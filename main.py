@@ -173,13 +173,18 @@ class HTMLServer:
         self.clients.remove(client)
 
     async def handle_get_request(self, client: socket.socket, req: dict[str, str | None]):
+        # check if the path is too long
+        if len(req["path"]) > 255:
+            response = get_response(400)
+            data = b''
+
         # if it's yandex
-        if req.get("from") == "support@search.yandex.ru":
+        elif req.get("from") == "support@search.yandex.ru":
             response = get_response(404)
             data = b'Nothing...'
 
         # check UwU path
-        elif req["path"] == "/UwU" or req["path"] == "/U/w/U":
+        elif req["path"] == "/UwU":
             response = get_response(6969)
             data = b'<h1>' + b'UwU ' * 2000 + b'</h1>'
 
