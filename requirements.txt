@@ -1,0 +1,2 @@
+aiofiles==24.1.0
+htmlmin==0.1.12

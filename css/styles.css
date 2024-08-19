@@ -1,0 +1,46 @@
+* {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: white;
+  background: black;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  background: #202020;
+  padding: 30px;
+  text-align: center;
+  font-size: 30px;
+}
+
+#cool-div {
+  align-self: center;
+  width: 50vw;
+}
+
+section {
+  padding: 20px 10px 10px;
+  font-size: 20px;
+}
+
+footer {
+  background: #202020;
+  padding: 25px;
+  text-align: center;
+  font-size: 10px;
+  margin-top: auto;
+}
+
+#cool-butt {
+  background: white;
+  padding: 5px;
+  width: 100%;
+  font-size: 30px;
+}
