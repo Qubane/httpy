@@ -4,6 +4,10 @@
   background: transparent;
 }
 
+p {
+  padding-top: 4px;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
   color: white;
@@ -43,4 +47,11 @@ footer {
   padding: 5px;
   width: 100%;
   font-size: 30px;
+}
+
+#git-butt {
+  background: lawngreen;
+  padding: 5px;
+  width: 80%;
+  font-size: 80px;
 }
