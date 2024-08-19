@@ -73,9 +73,9 @@ class HTMLServer:
 
         # list of allowed paths
         self.allowed_paths: dict[str, dict] = {
-            "/":                {"path": "index.html",          "encoding": "css/html"},
-            "/robots.txt":      {"path": "page/robots.txt",     "encoding": "text"},
-            "/favicon.ico":     {"path": "page/favicon.ico",    "encoding": "bin"},
+            "/":                {"path": "www/index.html",      "encoding": "css/html"},
+            "/robots.txt":      {"path": "www/robots.txt",      "encoding": "text"},
+            "/favicon.ico":     {"path": "www/favicon.ico",     "encoding": "bin"},
             "/css/styles.css":  {"path": None,                  "encoding": "css/html"},
         }
 
