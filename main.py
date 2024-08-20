@@ -165,6 +165,33 @@ class HTTPServer:
             # if it is -> return file from that path
             async with aiofiles.open(PATH_MAP[request.path]["path"], "rb") as f:
                 data = await f.read()
+            HTTPServer._send(client, 200, data)
+
+    @staticmethod
+    def _send(client: socket.socket, response: int, data: bytes, headers: dict[str, str] = None):
+        """
+        Sends client response code + headers + data
+        :param client: client
+        :param response: response code
+        :param data: data
+        :param headers: headers to include
+        """
+
+        if headers is None:
+            headers = dict()
+
+        byte_header = bytearray()
+        for key, value in headers.items():
+            byte_header += f"{key}: {value}\r\n".encode("ascii")
+
+        client.sendall(
+            b'HTTP/1.1 ' +
+            get_response_code(response) +
+            b'\r\n' +
+            byte_header +       # if empty, we'll just get b'\r\n\r\n'
+            b'\r\n' +
+            data
+        )
 
     def _close_client(self, client: socket.socket):
         """
