@@ -142,6 +142,10 @@ class HTTPServer:
             # decode request
             request: Request = Request.create(raw_request)
 
+            # log request
+            async with aiofiles.open("logs.log", "a") as f:
+                await f.write(f"IP: {client.getpeername()[0]}\n{request}\n\n")
+
             # handle requests
             try:
                 match request.type:
