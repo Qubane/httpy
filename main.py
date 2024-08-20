@@ -21,6 +21,11 @@ PATH_MAP = {
     "/css/styles.css":          {"path": "css/styles.css"},
 }
 
+# internal path map
+I_PATH_MAP = {
+    "/err/response.html":       {"path": "www/err/response.html"}
+}
+
 
 def get_response_code(code: int) -> bytes:
     match code:
@@ -200,8 +205,18 @@ class HTTPServer:
             # send 200 response with the file to the client
             HTTPServer._send(client, 200, data, headers)
         else:
+            # in case of error, return error page
+            async with aiofiles.open(I_PATH_MAP["/err/response.html"]["path"], "r") as f:
+                data = await f.read()
+
+            # status code
+            status_code = 404
+
+            # format error response
+            data = data.format(status_code=get_response_code(status_code).decode("ascii"))
+
             # send 404 response to the client
-            HTTPServer._send(client, 404)
+            HTTPServer._send(client, status_code, data.encode("ascii"))
 
     @staticmethod
     def _send(client: socket.socket, response: int, data: bytes = None, headers: dict[str, str] = None):
