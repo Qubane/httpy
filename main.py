@@ -157,6 +157,8 @@ class HTTPServer:
 
             # break the connection
             break
+
+        # close connection (stop page loading)
         self._close_client(client)
 
     @staticmethod
@@ -172,8 +174,11 @@ class HTTPServer:
             # if it is -> return file from that path
             async with aiofiles.open(PATH_MAP[request.path]["path"], "rb") as f:
                 data = await f.read()
+
+            # send 200 response with the file to the client
             HTTPServer._send(client, 200, data)
         else:
+            # send 400 response to the client
             HTTPServer._send(client, 400)
 
     @staticmethod
