@@ -5,7 +5,6 @@ The mighty silly webserver written in python for no good reason
 
 import ssl
 import time
-import json
 import gzip
 import socket
 import asyncio
@@ -184,17 +183,25 @@ class HTTPServer:
         :param request: client's request
         """
 
+        # get available compression methods
+        compressions = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
+
         # check if request path is in the PATH_MAP
         if request.path in PATH_MAP:
             # if it is -> return file from that path
             async with aiofiles.open(PATH_MAP[request.path]["path"], "rb") as f:
                 data = await f.read()
 
+            # add gzip compression header (if supported)
+            headers = {}
+            if "gzip" in compressions:
+                headers["Content-Encoding"] = "gzip"
+
             # send 200 response with the file to the client
-            HTTPServer._send(client, 200, data)
+            HTTPServer._send(client, 200, data, headers)
         else:
-            # send 400 response to the client
-            HTTPServer._send(client, 400)
+            # send 404 response to the client
+            HTTPServer._send(client, 404)
 
     @staticmethod
     def _send(client: socket.socket, response: int, data: bytes = None, headers: dict[str, str] = None):
@@ -213,6 +220,11 @@ class HTTPServer:
         # if headers were not given
         if headers is None:
             headers = dict()
+
+        # check for 'content-encoding' header
+        if headers.get("Content-Encoding") == "gzip":
+            # if present -> compress data
+            data = gzip.compress(data)
 
         # format headers
         byte_header = bytearray()
