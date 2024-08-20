@@ -162,3 +162,4 @@ cython_debug/
 .idea/
 /cert.pem
 /key.pem
+/www/yes.txt

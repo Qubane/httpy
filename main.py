@@ -3,6 +3,7 @@ The mighty silly webserver written in python for no good reason
 """
 
 
+import ssl
 import time
 import json
 import gzip
@@ -86,9 +87,19 @@ class HTTPServer:
     """
 
     def __init__(self, *, port: int, packet_size: int = 2048):
-        self.bind_port: int = port
+        # ssl context
+        self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        self.context.load_cert_chain(
+            certfile=r"C:\Certbot\live\qubane.ddns.net\fullchain.pem",      # use your own path here
+            keyfile=r"C:\Certbot\live\qubane.ddns.net\privkey.pem"          # here too
+        )
+        self.context.check_hostname = False
+
+        # sockets
+        self.socket: ssl.SSLSocket = self.context.wrap_socket(
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM), server_side=True)
         self.packet_size: int = packet_size
-        self.socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.bind_port: int = port
 
         self.clients: list[socket.socket] = []
 
