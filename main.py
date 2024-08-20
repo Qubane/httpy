@@ -13,6 +13,16 @@ import aiofiles
 import threading
 
 
+# path mapping
+PATH_MAP = {
+    "/":                        {"path": "www/index.html"},
+    "/index.html":              {"path": "www/index.html"},
+    "/robots.txt":              {"path": "www/robots.txt"},
+    "/favicon.ico":             {"path": "www/favicon.ico"},
+    "/css/styles.css":          {"path": "css/styles.css"},
+}
+
+
 class Request:
     """
     Just a request
@@ -115,8 +125,25 @@ class HTTPServer:
             # decode request
             request: Request = Request.create(raw_request)
 
+            # handle requests
+            match request.type:
+                case "GET":
+                    await self.handle_get_request(client, request)
+                case _:
+                    pass
+
             self._close_client(client)
             break
+
+    @staticmethod
+    async def handle_get_request(client: socket.socket, request: Request):
+        """
+        Handles user's GET request
+        :param client: client
+        :param request: client's request
+        """
+
+        pass
 
     def _close_client(self, client: socket.socket):
         """
