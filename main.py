@@ -8,7 +8,6 @@ import json
 import gzip
 import socket
 import asyncio
-import htmlmin
 import aiofiles
 import threading
 
@@ -21,6 +20,24 @@ PATH_MAP = {
     "/favicon.ico":             {"path": "www/favicon.ico"},
     "/css/styles.css":          {"path": "css/styles.css"},
 }
+
+
+def get_response_code(code: int) -> bytes:
+    match code:
+        case 200:
+            return b'200 OK'
+        case 400:
+            return b'400 Bad Request'
+        case 401:
+            return b'401 Unauthorized'
+        case 403:
+            return b'403 Forbidden'
+        case 404:
+            return b'404 Not Found'
+        case 6969:
+            return b'6969 UwU'
+        case _:  # in any other case return bad request response
+            return get_response_code(400)
 
 
 class Request:
@@ -143,7 +160,11 @@ class HTTPServer:
         :param request: client's request
         """
 
-        pass
+        # check if request path is in the PATH_MAP
+        if request.path in PATH_MAP:
+            # if it is -> return file from that path
+            async with aiofiles.open(PATH_MAP[request.path]["path"], "rb") as f:
+                data = await f.read()
 
     def _close_client(self, client: socket.socket):
         """
