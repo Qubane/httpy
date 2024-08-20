@@ -143,14 +143,21 @@ class HTTPServer:
             request: Request = Request.create(raw_request)
 
             # handle requests
-            match request.type:
-                case "GET":
-                    await self.handle_get_request(client, request)
-                case _:
-                    pass
+            try:
+                match request.type:
+                    case "GET":
+                        await self.handle_get_request(client, request)
+                    case _:
+                        break
 
-            self._close_client(client)
+            # break on exception
+            except Exception as e:
+                print(e)
+                break
+
+            # break the connection
             break
+        self._close_client(client)
 
     @staticmethod
     async def handle_get_request(client: socket.socket, request: Request):
@@ -179,16 +186,20 @@ class HTTPServer:
         :param headers: headers to include
         """
 
+        # if data was not given
         if data is None:
             data = bytes()
 
+        # if headers were not given
         if headers is None:
             headers = dict()
 
+        # format headers
         byte_header = bytearray()
         for key, value in headers.items():
             byte_header += f"{key}: {value}\r\n".encode("ascii")
 
+        # send response to the client
         client.sendall(
             b'HTTP/1.1 ' +
             get_response_code(response) +
@@ -240,7 +251,7 @@ class HTTPServer:
 
 
 def main():
-    server = HTTPServer(port=13701)
+    server = HTTPServer(port=13700)
     server.start()
 
 
