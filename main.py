@@ -166,9 +166,11 @@ class HTTPServer:
             async with aiofiles.open(PATH_MAP[request.path]["path"], "rb") as f:
                 data = await f.read()
             HTTPServer._send(client, 200, data)
+        else:
+            HTTPServer._send(client, 400)
 
     @staticmethod
-    def _send(client: socket.socket, response: int, data: bytes, headers: dict[str, str] = None):
+    def _send(client: socket.socket, response: int, data: bytes = None, headers: dict[str, str] = None):
         """
         Sends client response code + headers + data
         :param client: client
@@ -176,6 +178,9 @@ class HTTPServer:
         :param data: data
         :param headers: headers to include
         """
+
+        if data is None:
+            data = bytes()
 
         if headers is None:
             headers = dict()
