@@ -5,7 +5,9 @@ The mighty silly webserver written in python for no good reason
 
 import ssl
 import gzip
+import time
 import socket
+import signal
 import asyncio
 import aiofiles
 from src.request import Request
@@ -65,16 +67,28 @@ class HTTPServer:
         self.packet_size: int = packet_size
         self.bind_port: int = port
 
+        # list of connected clients
         self.clients: list[socket.socket] = []
+
+    def interrupt(self, *args, **kwargs):
+        """
+        Interrupts the web server
+        """
+
+        self.socket.close()
 
     def start(self):
         """
         Method to start the web server
         """
 
+        # setup signaling
+        signal.signal(signal.SIGINT, self.interrupt)
+
         # bind and start listening to port
         self.socket.bind(('', self.bind_port))
         self.socket.listen()
+        self.socket.setblocking(False)
 
         # start listening
         asyncio.run(self._listen_thread())
@@ -84,10 +98,21 @@ class HTTPServer:
         Listening for new connections
         """
 
+        # get event loop
         loop = asyncio.get_event_loop()
+
+        # start listening
         while True:
-            # accept new connection, add to client list and start listening to it
-            client = (await self._accept(self.socket))[0]
+            # try to accept new connection
+            try:
+                client = (await self._accept(self.socket))[0]
+
+            # if socket was closed -> break
+            except OSError:
+                print("Closed.")
+                break
+
+            # else append to client list and create new task
             self.clients.append(client)
             await loop.create_task(self.client_handle(client))
 
@@ -245,11 +270,17 @@ class HTTPServer:
 
     @staticmethod
     async def _accept(sock: ssl.SSLSocket) -> tuple[ssl.SSLSocket, str]:
-        return sock.accept()
+        while True:
+            try:
+                return sock.accept()
+            except BlockingIOError:
+                time.sleep(1.e-3)
 
     @staticmethod
     async def _recv(sock: ssl.SSLSocket, buflen: int = 1024):
-        return sock.recv(buflen)
+        while (msg := sock.recv(buflen)) == b'':
+            time.sleep(1.e-3)
+        return msg
 
     @staticmethod
     async def _sendall(sock: ssl.SSLSocket, data: bytes):
