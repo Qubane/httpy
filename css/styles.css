@@ -4,8 +4,12 @@
   background: transparent;
 }
 
-p {
+p, li {
   padding-top: 4px;
+}
+
+ul {
+  padding-left: 16px;
 }
 
 body {
@@ -17,6 +21,12 @@ body {
   min-height: 100vh;
 }
 
+button {
+  padding: 10px;
+  color: white;
+  background: #2a2a2a;
+}
+
 header {
   background: #202020;
   padding: 30px;
@@ -26,11 +36,13 @@ header {
 
 #section-div {
   align-self: center;
-  width: 50vw;
+  width: 70vw;
+  min-height: 100vh;
+  background: #1a1a1a;
 }
 
 section {
-  padding: 20px 10px 10px;
+  padding: 20px 24px 24px;
   font-size: 20px;
 }
 
