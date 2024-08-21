@@ -20,7 +20,7 @@ PATH_MAP = {
     "/robots.txt":              {"path": "www/robots.txt"},
     "/favicon.ico":             {"path": "www/favicon.ico"},
     "/css/styles.css":          {"path": "css/styles.css"},
-    "/about.html":              {"path": "www/about.html"},
+    "/about":                   {"path": "www/about.html"},
 }
 
 # internal path map
