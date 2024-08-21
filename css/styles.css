@@ -24,7 +24,7 @@ header {
   font-size: 30px;
 }
 
-#cool-div {
+#section-div {
   align-self: center;
   width: 50vw;
 }
@@ -40,13 +40,6 @@ footer {
   text-align: center;
   font-size: 10px;
   margin-top: auto;
-}
-
-#cool-butt {
-  background: white;
-  padding: 5px;
-  width: 100%;
-  font-size: 30px;
 }
 
 #git-butt {
