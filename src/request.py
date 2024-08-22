@@ -23,6 +23,9 @@ class Request:
         request.type = raw_request[:raw_request.find(b' ')].decode("ascii")
         raw_path = raw_request[len(request.type)+1:raw_request.find(b' ', len(request.type)+1)].decode("ascii")
 
+        # remove path args from path
+        request.path = raw_path.split("?")[0]
+
         # decode path args
         raw_args = raw_path.split("/")[-1].split("?")
         raw_args = raw_args[1] if len(raw_args) == 2 else ""
@@ -36,9 +39,6 @@ class Request:
             # if there is only a key present (and it's a valid key)
             elif len(split) == 1 and split[0] != "":
                 request.path_args[split[0]] = None
-
-        # remove path args from path
-        request.path = raw_path.split("?")[0]
 
         # decode headers
         for raw_header in raw_request.split(b'\r\n'):
