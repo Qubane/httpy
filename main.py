@@ -11,6 +11,7 @@ import signal
 import asyncio
 import aiofiles
 from src.request import Request
+from src.minimizer import minimize_html
 
 
 # path mapping
@@ -167,6 +168,10 @@ class HTTPServer:
             # if it is -> return file from that path
             async with aiofiles.open(PATH_MAP[request.path]["path"], "rb") as f:
                 data = await f.read()
+
+            # pre-compress data for HTML files
+            if PATH_MAP[request.path]["path"][-4:] == "html":
+                data = minimize_html(data)
 
             # add gzip compression header (if supported)
             headers = {}
