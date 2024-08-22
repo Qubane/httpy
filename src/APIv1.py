@@ -59,7 +59,7 @@ def decode_size(size: str) -> int:
     return size
 
 
-async def respond(client: SSLSocket, request: Request) -> tuple[int, bytes, dict]:
+def respond(client: SSLSocket, request: Request) -> tuple[int, bytes, dict]:
     """
     Respond to clients API request
     """
