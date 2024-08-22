@@ -1,5 +1,8 @@
-import time
+import asyncio
 from ssl import SSLSocket
+
+
+_SOCK_TIME_DELAY = 1.e-3
 
 
 async def ssl_sock_accept(sock: SSLSocket) -> tuple[SSLSocket, str]:
@@ -7,12 +10,12 @@ async def ssl_sock_accept(sock: SSLSocket) -> tuple[SSLSocket, str]:
         try:
             return sock.accept()
         except BlockingIOError:
-            time.sleep(1.e-3)
+            await asyncio.sleep(_SOCK_TIME_DELAY)
 
 
 async def ssl_sock_recv(sock: SSLSocket, buflen: int = 1024):
     while (msg := sock.recv(buflen)) == b'':
-        time.sleep(1.e-3)
+        await asyncio.sleep(_SOCK_TIME_DELAY)
     return msg
 
 

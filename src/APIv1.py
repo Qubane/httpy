@@ -59,7 +59,7 @@ def decode_size(size: str) -> int:
     return size
 
 
-async def respond(client: SSLSocket, request: Request) -> tuple[int, bytes]:
+async def respond(client: SSLSocket, request: Request) -> tuple[int, bytes, dict]:
     """
     Respond to clients API request
     """
@@ -78,10 +78,10 @@ async def respond(client: SSLSocket, request: Request) -> tuple[int, bytes]:
 
             # check size
             if size < API_FILE_RANDOM_MIN_SIZE_LIMIT or size > API_FILE_RANDOM_MAX_SIZE_LIMIT:
-                return 400, b''
+                return 400, b'', {}
 
-            return 200, random_data_gen(size)
+            return 200, random_data_gen(size), {}
         else:
-            return 400, b''
+            return 400, b'', {}
     else:
-        return 400, b''
+        return 400, b'', {}

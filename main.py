@@ -132,6 +132,7 @@ class HTTPServer:
 
             # if socket was closed -> break
             except OSError as e:
+                print(e)
                 print("Closed.")
                 break
 
@@ -143,6 +144,8 @@ class HTTPServer:
         """
         Handles client's connection
         """
+
+        loop = asyncio.get_event_loop()
 
         while True:
             # receive request from client
@@ -211,9 +214,10 @@ class HTTPServer:
         # if it's an API request
         elif (api_version := request.path.split("/")[1]) in API_VERSIONS:
             data = b''
+            headers = {}
             match api_version:
                 case "APIv1":
-                    status, data = await APIv1.respond(client, request)
+                    status, data, headers = await APIv1.respond(client, request)
                 case _:
                     status = 400
 
@@ -223,7 +227,7 @@ class HTTPServer:
                 return
 
             # send data if no error
-            await HTTPServer._send(client, status, data)
+            await HTTPServer._send(client, status, data, headers)
 
             # return after answer
             return
@@ -279,7 +283,7 @@ class HTTPServer:
             byte_header += f"{key}: {value}\r\n".encode("ascii")
 
         # send response to the client
-        await ssl_sock_sendall(
+        await asyncio.get_event_loop().create_task(ssl_sock_sendall(
             client,
             b'HTTP/1.1 ' +
             get_response_code(response) +
@@ -287,7 +291,18 @@ class HTTPServer:
             byte_header +  # if empty, we'll just get b'\r\n\r\n'
             b'\r\n' +
             data
-        )
+        ))
+
+        # # send response to the client
+        # await ssl_sock_sendall(
+        #     client,
+        #     b'HTTP/1.1 ' +
+        #     get_response_code(response) +
+        #     b'\r\n' +
+        #     byte_header +  # if empty, we'll just get b'\r\n\r\n'
+        #     b'\r\n' +
+        #     data
+        # )
 
     def _close_client(self, client: socket.socket):
         """
