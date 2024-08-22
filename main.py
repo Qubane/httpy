@@ -7,6 +7,7 @@ import ssl
 import gzip
 import time
 import socket
+import brotli
 import signal
 import asyncio
 import aiofiles
@@ -16,12 +17,24 @@ from src.minimizer import minimize_html
 
 # path mapping
 PATH_MAP = {
-    "/":                        {"path": "www/index.html"},
-    "/index.html":              {"path": "www/index.html"},
-    "/robots.txt":              {"path": "www/robots.txt"},
-    "/favicon.ico":             {"path": "www/favicon.ico"},
-    "/css/styles.css":          {"path": "css/styles.css"},
-    "/about":                   {"path": "www/about.html"},
+    "/":
+        {"path": "www/index.html",
+         "compress": True},
+    "/index.html":
+        {"path": "www/index.html",
+         "compress": True},
+    "/robots.txt":
+        {"path": "www/robots.txt",
+         "compress": False},
+    "/favicon.ico":
+        {"path": "www/favicon.ico",
+         "compress": False},
+    "/css/styles.css":
+        {"path": "css/styles.css",
+         "compress": True},
+    "/about":
+        {"path": "www/about.html",
+         "compress": True},
 }
 
 # internal path map
@@ -173,9 +186,13 @@ class HTTPServer:
             if PATH_MAP[request.path]["path"][-4:] == "html":
                 data = minimize_html(data)
 
-            # add gzip compression header (if supported)
+            # add brotli compression header (if supported)
             headers = {}
-            if "gzip" in compressions:
+            if "br" in compressions:
+                headers["Content-Encoding"] = "br"
+
+            # else add gzip compression (if supported)
+            elif "gzip" in compressions:
                 headers["Content-Encoding"] = "gzip"
 
             # send 200 response with the file to the client
@@ -213,8 +230,10 @@ class HTTPServer:
             headers = dict()
 
         # check for 'content-encoding' header
-        if headers.get("Content-Encoding") == "gzip":
-            # if present -> compress data
+        if headers.get("Content-Encoding") == "br":
+            data = brotli.compress(data)
+
+        elif headers.get("Content-Encoding") == "gzip":
             data = gzip.compress(data)
 
         # format headers
