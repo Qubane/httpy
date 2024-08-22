@@ -5,12 +5,13 @@ The mighty silly webserver written in python for no good reason
 
 import ssl
 import gzip
-import time
 import socket
 import brotli
 import signal
 import asyncio
 import aiofiles
+from src import APIv1
+from src.socks import *
 from src.request import Request
 from src.minimizer import minimize_html
 
@@ -38,6 +39,14 @@ PATH_MAP = {
     "/test":
         {"path": "www/test.html",
          "compress": True},
+}
+
+# API
+API_PATH = {
+    "/APIv1/file/generated/1gib",
+    "/APIv1/file/generated/5gib",
+    "/APIv1/file/generated/10gib",
+    "/APIv1/file/generated/20gib",
 }
 
 # internal path map
@@ -122,10 +131,10 @@ class HTTPServer:
         while True:
             # try to accept new connection
             try:
-                client = (await self._accept(self.socket))[0]
+                client = (await ssl_sock_accept(self.socket))[0]
 
             # if socket was closed -> break
-            except OSError:
+            except OSError as e:
                 print("Closed.")
                 break
 
@@ -172,8 +181,6 @@ class HTTPServer:
     async def handle_get_request(client: ssl.SSLSocket, request: Request):
         """
         Handles user's GET request
-        :param client: client
-        :param request: client's request
         """
 
         # get available compression methods
@@ -200,19 +207,47 @@ class HTTPServer:
 
             # send 200 response with the file to the client
             await HTTPServer._send(client, 200, data, headers)
-        else:
-            # in case of error, return error page
-            async with aiofiles.open(I_PATH_MAP["/err/response.html"]["path"], "r") as f:
-                data = await f.read()
 
-            # status code
-            status_code = 404
+            # return after answer
+            return
 
-            # format error response
-            data = data.format(status_code=get_response_code(status_code).decode("ascii"))
+        # if it's an API request
+        elif request.path in API_PATH:
+            # get API version
+            api_version = request.path.split("/")[1]
 
-            # send 404 response to the client
-            await HTTPServer._send(client, status_code, data.encode("ascii"))
+            match api_version:
+                case "APIv1":
+                    status, data = await APIv1.respond(client, request)
+                case _:
+                    status = 400
+
+            # if status is not 200 -> send bad response
+            if status != 200:
+                await HTTPServer._bad_response(client, status)
+
+            # return after answer
+            return
+
+        # in case of error, return error page
+        await HTTPServer._bad_response(client, 404)
+
+    @staticmethod
+    async def _bad_response(client: ssl.SSLSocket, status_code: int):
+        """
+        Sends a bad response page to the client.
+        :param client: client
+        :param status_code: status code
+        """
+
+        async with aiofiles.open(I_PATH_MAP["/err/response.html"]["path"], "r") as f:
+            data = await f.read()
+
+        # format error response
+        data = data.format(status_code=get_response_code(status_code).decode("ascii"))
+
+        # send response to the client
+        await HTTPServer._send(client, status_code, data.encode("ascii"))
 
     @staticmethod
     async def _send(client: ssl.SSLSocket, response: int, data: bytes = None, headers: dict[str, str] = None):
@@ -245,7 +280,7 @@ class HTTPServer:
             byte_header += f"{key}: {value}\r\n".encode("ascii")
 
         # send response to the client
-        await HTTPServer._sendall(
+        await ssl_sock_sendall(
             client,
             b'HTTP/1.1 ' +
             get_response_code(response) +
@@ -276,7 +311,7 @@ class HTTPServer:
         while True:
             try:
                 # fetch packet
-                message = await self._recv(client, self.packet_size)
+                message = await ssl_sock_recv(client, self.packet_size)
             except OSError:
                 break
 
@@ -294,24 +329,6 @@ class HTTPServer:
 
         # return empty buffer on error
         return b''
-
-    @staticmethod
-    async def _accept(sock: ssl.SSLSocket) -> tuple[ssl.SSLSocket, str]:
-        while True:
-            try:
-                return sock.accept()
-            except BlockingIOError:
-                time.sleep(1.e-3)
-
-    @staticmethod
-    async def _recv(sock: ssl.SSLSocket, buflen: int = 1024):
-        while (msg := sock.recv(buflen)) == b'':
-            time.sleep(1.e-3)
-        return msg
-
-    @staticmethod
-    async def _sendall(sock: ssl.SSLSocket, data: bytes):
-        sock.sendall(data)
 
 
 def main():
