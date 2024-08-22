@@ -19,13 +19,13 @@ async def respond(client: SSLSocket, request: Request) -> tuple[int, bytes]:
     if api_level1 == "file":
         if api_level2 == "generated":
             if api_request == "1gib":
-                return 200, random.randbytes(1048576)
+                return 200, random.randbytes(2**27) * 8
             elif api_request == "5gib":
-                return 200, random.randbytes(1048576)
+                return 200, random.randbytes(2**27) * 25
             elif api_request == "10gib":
-                return 200, random.randbytes(1048576)
+                return 200, random.randbytes(2**27) * 80
             elif api_request == "20gib":
-                return 200, random.randbytes(1048576)
+                return 200, random.randbytes(2**27) * 160
             else:
                 return 400, b''
         else:
