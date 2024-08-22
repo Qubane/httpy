@@ -40,6 +40,48 @@ I_PATH_MAP = {
 
 class HTTPServer:
     """
+    The mightier HTTP server!
+    Now uses threading
+    """
+
+    def __init__(self, *, port: int, packet_size: int = 2048):
+        # SSL context
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.check_hostname = False
+        context.load_cert_chain(
+            certfile=r"C:\Certbot\live\qubane.ddns.net\fullchain.pem",  # use your own path here
+            keyfile=r"C:\Certbot\live\qubane.ddns.net\privkey.pem")     # here too
+
+        # Sockets
+        self.sock: ssl.SSLSocket = context.wrap_socket(
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM),
+            server_side=True)
+        self.packet_size: int = packet_size
+        self.port: int = port
+
+        # client thread list
+        self.client_threads: list[threading.Thread] = []
+
+        # add signaling
+        self.stop_event = threading.Event()
+        signal.signal(signal.SIGINT, self._signal_interrupt)
+
+    def _signal_interrupt(self, *args):
+        """
+        Checks for CTRL+C keyboard interrupt, to properly stop the HTTP server
+        """
+
+        # stop all threads
+        self.stop_event.set()
+        for thread in self.client_threads:
+            thread.join()
+
+        # close server socket
+        self.sock.close()
+
+
+class HTTPServer:
+    """
     The mighty HTTP server
     """
 
@@ -76,7 +118,6 @@ class HTTPServer:
         """
 
         # setup signaling
-        signal.signal(signal.SIGINT, self.interrupt)
 
         # bind and start listening to port
         self.socket.bind(('', self.bind_port))
