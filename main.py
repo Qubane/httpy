@@ -216,6 +216,7 @@ class HTTPServer:
             # get API version
             api_version = request.path.split("/")[1]
 
+            data = b''
             match api_version:
                 case "APIv1":
                     status, data = await APIv1.respond(client, request)
@@ -225,6 +226,10 @@ class HTTPServer:
             # if status is not 200 -> send bad response
             if status != 200:
                 await HTTPServer._bad_response(client, status)
+                return
+
+            # send data if no error
+            await HTTPServer._send(client, status, data)
 
             # return after answer
             return
