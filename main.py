@@ -35,6 +35,9 @@ PATH_MAP = {
     "/about":
         {"path": "www/about.html",
          "compress": True},
+    "/test":
+        {"path": "www/test.html",
+         "compress": True},
 }
 
 # internal path map
