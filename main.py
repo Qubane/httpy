@@ -277,6 +277,10 @@ class HTTPServer:
         elif headers.get("Content-Encoding") == "gzip":
             data = gzip.compress(data)
 
+        # add 'Content-Length' header if not present
+        if headers.get("Content-Length") is None:
+            headers["Content-Length"] = len(data)
+
         # format headers
         byte_header = bytearray()
         for key, value in headers.items():
