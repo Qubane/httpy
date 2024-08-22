@@ -13,60 +13,29 @@ from src import APIv1
 from src.socks import *
 from src.request import Request
 from src.minimizer import minimize_html
+from src.status_code import *
 
 
 # path mapping
 PATH_MAP = {
-    "/":
-        {"path": "www/index.html",
-         "compress": True},
-    "/index.html":
-        {"path": "www/index.html",
-         "compress": True},
-    "/robots.txt":
-        {"path": "www/robots.txt",
-         "compress": False},
-    "/favicon.ico":
-        {"path": "www/favicon.ico",
-         "compress": False},
-    "/css/styles.css":
-        {"path": "css/styles.css",
-         "compress": True},
-    "/about":
-        {"path": "www/about.html",
-         "compress": True},
-    "/test":
-        {"path": "www/test.html",
-         "compress": True},
+    "/":                    {"path": "www/index.html"},
+    "/index.html":          {"path": "www/index.html"},
+    "/robots.txt":          {"path": "www/robots.txt"},
+    "/favicon.ico":         {"path": "www/favicon.ico"},
+    "/css/styles.css":      {"path": "css/styles.css"},
+    "/about":               {"path": "www/about.html"},
+    "/test":                {"path": "www/test.html"},
 }
 
 # API
 API_VERSIONS = {
-    "APIv1"
+    "APIv1":                {"supported": True}
 }
 
 # internal path map
 I_PATH_MAP = {
     "/err/response.html":       {"path": "www/err/response.html"}
 }
-
-
-def get_response_code(code: int) -> bytes:
-    match code:
-        case 200:
-            return b'200 OK'
-        case 400:
-            return b'400 Bad Request'
-        case 401:
-            return b'401 Unauthorized'
-        case 403:
-            return b'403 Forbidden'
-        case 404:
-            return b'404 Not Found'
-        case 6969:
-            return b'6969 UwU'
-        case _:  # in any other case return bad request response
-            return get_response_code(400)
 
 
 class HTTPServer:
