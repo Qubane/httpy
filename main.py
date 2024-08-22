@@ -59,8 +59,9 @@ class HTTPServer:
         self.packet_size: int = packet_size
         self.port: int = port
 
-        # client thread list
+        # client thread list and server thread
         self.client_threads: list[threading.Thread] = []
+        self.server_thread: threading.Thread | None = None
 
         # add signaling
         self.stop_event = threading.Event()
@@ -75,9 +76,30 @@ class HTTPServer:
         self.stop_event.set()
         for thread in self.client_threads:
             thread.join()
+        self.server_thread.join()
 
         # close server socket
         self.sock.close()
+
+    def start(self):
+        """
+        Method to start the web server
+        """
+
+        # bind and start listening to port
+        self.sock.bind(('', self.port))
+        self.sock.setblocking(False)
+        self.sock.listen()
+
+        # listen and respond handler
+        while not self.stop_event.is_set():
+            # accept new client
+            client = ssl_sock_accept(self.sock)[0]
+
+            # create thread for new client and append it to the list
+            th = threading.Thread(target=lambda x: x, args=[client])  # TODO: this line
+            self.client_threads.append(th)
+            th.start()
 
 
 class HTTPServer:
