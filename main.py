@@ -145,34 +145,27 @@ class HTTPServer:
         Handles client's connection
         """
 
-        loop = asyncio.get_event_loop()
+        # receive request from client
+        raw_request = await self._recvall(client)
 
-        while True:
-            # receive request from client
-            raw_request = await self._recvall(client)
+        # decode request
+        request: Request = Request.create(raw_request)
 
-            # decode request
-            request: Request = Request.create(raw_request)
+        # # log request
+        # async with aiofiles.open("logs.log", "a") as f:
+        #     await f.write(f"IP: {client.getpeername()[0]}\n{request}\n\n")
 
-            # # log request
-            # async with aiofiles.open("logs.log", "a") as f:
-            #     await f.write(f"IP: {client.getpeername()[0]}\n{request}\n\n")
+        # handle requests
+        try:
+            match request.type:
+                case "GET":
+                    await self.handle_get_request(client, request)
+                case _:
+                    pass
 
-            # handle requests
-            try:
-                match request.type:
-                    case "GET":
-                        await self.handle_get_request(client, request)
-                    case _:
-                        break
-
-            # break on exception
-            except Exception as e:
-                print(e)
-                break
-
-            # break the connection
-            break
+        # break on exception
+        except Exception as e:
+            print(e)
 
         # close connection (stop page loading)
         self._close_client(client)
