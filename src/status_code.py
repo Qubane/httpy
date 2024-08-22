@@ -1,0 +1,23 @@
+class StatusCode:
+    """
+    HTML status code
+    """
+
+    def __init__(self, code: int, message: str):
+        self.code: int = code
+        self.message: str = message
+
+    def __bytes__(self):
+        return f"{self.code} {self.message}".encode("ascii")
+
+
+# Status codes!
+STATUS_CODE_OK = StatusCode(200, "OK")
+STATUS_CODE_BAD_REQUEST = StatusCode(400, "Bad Request")
+STATUS_CODE_UNAUTHORIZED = StatusCode(401, "Unauthorized")
+STATUS_CODE_FORBIDDEN = StatusCode(403, "Forbidden")
+STATUS_CODE_NOT_FOUND = StatusCode(404, "Not Found")
+STATUS_CODE_PAYLOAD_TOO_LARGE = StatusCode(413, "Payload Too Large")
+STATUS_CODE_URI_TOO_LONG = StatusCode(414, "URI Too Long")
+STATUS_CODE_IM_A_TEAPOT = StatusCode(418, "I'm a teapot")  # I followed mozilla's dev page, it was there
+STATUS_CODE_FUNNY_NUMBER = StatusCode(6969, "UwU")
