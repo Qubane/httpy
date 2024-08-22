@@ -137,7 +137,6 @@ class HTTPServer:
                 break
 
             # else append to client list and create new task
-            self.clients.append(client)
             await loop.create_task(self.client_handle(client))
 
     async def client_handle(self, client: ssl.SSLSocket):
@@ -280,7 +279,7 @@ class HTTPServer:
             byte_header += f"{key}: {value}\r\n".encode("ascii")
 
         # send response to the client
-        await asyncio.get_event_loop().create_task(ssl_sock_sendall(
+        await ssl_sock_sendall(
             client,
             b'HTTP/1.1 ' +
             get_response_code(response) +
@@ -288,18 +287,7 @@ class HTTPServer:
             byte_header +  # if empty, we'll just get b'\r\n\r\n'
             b'\r\n' +
             data
-        ))
-
-        # # send response to the client
-        # await ssl_sock_sendall(
-        #     client,
-        #     b'HTTP/1.1 ' +
-        #     get_response_code(response) +
-        #     b'\r\n' +
-        #     byte_header +  # if empty, we'll just get b'\r\n\r\n'
-        #     b'\r\n' +
-        #     data
-        # )
+        )
 
     def _close_client(self, client: socket.socket):
         """
