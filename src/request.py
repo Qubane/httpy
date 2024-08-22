@@ -6,6 +6,7 @@ class Request:
     def __init__(self):
         self.type: str = ""
         self.path: str = ""
+        self.path_args: dict[str, str | None] = dict()
 
     @staticmethod
     def create(raw_request: bytes):
@@ -18,9 +19,26 @@ class Request:
         # new request
         request = Request()
 
-        # fix type and path
+        # change type and path
         request.type = raw_request[:raw_request.find(b' ')].decode("ascii")
-        request.path = raw_request[len(request.type)+1:raw_request.find(b' ', len(request.type)+1)].decode("ascii")
+        raw_path = raw_request[len(request.type)+1:raw_request.find(b' ', len(request.type)+1)].decode("ascii")
+
+        # decode path args
+        raw_args = raw_path.split("/")[-1].split("?")
+        raw_args = raw_args[1] if len(raw_args) == 2 else ""
+        for raw_arg in raw_args.split("&"):
+            split = raw_arg.split("=")
+
+            # if there is a key value pair present
+            if len(split) == 2:
+                request.path_args[split[0]] = split[1]
+
+            # if there is only a key present (and it's a valid key)
+            elif len(split) == 1 and split[0] != "":
+                request.path_args[split[0]] = None
+
+        # remove path args from path
+        request.path = raw_path.split("?")[0]
 
         # decode headers
         for raw_header in raw_request.split(b'\r\n'):

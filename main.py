@@ -42,11 +42,8 @@ PATH_MAP = {
 }
 
 # API
-API_PATH = {
-    "/APIv1/file/generated/1gib",
-    "/APIv1/file/generated/5gib",
-    "/APIv1/file/generated/10gib",
-    "/APIv1/file/generated/20gib",
+API_VERSIONS = {
+    "APIv1"
 }
 
 # internal path map
@@ -212,10 +209,7 @@ class HTTPServer:
             return
 
         # if it's an API request
-        elif request.path in API_PATH:
-            # get API version
-            api_version = request.path.split("/")[1]
-
+        elif (api_version := request.path.split("/")[1]) in API_VERSIONS:
             data = b''
             match api_version:
                 case "APIv1":
