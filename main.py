@@ -32,7 +32,7 @@ API_VERSIONS = {
 
 # internal path map
 I_PATH_MAP = {
-    "/err/response.html":       {"path": "www/err/response.html"}
+    "/err/response":        {"path": "www/err/response.html"}
 }
 
 
@@ -101,7 +101,7 @@ class HTTPServer:
 
     def _client_thread(self, client: ssl.SSLSocket):
         """
-        Handles client's requests
+        Handles getting client's requests
         :param client: client ssl socket
         """
 
@@ -113,8 +113,7 @@ class HTTPServer:
                 if request is None:
                     break
 
-                with open("www/index.html", "rb") as file:
-                    send_response(client, file.read(), STATUS_CODE_OK)
+                threading.Thread(target=self._client_request_handler, args=[client, request], daemon=True).start()
             except TimeoutError:
                 print("Client timeout")
                 break
@@ -124,6 +123,13 @@ class HTTPServer:
 
         # close the connection once stop even was set or an error occurred
         client.close()
+
+    def _client_request_handler(self, client, request):
+        """
+        Handles responses to client's requests
+        :param client: client
+        :param request: client's request
+        """
 
     def _recv_request(self, client: ssl.SSLSocket) -> Request | None:
         """
