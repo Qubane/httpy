@@ -5,14 +5,12 @@ The mighty silly webserver written in python for no good reason
 
 import ssl
 import time
-import gzip
 import socket
-import brotli
 import signal
 import threading
 from src import APIv1
+from src.request import *
 from src.status_code import *
-from src.request import Request
 from src.minimizer import minimize_html
 
 
@@ -115,7 +113,8 @@ class HTTPServer:
                 if request is None:
                     break
 
-                print(request, end="\n\n")
+                with open("www/index.html", "rb") as file:
+                    send_response(client, file.read(), STATUS_CODE_OK)
             except TimeoutError:
                 print("Client timeout")
                 break
@@ -264,90 +263,6 @@ class HTTPServer:
 #
 #         # send response to the client
 #         HTTPServer._send(client, status_code, data.encode("ascii"))
-#
-#     @staticmethod
-#     def _send(client: ssl.SSLSocket, response: int, data: bytes = None, headers: dict[str, str] = None):
-#         """
-#         Sends client response code + headers + data
-#         :param client: client
-#         :param response: response code
-#         :param data: data
-#         :param headers: headers to include
-#         """
-#
-#         # if data was not given
-#         if data is None:
-#             data = bytes()
-#
-#         # if headers were not given
-#         if headers is None:
-#             headers = dict()
-#
-#         # check for 'content-encoding' header
-#         if headers.get("Content-Encoding") == "br":
-#             data = brotli.compress(data)
-#
-#         elif headers.get("Content-Encoding") == "gzip":
-#             data = gzip.compress(data)
-#
-#         # add 'Content-Length' header if not present
-#         if headers.get("Content-Length") is None:
-#             headers["Content-Length"] = len(data)
-#
-#         # format headers
-#         byte_header = bytearray()
-#         for key, value in headers.items():
-#             byte_header += f"{key}: {value}\r\n".encode("ascii")
-#
-#         # send response to the client
-#         client.sendall(
-#             b'HTTP/1.1 ' +
-#             get_response_code(response) +
-#             b'\r\n' +
-#             byte_header +  # if empty, we'll just get b'\r\n\r\n'
-#             b'\r\n' +
-#             data
-#         )
-#
-#     def _recvall(self, client: ssl.SSLSocket) -> bytes:
-#         """
-#         Receive All (just receives the whole message, instead of 1 packet at a time)
-#         """
-#
-#         # create message buffer
-#         buffer: bytearray = bytearray()
-#
-#         # start fetching the message
-#         while True:
-#             try:
-#                 # fetch packet
-#                 message = ssl_sock_recv(client, self.packet_size)
-#             except OSError:
-#                 break
-#
-#             # that happens when user stops loading the page
-#             if message == b'':
-#                 break
-#
-#             # append fetched message to the buffer
-#             buffer += message
-#
-#             # check for EoF
-#             if buffer[-4:] == b'\r\n\r\n':
-#                 # return the received message
-#                 return buffer
-#
-#         # return empty buffer on error
-#         return b''
-#
-#     def _close_client(self, client: socket.socket):
-#         """
-#         Closes a client
-#         """
-#
-#         client.close()
-#         if client in self.clients:
-#             self.clients.remove(client)
 
 
 def main():

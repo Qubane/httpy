@@ -1,3 +1,10 @@
+import gzip
+import brotli
+from typing import Any
+from ssl import SSLSocket
+from src.status_code import StatusCode
+
+
 class Request:
     """
     Just a request
@@ -54,3 +61,36 @@ class Request:
 
     def __str__(self):
         return '\n'.join([f"{key}: {val}" for key, val in self.__dict__.items()])
+
+
+def send_response(sock: SSLSocket, data: bytes, status: StatusCode, headers: dict[str, Any] = None):
+    """
+    Sends response to client.
+    Probably ran inside a daemonic thread
+    :param sock: client's socket
+    :param data: raw data to send
+    :param status: status code
+    :param headers: headers to include
+    """
+
+    # process header data
+    if headers is None:
+        headers = dict()
+    if headers.get("Content-Encoding") is not None:
+        if headers["Content-Encoding"] == "br":
+            data = brotli.compress(data)
+        elif headers["Content-Encoding"] == "gzip":
+            data = gzip.compress(data)
+    if headers.get("Content-Length") is None:
+        headers["Content-Length"] = len(data)
+    if headers.get("Connection") is None:
+        headers["Connection"] = "close"
+
+    # generate basic message
+    message = b'HTTP/1.1 ' + status.__bytes__() + b'\r\n'
+    for key, value in headers.items():
+        message += f"{key}: {value}\r\n".encode("ascii")
+    message += b'\r\n' + data
+
+    # send message
+    sock.sendall(message)
