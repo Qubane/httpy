@@ -107,7 +107,7 @@ class HTTPServer:
         :param client: client ssl socket
         """
 
-        client.settimeout(5)
+        # client.settimeout(5)
         while not self.stop_event.is_set():
             try:
                 # get client's request
@@ -126,7 +126,7 @@ class HTTPServer:
         # close the connection once stop even was set or an error occurred
         client.close()
 
-    def _client_request_handler(self, client, request):
+    def _client_request_handler(self, client: ssl.SSLSocket, request: Request):
         """
         Handles responses to client's requests
         :param client: client
@@ -166,7 +166,7 @@ class HTTPServer:
         # send message
         client.sendall(message)
 
-    def _handle_get(self, client, request) -> Response:
+    def _handle_get(self, client: ssl.SSLSocket, request: Request) -> Response:
         """
         Handles GET / HEAD requests from a client
         """
@@ -200,7 +200,7 @@ class HTTPServer:
             data = data.format(status_code=str(STATUS_CODE_NOT_FOUND)).encode("ascii")
             return Response(data, STATUS_CODE_NOT_FOUND)
 
-    def _handle_post(self, client, request) -> Response:
+    def _handle_post(self, client: ssl.SSLSocket, request: Request) -> Response:
         """
         Handles POSt request from a client
         """
