@@ -4,11 +4,19 @@ class StatusCode:
     """
 
     def __init__(self, code: int, message: str):
-        self.code: int = code
-        self.message: str = message
+        self._code: int = code
+        self._message: str = message
 
     def __bytes__(self):
-        return f"{self.code} {self.message}".encode("ascii")
+        return f"{self._code} {self._message}".encode("ascii")
+
+    @property
+    def code(self):
+        return self._code
+
+    @property
+    def message(self):
+        return self._message
 
 
 # Status codes!
