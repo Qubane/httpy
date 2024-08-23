@@ -65,13 +65,11 @@ def api_call(client: SSLSocket, request: Request) -> Response:
     """
 
     # decode API request
-    split_path = request.path.split("/")
-    api_level1 = split_path[2]
-    api_request = split_path[3]
+    split_path = request.path.split("/", maxsplit=16)[1:]
 
     # do something with it (oh god)
-    if api_level1 == "file":
-        if api_request == "random":
+    if len(split_path) > 1 and split_path[1] == "file":
+        if len(split_path) > 2 and split_path[2] == "random":
             # get size
             size_str = request.path_args.get("size", "16mib")
             size = decode_size(size_str)
