@@ -4,8 +4,10 @@ The mighty silly webserver written in python for no good reason
 
 
 import ssl
+import gzip
 import time
 import socket
+import brotli
 import signal
 import threading
 from src import APIv1
@@ -117,7 +119,7 @@ class HTTPServer:
             except TimeoutError:
                 print("Client timeout")
                 break
-            except OSError as e:
+            except Exception as e:
                 print(e)
                 break
 
@@ -129,6 +131,78 @@ class HTTPServer:
         Handles responses to client's requests
         :param client: client
         :param request: client's request
+        """
+
+        match request.type:
+            case "GET" | "HEAD":
+                response = self._handle_get(client, request)
+            # case "POST":  # Not Implemented
+            #     response = self._handle_post(client, request)
+            case _:
+                with open(I_PATH_MAP["/err/response"]["path"], "r", encoding="ascii") as file:
+                    data = file.read().format(status_code=str(STATUS_CODE_NOT_FOUND)).encode("ascii")
+                response = Response(data, STATUS_CODE_NOT_FOUND)
+
+        # process header data
+        if response.headers.get("Content-Encoding") is None:
+            supported_compressions = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
+            if "br" in supported_compressions:
+                response.headers["Content-Encoding"] = "br"
+                response.data = brotli.compress(response.data)
+            elif "gzip" in supported_compressions:
+                response.headers["Content-Encoding"] = "gzip"
+                response.data = gzip.compress(response.data)
+        if response.headers.get("Content-Length") is None:
+            response.headers["Content-Length"] = len(response.data)
+        if response.headers.get("Connection") is None:
+            response.headers["Connection"] = "close"
+
+            # generate basic message
+        message = b'HTTP/1.1 ' + response.status.__bytes__() + b'\r\n'
+        for key, value in response.headers.items():
+            message += f"{key}: {value}\r\n".encode("ascii")
+        message += b'\r\n' + response.data
+
+        # send message
+        client.sendall(message)
+
+    def _handle_get(self, client, request) -> Response:
+        """
+        Handles GET / HEAD requests from a client
+        """
+
+        split_path = request.path.split("/", maxsplit=16)[1:]
+        if request.path in PATH_MAP:  # assume browser
+            filepath = PATH_MAP[request.path]["path"]
+            with open(filepath, "rb") as file:
+                data = file.read()
+
+            if request.type == "GET":
+                return Response(data, STATUS_CODE_OK)
+            elif request.type == "HEAD":
+                return Response(b'', STATUS_CODE_OK, {"Content-Length": len(data)})
+            else:
+                raise TypeError("Called GET handler for non-GET request")
+
+        elif len(split_path) >= 2 and split_path[0] in API_VERSIONS:  # assume script
+            # unsupported API version
+            if not API_VERSIONS[split_path[0]]:
+                if request.type == "GET" or request.type == "HEAD":
+                    return Response(b'', STATUS_CODE_BAD_REQUEST)
+                else:
+                    raise TypeError("Called GET handler for non-GET request")
+
+            return APIv1.api_call(client, request)
+
+        else:  # assume browser
+            with open(I_PATH_MAP["/err/response"]["path"], "r", encoding="ascii") as file:
+                data = file.read()
+            data = data.format(status_code=str(STATUS_CODE_NOT_FOUND)).encode("ascii")
+            return Response(data, STATUS_CODE_NOT_FOUND)
+
+    def _handle_post(self, client, request) -> Response:
+        """
+        Handles POSt request from a client
         """
 
     def _recv_request(self, client: ssl.SSLSocket) -> Request | None:
