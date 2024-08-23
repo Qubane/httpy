@@ -63,6 +63,17 @@ class Request:
         return '\n'.join([f"{key}: {val}" for key, val in self.__dict__.items()])
 
 
+class Response:
+    """
+    Server response
+    """
+
+    def __init__(self, data: bytes, status: StatusCode, headers: dict[str, Any] = None):
+        self.data: bytes = data
+        self.status: StatusCode = status
+        self.headers: dict[str, Any] = headers if headers is not None else dict()
+
+
 def send_response(sock: SSLSocket, data: bytes, status: StatusCode, headers: dict[str, Any] = None):
     """
     Sends response to client.
