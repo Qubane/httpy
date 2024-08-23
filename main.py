@@ -144,7 +144,7 @@ class HTTPServer:
                 response = Response(data, STATUS_CODE_NOT_FOUND)
 
         # process header data
-        if response.headers.get("Content-Encoding") is None:
+        if response.headers.get("Content-Encoding") is None and response.compress:
             supported_compressions = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
             if "br" in supported_compressions:
                 response.headers["Content-Encoding"] = "br"
