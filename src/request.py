@@ -1,5 +1,3 @@
-import gzip
-import brotli
 from typing import Any
 from ssl import SSLSocket
 from src.status_code import StatusCode
