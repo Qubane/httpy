@@ -68,7 +68,8 @@ class Response:
     Server response
     """
 
-    def __init__(self, data: bytes, status: StatusCode, headers: dict[str, Any] = None):
+    def __init__(self, data: bytes, status: StatusCode, headers: dict[str, Any] = None, **kwargs):
         self.data: bytes = data
         self.status: StatusCode = status
         self.headers: dict[str, Any] = headers if headers is not None else dict()
+        self.compress: bool = kwargs.get("compress", False)
