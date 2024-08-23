@@ -1,6 +1,6 @@
 import random
-from ssl import SSLSocket
-from src.request import Request
+from src.request import *
+from src.status_code import *
 
 
 API_FILE_RANDOM_MIN_SIZE_LIMIT = 1
@@ -59,29 +59,27 @@ def decode_size(size: str) -> int:
     return size
 
 
-def respond(client: SSLSocket, request: Request) -> tuple[int, bytes, dict]:
+def api_call(client: SSLSocket, request: Request) -> Response:
     """
     Respond to clients API request
     """
 
     # decode API request
-    split_path = request.path.split("/")
-    api_level1 = split_path[2]
-    api_request = split_path[3]
+    split_path = request.path.split("/", maxsplit=16)[1:]
 
     # do something with it (oh god)
-    if api_level1 == "file":
-        if api_request == "random":
+    if len(split_path) > 1 and split_path[1] == "file":
+        if len(split_path) > 2 and split_path[2] == "random":
             # get size
             size_str = request.path_args.get("size", "16mib")
             size = decode_size(size_str)
 
             # check size
             if size < API_FILE_RANDOM_MIN_SIZE_LIMIT or size > API_FILE_RANDOM_MAX_SIZE_LIMIT:
-                return 400, b'', {}
+                return Response(b'', STATUS_CODE_BAD_REQUEST)
 
-            return 200, random_data_gen(size), {}
+            return Response(random_data_gen(size), STATUS_CODE_OK, compress=False)
         else:
-            return 400, b'', {}
+            return Response(b'', STATUS_CODE_BAD_REQUEST)
     else:
-        return 400, b'', {}
+        return Response(b'', STATUS_CODE_BAD_REQUEST)

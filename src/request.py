@@ -1,3 +1,8 @@
+from typing import Any
+from ssl import SSLSocket
+from src.status_code import StatusCode
+
+
 class Request:
     """
     Just a request
@@ -54,3 +59,23 @@ class Request:
 
     def __str__(self):
         return '\n'.join([f"{key}: {val}" for key, val in self.__dict__.items()])
+
+
+class Response:
+    """
+    Server response
+    """
+
+    def __init__(self, data: bytes, status: StatusCode, headers: dict[str, Any] = None, **kwargs):
+        """
+
+        :param data: response data
+        :param status: response status code
+        :param headers: headers to include
+        :param kwarg: compress - whether to compress data or not
+        """
+
+        self.data: bytes = data
+        self.status: StatusCode = status
+        self.headers: dict[str, Any] = headers if headers is not None else dict()
+        self.compress: bool = kwargs.get("compress", True)
