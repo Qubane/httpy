@@ -135,7 +135,10 @@ class HTTPServer:
 
         buffer = bytearray()
         while not self.stop_event.is_set():
-            buffer += client.recv(self.buf_len)
+            msg = client.recv(self.buf_len)
+            if len(msg) == 0:
+                break
+            buffer += msg
             if buffer[-4:] == b'\r\n\r\n':
                 return Request.create(buffer)
         return None
