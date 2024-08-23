@@ -72,4 +72,4 @@ class Response:
         self.data: bytes = data
         self.status: StatusCode = status
         self.headers: dict[str, Any] = headers if headers is not None else dict()
-        self.compress: bool = kwargs.get("compress", False)
+        self.compress: bool = kwargs.get("compress", True)

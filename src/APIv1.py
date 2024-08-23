@@ -78,7 +78,7 @@ def api_call(client: SSLSocket, request: Request) -> Response:
             if size < API_FILE_RANDOM_MIN_SIZE_LIMIT or size > API_FILE_RANDOM_MAX_SIZE_LIMIT:
                 return Response(b'', STATUS_CODE_BAD_REQUEST)
 
-            return Response(random_data_gen(size), STATUS_CODE_OK)
+            return Response(random_data_gen(size), STATUS_CODE_OK, compress=False)
         else:
             return Response(b'', STATUS_CODE_BAD_REQUEST)
     else:
