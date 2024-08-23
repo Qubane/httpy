@@ -107,6 +107,7 @@ class HTTPServer:
         :param client: client ssl socket
         """
 
+        client.settimeout(5)
         while not self.stop_event.is_set():
             try:
                 # get client's request
@@ -115,6 +116,9 @@ class HTTPServer:
                     break
 
                 print(request, end="\n\n")
+            except TimeoutError:
+                print("Client timeout")
+                break
             except OSError as e:
                 print(e)
                 break
