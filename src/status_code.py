@@ -10,6 +10,9 @@ class StatusCode:
     def __bytes__(self):
         return f"{self._code} {self._message}".encode("ascii")
 
+    def __str__(self):
+        return f"{self._code} {self._message}"
+
     @property
     def code(self):
         return self._code
