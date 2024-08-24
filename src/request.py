@@ -82,9 +82,9 @@ class Response:
         self.headers: dict[str, Any] = headers if headers is not None else dict()
         self.compress: bool = kwargs.get("compress", True)
 
-        # check for content-length when using data_stream
-        if self.data_stream is not None and self.headers.get("Content-Length") is None:
-            raise Exception("Undefined length for data stream")
+        # # check for content-length when using data_stream
+        # if self.data_stream is not None and self.headers.get("Content-Length") is None:
+        #     raise Exception("Undefined length for data stream")
 
     def get_data_stream(self):
         if self.data_stream is None:
