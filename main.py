@@ -135,6 +135,8 @@ class HTTPServer:
             request = self._recv_request(client)
             if request is not None:
                 self._client_request_handler(client, request)
+        except ssl.SSLEOFError:
+            pass  # idc
         except TimeoutError:
             print("Client timeout")
         except Exception as e:
