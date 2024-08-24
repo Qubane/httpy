@@ -1,11 +1,8 @@
 import random
 from ssl import SSLSocket
+from src.config import *
 from src.request import *
 from src.status_code import *
-
-
-API_FILE_RANDOM_MIN_SIZE_LIMIT = 1
-API_FILE_RANDOM_MAX_SIZE_LIMIT = 2**30 * 2
 
 
 def random_data_gen(size: int, chunk_size: int = 65536) -> bytes:
