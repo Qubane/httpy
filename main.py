@@ -134,11 +134,16 @@ class HTTPServer:
         try:
             request = self._recv_request(client)
             if request is not None:
+                print(
+                    f"ip: {client.getpeername()[0]}\n"
+                    f"{request.type}\n"
+                    f"{request.path}\n"
+                    f"{request.path_args}", end="\n\n")
                 self._client_request_handler(client, request)
         except ssl.SSLEOFError:
-            pass  # idc
-        except TimeoutError:
-            print("Client timeout")
+            pass
+        except OSError as e:
+            print(f"Request dropped due to: {e}")
         except Exception as e:
             print(e)
 
@@ -269,7 +274,8 @@ class HTTPServer:
                 time.sleep(0.005)
             except ssl.SSLEOFError:
                 break
-            except TimeoutError:
+            except OSError as e:
+                print(f"Client dropped due to: {e}")
                 break
         return None
 
