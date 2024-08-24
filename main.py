@@ -115,7 +115,7 @@ class HTTPServer:
             # accept new client
             client = self._accept()
             if client is None:
-                break
+                continue
 
             # create thread for new client and append it to the list
             th = threading.Thread(target=self._client_thread, args=[client])
@@ -268,7 +268,9 @@ class HTTPServer:
             except BlockingIOError:
                 time.sleep(0.005)
             except ssl.SSLEOFError:
-                pass  # i d c
+                break
+            except TimeoutError:
+                break
         return None
 
 
