@@ -178,6 +178,9 @@ class HTTPServer:
             with open(filepath, "rb") as file:
                 data = file.read()
 
+            if filepath[-4:] == "html":
+                data = minimize_html(data)
+
             if request.type == "GET":
                 return Response(data, STATUS_CODE_OK)
             elif request.type == "HEAD":
