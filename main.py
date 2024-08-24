@@ -262,6 +262,8 @@ class HTTPServer:
                 return self.sock.accept()[0]
             except BlockingIOError:
                 time.sleep(0.005)
+            except ssl.SSLEOFError:
+                pass  # i d c
         return None
 
 
