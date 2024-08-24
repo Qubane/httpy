@@ -163,3 +163,4 @@ cython_debug/
 /cert.pem
 /key.pem
 /www/yes.txt
+/www/images/
