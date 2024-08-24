@@ -1,5 +1,5 @@
-from typing import Any
-from ssl import SSLSocket
+from typing import Any, Generator
+from src.config import BUFFER_LENGTH
 from src.status_code import StatusCode
 
 
@@ -72,10 +72,25 @@ class Response:
         :param data: response data
         :param status: response status code
         :param headers: headers to include
-        :param kwarg: compress - whether to compress data or not
+        :key compress: compress data or not
+        :key data_stream: stream of data
         """
 
         self.data: bytes = data
+        self.data_stream: Generator[bytes, None, None] | None = kwargs.get("data_stream")
         self.status: StatusCode = status
         self.headers: dict[str, Any] = headers if headers is not None else dict()
         self.compress: bool = kwargs.get("compress", True)
+
+        # check for content-length when using data_stream
+        if self.data_stream is not None and self.headers.get("Content-Length") is None:
+            raise Exception("Undefined length for data stream")
+
+    def get_data_stream(self):
+        if self.data_stream is None:
+            def generator() -> bytes:
+                for i in range(0, len(self.data), BUFFER_LENGTH):
+                    yield self.data[i:i+BUFFER_LENGTH]
+            return generator()
+        else:
+            return self.data_stream

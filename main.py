@@ -4,15 +4,16 @@ The mighty silly webserver written in python for no good reason
 
 
 import ssl
-import gzip
+# import zlib
 import time
 import socket
-import brotli
+# import brotli
 import signal
 import threading
 from src import APIv1
 from src.request import *
 from src.status_code import *
+from src.config import BUFFER_LENGTH
 from src.minimizer import minimize_html
 
 
@@ -44,7 +45,7 @@ class HTTPServer:
     Now uses threading
     """
 
-    def __init__(self, *, port: int, packet_size: int = 2048):
+    def __init__(self, *, port: int, packet_size: int = BUFFER_LENGTH):
         # SSL context
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.check_hostname = False
@@ -144,27 +145,27 @@ class HTTPServer:
                 response = Response(data, STATUS_CODE_NOT_FOUND)
 
         # process header data
-        if response.headers.get("Content-Encoding") is None and response.compress:
-            supported_compressions = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
-            if "br" in supported_compressions:
-                response.headers["Content-Encoding"] = "br"
-                response.data = brotli.compress(response.data)
-            elif "gzip" in supported_compressions:
-                response.headers["Content-Encoding"] = "gzip"
-                response.data = gzip.compress(response.data)
+        # if response.headers.get("Content-Encoding") is None and response.compress:
+        #     supported_compressions = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
+        #     if "br" in supported_compressions:
+        #         response.headers["Content-Encoding"] = "br"
+        #     elif "gzip" in supported_compressions:
+        #         response.headers["Content-Encoding"] = "gzip"
         if response.headers.get("Content-Length") is None:
             response.headers["Content-Length"] = len(response.data)
         if response.headers.get("Connection") is None:
             response.headers["Connection"] = "close"
 
-            # generate basic message
+        # generate basic message
         message = b'HTTP/1.1 ' + response.status.__bytes__() + b'\r\n'
         for key, value in response.headers.items():
             message += f"{key}: {value}\r\n".encode("ascii")
-        message += b'\r\n' + response.data
+        message += b'\r\n'
 
         # send message
         client.sendall(message)
+        for packet in response.get_data_stream():
+            client.sendall(packet)
 
     def _handle_get(self, client: ssl.SSLSocket, request: Request) -> Response:
         """
@@ -231,7 +232,7 @@ class HTTPServer:
             try:
                 return self.sock.accept()[0]
             except BlockingIOError:
-                time.sleep(0.001)
+                time.sleep(0.005)
         return None
 
 

@@ -1,4 +1,5 @@
 import random
+from ssl import SSLSocket
 from src.request import *
 from src.status_code import *
 
@@ -7,20 +8,19 @@ API_FILE_RANDOM_MIN_SIZE_LIMIT = 1
 API_FILE_RANDOM_MAX_SIZE_LIMIT = 2**30 * 2
 
 
-def random_data_gen(size: int) -> bytes:
+def random_data_gen(size: int, chunk_size: int = 65536) -> bytes:
     """
-    Generates SIZE bytes of random data in 64kib chunks
+    Generates SIZE bytes of random data in CHUNK_SIZE byte chunks
     :param size: bytes to generate
+    :param chunk_size: size of each chunk (bytes)
     :return: random bytes
     """
 
-    data = bytearray()
-    int_size = size // 65536
+    int_size = size // chunk_size
     for _ in range(int_size):
-        data += random.randbytes(65536)
-    data += random.randbytes((int_size * 65536) - size)
-
-    return data
+        yield random.randbytes(chunk_size)
+    if (final_size := (int_size * chunk_size) - size) > 0:
+        yield random.randbytes(final_size)
 
 
 def decode_size(size: str) -> int:
@@ -78,7 +78,11 @@ def api_call(client: SSLSocket, request: Request) -> Response:
             if size < API_FILE_RANDOM_MIN_SIZE_LIMIT or size > API_FILE_RANDOM_MAX_SIZE_LIMIT:
                 return Response(b'', STATUS_CODE_BAD_REQUEST)
 
-            return Response(random_data_gen(size), STATUS_CODE_OK, compress=False)
+            return Response(
+                b'',
+                STATUS_CODE_OK,
+                headers={"Content-Length": size},
+                data_stream=random_data_gen(size))
         else:
             return Response(b'', STATUS_CODE_BAD_REQUEST)
     else:
