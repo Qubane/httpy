@@ -3,6 +3,7 @@ The mighty silly webserver written in python for no good reason
 """
 
 
+import os
 import ssl
 # import zlib
 import time
@@ -18,7 +19,7 @@ from src.minimizer import minimize_html
 
 
 # path mapping
-PATH_MAP = {
+path_map = {
     "/":                    {"path": "www/index.html"},
     "/index.html":          {"path": "www/index.html"},
     "/robots.txt":          {"path": "www/robots.txt"},
@@ -26,6 +27,8 @@ PATH_MAP = {
     "/css/styles.css":      {"path": "css/styles.css"},
     "/about":               {"path": "www/about.html"},
     "/test":                {"path": "www/test.html"},
+    "/projects":            {"path": "www/projects.html"},
+    "/images/*":            {"path": "www/images"},
 }
 
 # API
@@ -39,6 +42,26 @@ I_PATH_MAP = {
 }
 
 
+def init_path_map(verbose: bool = False):
+    """
+    Initializes * paths for 'path_map'
+    """
+
+    for key in list(path_map.keys()):
+        if key[-1] == "*":
+            for file in os.listdir(path_map[key]["path"]):
+                new_path = f"{key[:-2]}/{file}"
+                new_redirect_path = f"{path_map[key]['path']}/{file}"
+                path_map[new_path] = {"path": new_redirect_path}
+            path_map.pop(key)
+    if verbose:
+        print("LIST OF ALLOWED PATHS:")
+        max_len = max([len(x) for x in path_map.keys()]) + 2
+        for key, value in path_map.items():
+            print(f"\t{key: <{max_len}}: {value}")
+        print("END OF LIST.")
+
+
 class HTTPServer:
     """
     The mightier HTTP server!
@@ -48,6 +71,7 @@ class HTTPServer:
     def __init__(self, *, port: int, packet_size: int = BUFFER_LENGTH):
         # SSL context
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.options &= ssl.OP_NO_SSLv3
         context.check_hostname = False
         context.load_cert_chain(
             certfile=r"C:\Certbot\live\qubane.ddns.net\fullchain.pem",  # use your own path here
@@ -173,8 +197,8 @@ class HTTPServer:
         """
 
         split_path = request.path.split("/", maxsplit=16)[1:]
-        if request.path in PATH_MAP:  # assume browser
-            filepath = PATH_MAP[request.path]["path"]
+        if request.path in path_map:  # assume browser
+            filepath = path_map[request.path]["path"]
             with open(filepath, "rb") as file:
                 data = file.read()
 
@@ -240,6 +264,7 @@ class HTTPServer:
 
 
 def main():
+    init_path_map(True)
     server = HTTPServer(port=13700)
     server.start()
 
