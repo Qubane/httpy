@@ -132,21 +132,14 @@ class HTTPServer:
         :param client: client ssl socket
         """
 
-        # client.settimeout(5)
-        while not self.stop_event.is_set():
-            try:
-                # get client's request
-                request = self._recv_request(client)
-                if request is None:
-                    break
-
-                threading.Thread(target=self._client_request_handler, args=[client, request], daemon=True).start()
-            except TimeoutError:
-                print("Client timeout")
-                break
-            except Exception as e:
-                print(e)
-                break
+        try:
+            request = self._recv_request(client)
+            if request is not None:
+                self._client_request_handler(client, request)
+        except TimeoutError:
+            print("Client timeout")
+        except Exception as e:
+            print(e)
 
         # close the connection once stop even was set or an error occurred
         client.close()
@@ -175,8 +168,8 @@ class HTTPServer:
         #         response.headers["Content-Encoding"] = "br"
         #     elif "gzip" in supported_compressions:
         #         response.headers["Content-Encoding"] = "gzip"
-        if response.headers.get("Content-Length") is None:
-            response.headers["Content-Length"] = len(response.data)
+        # if response.headers.get("Content-Length") is None:
+        #     response.headers["Content-Length"] = len(response.data)
         if response.headers.get("Connection") is None:
             response.headers["Connection"] = "close"
 
@@ -190,6 +183,9 @@ class HTTPServer:
         client.sendall(message)
         for packet in response.get_data_stream():
             client.sendall(packet)
+
+            if self.stop_event.is_set():
+                break
 
     def _handle_get(self, client: ssl.SSLSocket, request: Request) -> Response:
         """
