@@ -5,10 +5,9 @@ The mighty silly webserver written in python for no good reason
 
 import os
 import ssl
-# import zlib
 import time
 import socket
-# import brotli
+import brotli
 import signal
 import threading
 from src import APIv1
@@ -162,14 +161,12 @@ class HTTPServer:
                 response = Response(data, STATUS_CODE_NOT_FOUND)
 
         # process header data
-        # if response.headers.get("Content-Encoding") is None and response.compress:
-        #     supported_compressions = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
-        #     if "br" in supported_compressions:
-        #         response.headers["Content-Encoding"] = "br"
-        #     elif "gzip" in supported_compressions:
-        #         response.headers["Content-Encoding"] = "gzip"
-        # if response.headers.get("Content-Length") is None:
-        #     response.headers["Content-Length"] = len(response.data)
+        compressor = None
+        if response.headers.get("Content-Encoding") is None and response.compress:
+            supported_compressions = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
+            if "br" in supported_compressions:
+                response.headers["Content-Encoding"] = "br"
+                compressor = brotli.Compressor()
         if response.headers.get("Connection") is None:
             response.headers["Connection"] = "close"
 
@@ -182,8 +179,15 @@ class HTTPServer:
         # send message
         client.sendall(message)
         for packet in response.get_data_stream():
-            client.sendall(packet)
+            data = packet
+            if response.headers.get("Content-Encoding") == "br":
+                # Docs for brotli (and other compressions) are bad, so that may not be the correct way of doing it
+                compressor.process(data)
+                data = compressor.flush()
 
+            client.sendall(data)
+
+            # check for stop event
             if self.stop_event.is_set():
                 break
 
