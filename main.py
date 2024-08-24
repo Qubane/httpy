@@ -208,11 +208,16 @@ class HTTPServer:
                 data = minimize_html(data)
 
             if request.type == "GET":
-                return Response(data, STATUS_CODE_OK)
+                response = Response(data, STATUS_CODE_OK)
             elif request.type == "HEAD":
-                return Response(b'', STATUS_CODE_OK, {"Content-Length": len(data)})
+                response = Response(b'', STATUS_CODE_OK, {"Content-Length": len(data)})
             else:
                 raise TypeError("Called GET handler for non-GET request")
+
+            if filepath[-4:] == "webp":
+                response.compress = False
+
+            return response
 
         elif len(split_path) >= 2 and split_path[0] in API_VERSIONS:  # assume script
             # unsupported API version
