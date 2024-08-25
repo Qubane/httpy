@@ -27,9 +27,9 @@ path_map = {
     "/about":               {"path": "www/about.html"},
     "/test":                {"path": "www/test.html"},
     "/projects":            {"path": "www/projects.html"},
-    "/images/*":            {"path": "www/images"},
+    "/images/*":            {"path": "www/images/"},
     "/js-test":             {"path": "www/js-test.html"},
-    "/scripts/*":           {"path": "www/scripts"},
+    "/scripts/*":           {"path": "www/scripts/"},
 }
 
 # API
@@ -50,11 +50,14 @@ def init_path_map(verbose: bool = False):
 
     for key in list(path_map.keys()):
         if key[-1] == "*":
-            for file in os.listdir(path_map[key]["path"]):
-                new_path = f"{key[:-2]}/{file}"
-                new_redirect_path = f"{path_map[key]['path']}/{file}"
-                path_map[new_path] = {"path": new_redirect_path}
-            path_map.pop(key)
+            try:
+                for file in os.listdir(path_map[key]["path"]):
+                    new_path = f"{key[:-1]}{file}"
+                    new_redirect_path = f"{path_map[key]['path']}{file}"
+                    path_map[new_path] = {"path": new_redirect_path}
+                path_map.pop(key)
+            except FileNotFoundError:
+                print(f"Unable to find '{path_map[key]["path"]}'")
     if verbose:
         print("LIST OF ALLOWED PATHS:")
         max_len = max([len(x) for x in path_map.keys()]) + 2
