@@ -28,6 +28,8 @@ path_map = {
     "/test":                {"path": "www/test.html"},
     "/projects":            {"path": "www/projects.html"},
     "/images/*":            {"path": "www/images"},
+    "/js-test":             {"path": "www/js-test.html"},
+    "/scripts/*":           {"path": "www/scripts"},
 }
 
 # API
@@ -163,8 +165,8 @@ class HTTPServer:
             # case "POST":  # Not Implemented
             #     response = self._handle_post(client, request)
             case _:
-                with open(I_PATH_MAP["/err/response"]["path"], "r", encoding="ascii") as file:
-                    data = file.read().format(status_code=str(STATUS_CODE_NOT_FOUND)).encode("ascii")
+                with open(I_PATH_MAP["/err/response"]["path"], "r", encoding="utf8") as file:
+                    data = file.read().format(status_code=str(STATUS_CODE_NOT_FOUND)).encode("utf8")
                 response = Response(data, STATUS_CODE_NOT_FOUND)
 
         # process header data
@@ -180,7 +182,7 @@ class HTTPServer:
         # generate basic message
         message = b'HTTP/1.1 ' + response.status.__bytes__() + b'\r\n'
         for key, value in response.headers.items():
-            message += f"{key}: {value}\r\n".encode("ascii")
+            message += f"{key}: {value}\r\n".encode("utf8")
         message += b'\r\n'
 
         # send message
@@ -235,9 +237,9 @@ class HTTPServer:
             return APIv1.api_call(client, request)
 
         else:  # assume browser
-            with open(I_PATH_MAP["/err/response"]["path"], "r", encoding="ascii") as file:
+            with open(I_PATH_MAP["/err/response"]["path"], "r", encoding="utf8") as file:
                 data = file.read()
-            data = data.format(status_code=str(STATUS_CODE_NOT_FOUND)).encode("ascii")
+            data = data.format(status_code=str(STATUS_CODE_NOT_FOUND)).encode("utf8")
             return Response(data, STATUS_CODE_NOT_FOUND)
 
     def _handle_post(self, client: ssl.SSLSocket, request: Request) -> Response:

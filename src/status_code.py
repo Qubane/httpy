@@ -8,7 +8,7 @@ class StatusCode:
         self._message: str = message
 
     def __bytes__(self):
-        return f"{self._code} {self._message}".encode("ascii")
+        return f"{self._code} {self._message}".encode("utf8")
 
     def __str__(self):
         return f"{self._code} {self._message}"

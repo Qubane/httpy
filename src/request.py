@@ -25,8 +25,8 @@ class Request:
         request = Request()
 
         # change type and path
-        request.type = raw_request[:raw_request.find(b' ')].decode("ascii")
-        raw_path = raw_request[len(request.type)+1:raw_request.find(b' ', len(request.type)+1)].decode("ascii")
+        request.type = raw_request[:raw_request.find(b' ')].decode("utf8")
+        raw_path = raw_request[len(request.type)+1:raw_request.find(b' ', len(request.type)+1)].decode("utf8")
 
         # remove path args from path
         request.path = raw_path.split("?")[0]
@@ -47,7 +47,7 @@ class Request:
 
         # decode headers
         for raw_header in raw_request.split(b'\r\n'):
-            if len(pair := raw_header.decode("ascii").split(":")) == 2:
+            if len(pair := raw_header.decode("utf8").split(":")) == 2:
                 key, val = pair
                 val = val.strip()
 
