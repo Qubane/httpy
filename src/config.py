@@ -10,3 +10,18 @@ API_FILE_RANDOM_MAX_SIZE_LIMIT = 2**30 * 5      # 5 GiB
 API_VERSIONS = {
     "APIv1": {"supported": True}
 }
+
+# file manager
+FILE_MAN_VERBOSE = True
+FILE_MAN_PATH_MAP = {
+    # external
+    "/":                {"path": "www/index.html"},
+    "/about":           {"path": "www/about.html"},
+    "/testing":         {"path": "www/testing.html"},
+    "/projects":        {"path": "www/projects.html"},
+    "/images/*":        {"path": "www/images/*"},
+    "/scripts/*":       {"path": "www/scripts/*"},
+    "/robots.txt":      {"path": "www/robots.txt"},
+    "/favicon.ico":     {"path": "www/css/styles.css"},
+    "/css/styles.css":  {"path": "www/css/styles.css"},
+}
