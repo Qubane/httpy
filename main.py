@@ -216,8 +216,8 @@ class HTTPServer:
                 time.sleep(0.005)
             except ssl.SSLEOFError:
                 break
-            except OSError as e:
-                print(f"Client dropped due to: {e}")
+            except OSError:
+                print(f"Client dropped due to: {traceback.format_exc()}")
                 break
         return None
 
