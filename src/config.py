@@ -22,6 +22,6 @@ FILE_MAN_PATH_MAP = {
     "/images/*":        {"path": "www/images/*"},
     "/scripts/*":       {"path": "www/scripts/*"},
     "/robots.txt":      {"path": "www/robots.txt"},
-    "/favicon.ico":     {"path": "www/css/styles.css"},
+    "/favicon.ico":     {"path": "www/favicon.ico"},
     "/css/styles.css":  {"path": "www/css/styles.css"},
 }
