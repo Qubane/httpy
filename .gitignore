@@ -164,3 +164,4 @@ cython_debug/
 /key.pem
 /www/yes.txt
 /www/images/
+/compress/
