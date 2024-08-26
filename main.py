@@ -8,6 +8,8 @@ import time
 import socket
 import signal
 import threading
+import traceback
+
 from src import APIv1
 from src.config import *
 from src.request import *
@@ -30,17 +32,23 @@ class HTTPServer:
             *,
             port: int,
             enable_ssl: bool = True,
-            path_map: dict[str, dict] | None = None
+            path_map: dict[str, dict] | None = None,
+            key_pair: tuple[str, str] | None = None
     ):
+        """
+        :param port: binding port
+        :param enable_ssl: use https
+        :param path_map: path map
+        :param key_pair: fullchain.pem + privkey.pem
+        """
+
         # Sockets
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if enable_ssl:
             # SSL context
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             context.check_hostname = False
-            context.load_cert_chain(
-                certfile=r"C:\Certbot\live\qubane.ddns.net\fullchain.pem",  # use your own path here
-                keyfile=r"C:\Certbot\live\qubane.ddns.net\privkey.pem")  # here too
+            context.load_cert_chain(certfile=key_pair[0], keyfile=key_pair[1])
             self.sock: usocket = context.wrap_socket(sock, server_side=True)
         else:
             self.sock: usocket = sock
@@ -107,8 +115,8 @@ class HTTPServer:
             pass
         except OSError as e:
             print(f"Request dropped due to: {e}")
-        except Exception as e:
-            print(e)
+        except Exception:
+            print("Ignoring exception:\n", traceback.format_exc())
 
         # Remove self from thread list and close the connection
         self.client_threads.remove(threading.current_thread())
@@ -141,6 +149,8 @@ class HTTPServer:
         # send message
         client.sendall(message)
         for packet in response.get_data_stream():
+            if packet is None:
+                break
             client.sendall(packet)
 
             # check for stop event
@@ -154,10 +164,9 @@ class HTTPServer:
 
         split_path = request.path.split("/", maxsplit=16)[1:]
         if request.path in self.path_map:  # assume browser
-            filepath = self.path_map[request.path]["path"]
-            filedata = self.fetch_file(filepath)
-            headers = self.fetch_file_headers(filepath)
-            response = Response(b'', STATUS_CODE_OK, data_stream=filedata, headers=headers)
+            filedata = self.fetch_file(request.path)
+            headers = self.fetch_file_headers(request.path)
+            response = Response(b'', STATUS_CODE_OK, headers, data_stream=filedata)
 
             return response
         elif len(split_path) >= 2 and split_path[0] in API_VERSIONS:  # assume script
@@ -231,14 +240,14 @@ class HTTPServer:
         """
 
         if path in self.path_map:
-            filepath = self.path_map[path]["path"]
-            with open(filepath, "rb") as file:
-                yield file.read(BUFFER_LENGTH)
+            with open(self.path_map[path]["path"], "rb") as file:
+                while (msg := file.read(BUFFER_LENGTH)):
+                    yield msg
         yield None
 
 
 def main():
-    server = HTTPServer(port=13700, enable_ssl=False)
+    server = HTTPServer(port=13700, key_pair=("fullchain.pem", "privkey.pem"), enable_ssl=False)
     server.start()
 
 

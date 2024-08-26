@@ -13,15 +13,16 @@ API_VERSIONS = {
 
 # file manager
 FILE_MAN_VERBOSE = True
+FILE_MAN_COMPRESS = True    # do compress all files
 FILE_MAN_PATH_MAP = {
     # external
-    "/":                {"path": "www/index.html"},
-    "/about":           {"path": "www/about.html"},
-    "/testing":         {"path": "www/testing.html"},
-    "/projects":        {"path": "www/projects.html"},
-    "/images/*":        {"path": "www/images/*"},
-    "/scripts/*":       {"path": "www/scripts/*"},
-    "/robots.txt":      {"path": "www/robots.txt"},
-    "/favicon.ico":     {"path": "www/favicon.ico"},
-    "/css/styles.css":  {"path": "www/css/styles.css"},
+    "/":                {"path": "www/index.html", "compress": True},
+    "/about":           {"path": "www/about.html", "compress": True},
+    "/testing":         {"path": "www/testing.html", "compress": True},
+    "/projects":        {"path": "www/projects.html", "compress": True},
+    "/images/*":        {"path": "www/images/*", "compress": False},
+    "/scripts/*":       {"path": "www/scripts/*", "compress": True},
+    "/robots.txt":      {"path": "www/robots.txt", "compress": False},
+    "/favicon.ico":     {"path": "www/favicon.ico", "compress": True},
+    "/css/styles.css":  {"path": "www/css/styles.css", "compress": True},
 }

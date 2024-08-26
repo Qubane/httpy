@@ -28,9 +28,13 @@ def generate_path_map() -> dict[str, dict[str, Any]]:
             keypath = FILE_MAN_PATH_MAP[key]["path"][:-2]
             for path in list_path(keypath):
                 webpath = f"{key[:-1]}{path.replace(keypath+'/', '')}"
-                path_map[webpath] = {"path": path}
+                path_map[webpath] = {
+                    "path": path,
+                    "compress": FILE_MAN_PATH_MAP[key]["compress"]}
         else:
-            path_map[key] = {"path": FILE_MAN_PATH_MAP[key]["path"]}
+            path_map[key] = {
+                "path": FILE_MAN_PATH_MAP[key]["path"],
+                "compress": FILE_MAN_PATH_MAP[key]["compress"]}
 
     # add headers
     for val in path_map.values():
@@ -48,13 +52,13 @@ def generate_path_map() -> dict[str, dict[str, Any]]:
             case ".png":
                 headers["Content-Type"] = "image/png"
             case ".webp":
-                headers["Content-Type"] = "image/avif"
+                headers["Content-Type"] = "image/webp"
             case ".jpg" | ".jpeg":
                 headers["Content-Type"] = "image/jpeg"
             case _:
                 headers["Content-Type"] = "*/*"
-        val["headers"] = headers
         headers["Content-Length"] = os.path.getsize(val["path"])
+        val["headers"] = headers
 
     # print list of paths
     if FILE_MAN_VERBOSE:
@@ -81,7 +85,7 @@ def compress_path_map(path_map: dict[str, dict[str, Any]], path_prefix: str = "c
         os.mkdir(path_prefix)
     for val in path_map.values():
         filepath = f"{path_prefix}/{val["path"]}"
-        if val["headers"]["Content-Type"].split("/")[0] == "image":  # ignore images
+        if not val["compress"]:
             continue
         if not os.path.exists((dirs := os.path.dirname(filepath))):  # add missing folders
             os.makedirs(dirs)
