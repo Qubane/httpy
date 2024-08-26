@@ -3,19 +3,16 @@ The mighty silly webserver written in python for no good reason
 """
 
 
-import os
 import ssl
-import gzip
 import time
 import socket
-import brotli
 import signal
 import threading
 from src import APIv1
 from src.config import *
 from src.request import *
 from src.status_code import *
-from src.minimizer import minimize_html
+from src.file_man import PATH_MAP
 
 
 # typing
@@ -58,7 +55,7 @@ class HTTPServer:
         signal.signal(signal.SIGINT, self._signal_interrupt)
 
         # path mapping
-        self.path_map: dict[str, dict] = path_map if path_map else dict()
+        self.path_map: dict[str, dict] = path_map if path_map else PATH_MAP
 
     def _signal_interrupt(self, *args):
         """
@@ -229,6 +226,7 @@ class HTTPServer:
 
 
 def main():
+
     server = HTTPServer(port=13700, enable_ssl=False)
     server.start()
 
