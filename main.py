@@ -5,6 +5,7 @@ The mighty silly webserver written in python for no good reason
 
 import os
 import ssl
+import gzip
 import time
 import socket
 import brotli
@@ -21,68 +22,24 @@ from src.minimizer import minimize_html
 usocket = socket.socket | ssl.SSLSocket
 
 
-# path mapping
-path_map = {
-    "/":                    {"path": "www/index.html"},
-    "/index.html":          {"path": "www/index.html"},
-    "/robots.txt":          {"path": "www/robots.txt"},
-    "/favicon.ico":         {"path": "www/favicon.ico"},
-    "/css/styles.css":      {"path": "css/styles.css"},
-    "/about":               {"path": "www/about.html"},
-    "/test":                {"path": "www/test.html"},
-    "/projects":            {"path": "www/projects.html"},
-    "/images/*":            {"path": "www/images/"},
-    "/js-test":             {"path": "www/js-test.html"},
-    "/scripts/*":           {"path": "www/scripts/"},
-}
-
-# API
-API_VERSIONS = {
-    "APIv1":                {"supported": True}
-}
-
-# internal path map
-I_PATH_MAP = {
-    "/err/response":        {"path": "www/err/response.html"}
-}
-
-
-def init_path_map(verbose: bool = False):
-    """
-    Initializes * paths for 'path_map'
-    """
-
-    for key in list(path_map.keys()):
-        if key[-1] == "*":
-            try:
-                for file in os.listdir(path_map[key]["path"]):
-                    new_path = f"{key[:-1]}{file}"
-                    new_redirect_path = f"{path_map[key]['path']}{file}"
-                    path_map[new_path] = {"path": new_redirect_path}
-                path_map.pop(key)
-            except FileNotFoundError:
-                print(f"Unable to find '{path_map[key]["path"]}'")
-    if verbose:
-        print("LIST OF ALLOWED PATHS:")
-        max_len = max([len(x) for x in path_map.keys()]) + 2
-        for key, value in path_map.items():
-            print(f"\t{key: <{max_len}}: {value}")
-        print("END OF LIST.")
-
-
 class HTTPServer:
     """
     The mightier HTTP server!
     Now uses threading
     """
 
-    def __init__(self, *, port: int, packet_size: int = BUFFER_LENGTH, enable_ssl: bool = True):
+    def __init__(
+            self,
+            *,
+            port: int,
+            enable_ssl: bool = True,
+            path_map: dict[str, dict] | None = None
+    ):
         # Sockets
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if enable_ssl:
             # SSL context
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-            context.options &= ssl.OP_NO_SSLv3
             context.check_hostname = False
             context.load_cert_chain(
                 certfile=r"C:\Certbot\live\qubane.ddns.net\fullchain.pem",  # use your own path here
@@ -90,7 +47,6 @@ class HTTPServer:
             self.sock: usocket = context.wrap_socket(sock, server_side=True)
         else:
             self.sock: usocket = sock
-        self.buf_len: int = packet_size
         self.port: int = port
 
         # client thread list
@@ -100,6 +56,9 @@ class HTTPServer:
         # add signaling
         self.stop_event = threading.Event()
         signal.signal(signal.SIGINT, self._signal_interrupt)
+
+        # path mapping
+        self.path_map: dict[str, dict] = path_map if path_map else dict()
 
     def _signal_interrupt(self, *args):
         """
@@ -146,11 +105,6 @@ class HTTPServer:
         try:
             request = self._recv_request(client)
             if request is not None:
-                # print(
-                #     f"ip: {client.getpeername()[0]}\n"
-                #     f"{request.type}\n"
-                #     f"{request.path}\n"
-                #     f"{request.path_args}", end="\n\n")
                 self._client_request_handler(client, request)
         except ssl.SSLEOFError:
             pass
@@ -174,20 +128,10 @@ class HTTPServer:
         match request.type:
             case "GET":
                 response = self._handle_get(client, request)
-            # case "POST":  # Not Implemented
-            #     response = self._handle_post(client, request)
             case _:
-                with open(I_PATH_MAP["/err/response"]["path"], "r", encoding="utf8") as file:
-                    data = file.read().format(status_code=str(STATUS_CODE_NOT_FOUND)).encode("utf8")
-                response = Response(data, STATUS_CODE_NOT_FOUND)
+                response = Response(b'', STATUS_CODE_NOT_FOUND)
 
         # process header data
-        compressor = None
-        if response.headers.get("Content-Encoding") is None and response.compress:
-            supported_compressions = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
-            if "br" in supported_compressions:
-                response.headers["Content-Encoding"] = "br"
-                compressor = brotli.Compressor()
         if response.headers.get("Connection") is None:
             response.headers["Connection"] = "close"
 
@@ -200,13 +144,7 @@ class HTTPServer:
         # send message
         client.sendall(message)
         for packet in response.get_data_stream():
-            data = packet
-            if response.headers.get("Content-Encoding") == "br":
-                # Docs for brotli (and other compressions) are bad, so that may not be the correct way of doing it
-                compressor.process(data)
-                data = compressor.flush()
-
-            client.sendall(data)
+            client.sendall(packet)
 
             # check for stop event
             if self.stop_event.is_set():
@@ -218,39 +156,26 @@ class HTTPServer:
         """
 
         split_path = request.path.split("/", maxsplit=16)[1:]
-        if request.path in path_map:  # assume browser
-            filepath = path_map[request.path]["path"]
-            with open(filepath, "rb") as file:
-                data = file.read()
-
-            if filepath[-4:] == "html":
-                data = minimize_html(data)
-
-            response = Response(data, STATUS_CODE_OK)
-            if filepath[-4:] == "webp":
-                response.compress = False
+        if request.path in self.path_map:  # assume browser
+            filepath = self.path_map[request.path]["path"]
+            filedata = self.fetch_file(filepath)
+            response = Response(b'', STATUS_CODE_OK, data_stream=filedata)
 
             return response
-
         elif len(split_path) >= 2 and split_path[0] in API_VERSIONS:  # assume script
             # unsupported API version
             if not API_VERSIONS[split_path[0]]:
                 if request.type == "GET":
-                    return Response(b'', STATUS_CODE_BAD_REQUEST)
-                else:
-                    raise TypeError("Called GET handler for non-GET request")
+                    return Response(b'API unavailable / deprecated', STATUS_CODE_BAD_REQUEST)
 
+            # return API response
             return APIv1.api_call(client, request)
-
-        else:  # assume browser
-            with open(I_PATH_MAP["/err/response"]["path"], "r", encoding="utf8") as file:
-                data = file.read()
-            data = data.format(status_code=str(STATUS_CODE_NOT_FOUND)).encode("utf8")
-            return Response(data, STATUS_CODE_NOT_FOUND)
+        else:
+            return Response(b'', STATUS_CODE_NOT_FOUND)
 
     def _handle_post(self, client: usocket, request: Request) -> Response:
         """
-        Handles POSt request from a client
+        Handles POST request from a client
         """
 
     def _recv_request(self, client: usocket) -> Request | None:
@@ -262,8 +187,7 @@ class HTTPServer:
 
         buffer = bytearray()
         while not self.stop_event.is_set():
-            msg = client.recv(self.buf_len)
-            if len(msg) == 0:
+            if len(msg := client.recv(BUFFER_LENGTH)) == 0:
                 break
             buffer += msg
             if buffer[-4:] == b'\r\n\r\n':
@@ -290,10 +214,22 @@ class HTTPServer:
                 break
         return None
 
+    def fetch_file(self, path: str) -> tuple[Generator[bytes, None, None], dict[str, str]] | None:
+        """
+        Fetches file
+        :param path: filepath
+        :return: data stream, headers
+        """
+
+        if path in self.path_map:
+            filepath = self.path_map[path]["path"]
+            headers = self.path_map[path]["headers"]
+            with open(filepath, "rb") as file:
+                yield file.read(BUFFER_LENGTH), headers
+
 
 def main():
-    init_path_map(verbose=True)
-    server = HTTPServer(port=13700)
+    server = HTTPServer(port=13700, enable_ssl=False)
     server.start()
 
 

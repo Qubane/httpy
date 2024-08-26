@@ -7,3 +7,6 @@ CLIENT_MAX_PROCESS = 32         # max processing threads at once
 # API
 API_FILE_RANDOM_MIN_SIZE_LIMIT = 1              # 1 byte
 API_FILE_RANDOM_MAX_SIZE_LIMIT = 2**30 * 5      # 5 GiB
+API_VERSIONS = {
+    "APIv1": {"supported": True}
+}

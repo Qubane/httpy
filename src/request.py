@@ -81,7 +81,6 @@ class Response:
         self.data_stream: Generator[bytes, None, None] | None = kwargs.get("data_stream")
         self.status: StatusCode = status
         self.headers: dict[str, Any] = headers if headers is not None else dict()
-        self.compress: bool = kwargs.get("compress", True)
 
         # # check for content-length when using data_stream
         # if self.data_stream is not None and self.headers.get("Content-Length") is None:
