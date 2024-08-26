@@ -1,4 +1,5 @@
-from typing import Any, Generator
+from typing import Any
+from collections.abc import Generator
 from src.config import BUFFER_LENGTH
 from src.status_code import StatusCode
 
