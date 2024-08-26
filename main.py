@@ -88,13 +88,7 @@ class HTTPServer:
         # listen and respond handler
         while not self.stop_event.is_set():
             # accept new client
-            try:
-                client = self._accept()
-            except ssl.SSLEOFError:
-                continue
-            except OSError:
-                print("Ignoring exception:\n", traceback.format_exc())
-                continue
+            client = self._accept()
             if client is None:
                 continue
 
@@ -220,6 +214,11 @@ class HTTPServer:
                     return self.sock.accept()[0]
             except BlockingIOError:
                 time.sleep(0.005)
+            except ssl.SSLEOFError:
+                break
+            except OSError as e:
+                print(f"Client dropped due to: {e}")
+                break
         return None
 
     def fetch_file_headers(self, path: str) -> dict[str, Any] | None:
