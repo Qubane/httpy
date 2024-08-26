@@ -247,7 +247,7 @@ class HTTPServer:
 
 
 def main():
-    server = HTTPServer(port=13700, key_pair=("fullchain.pem", "privkey.pem"), enable_ssl=False)
+    server = HTTPServer(port=13700, key_pair=("fullchain.pem", "privkey.pem"))
     server.start()
 
 
