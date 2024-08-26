@@ -1,6 +1,6 @@
 import os
 from typing import Any
-from src.config import FILE_MAN_PATH_MAP, FILE_MAN_VERBOSE
+from src.config import FILE_MAN_PATH_MAP, FILE_MAN_VERBOSE, FILE_MAN_COMPRESS
 
 
 def list_path(path) -> list[str]:
@@ -43,14 +43,18 @@ def generate_path_map() -> dict[str, dict[str, Any]]:
                 headers["Content-Type"] = "text/css"
             case ".txt":
                 headers["Content-Type"] = "text/plain"
+            case ".js":
+                headers["Content-Type"] = "text/javascript"
             case ".png":
                 headers["Content-Type"] = "image/png"
             case ".webp":
                 headers["Content-Type"] = "image/avif"
             case ".jpg" | ".jpeg":
                 headers["Content-Type"] = "image/jpeg"
-        headers["Content-Length"] = os.path.getsize(val["path"])
+            case _:
+                headers["Content-Type"] = "*/*"
         val["headers"] = headers
+        headers["Content-Length"] = os.path.getsize(val["path"])
 
     # print list of paths
     if FILE_MAN_VERBOSE:
@@ -68,31 +72,55 @@ def generate_path_map() -> dict[str, dict[str, Any]]:
 
 def compress_path_map(path_map: dict[str, dict[str, Any]], path_prefix: str = "compress", regen: bool = False):
     """
-    Compresses all files using gzip
+    Compresses all files using brotli
     """
 
-    import gzip
+    import brotli
+    from src.minimizer import minimize_html
     if not os.path.exists(path_prefix):
         os.mkdir(path_prefix)
     for val in path_map.values():
         filepath = f"{path_prefix}/{val["path"]}"
+        if val["headers"]["Content-Type"].split("/")[0] == "image":  # ignore images
+            continue
         if not os.path.exists((dirs := os.path.dirname(filepath))):  # add missing folders
             os.makedirs(dirs)
         if not os.path.exists(filepath) or regen:
-            with gzip.open(filepath, "wb") as comp:  # compress
-                with open(val["path"], "rb") as file:
-                    comp.writelines(file)
+            # brotli compress
+            if val["headers"]["Content-Type"] == "text/html":
+                with open(filepath, "wb") as comp:
+                    with open(val["path"], "rb") as file:
+                        comp.write(
+                            brotli.compress(minimize_html(file.read()))
+                        )
+            else:
+                with open(filepath, "wb") as comp:
+                    br = brotli.Compressor()
+                    with open(val["path"], "rb") as file:
+                        while (chunk := file.read(65536)):
+                            br.process(chunk)
+                            comp.write(br.flush())
+
         val["path"] = filepath
         val["headers"]["Content-Length"] = os.path.getsize(filepath)
+        val["headers"]["Content-Encoding"] = "br"
 
     if FILE_MAN_VERBOSE:
-        print("COMPRESSED PATH MAP:")
-        max_len = max([len(x["path"]) for x in path_map.values()])
-        for val in path_map.values():
-            print(f"\t'{val['path']: <{max_len}}' {val['headers']['Content-Length']} bytes")
+        print("COMPRESSED PATH:")
+        max_key_len = max([len(x) for x in path_map.keys()])
+        max_val_len = max([len(x["path"]) for x in path_map.values()])
+        max_size_len = max([len(x["headers"]["Content-Length"].__repr__()) for x in path_map.values()])
+        print(f"\t{'web': ^{max_key_len}} | {'path': ^{max_val_len}} | {'size': ^{max_size_len}}\n"
+              f"\t{'=' * max_key_len}=#={'=' * max_val_len}=#={'=' * max_size_len}")
+        for key, val in path_map.items():
+            print(f"\t{key: <{max_key_len}} | "
+                  f"{val['path']: <{max_val_len}} | "
+                  f"{val['headers']['Content-Length']: <{max_size_len}}")
         print("END OF LIST.", len(path_map), end="\n\n")
 
     return path_map
 
 
-PATH_MAP = compress_path_map(generate_path_map())
+PATH_MAP = generate_path_map()
+if FILE_MAN_COMPRESS:
+    PATH_MAP = compress_path_map(PATH_MAP, regen=True)

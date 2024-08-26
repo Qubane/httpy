@@ -156,7 +156,8 @@ class HTTPServer:
         if request.path in self.path_map:  # assume browser
             filepath = self.path_map[request.path]["path"]
             filedata = self.fetch_file(filepath)
-            response = Response(b'', STATUS_CODE_OK, data_stream=filedata)
+            headers = self.fetch_file_headers(filepath)
+            response = Response(b'', STATUS_CODE_OK, data_stream=filedata, headers=headers)
 
             return response
         elif len(split_path) >= 2 and split_path[0] in API_VERSIONS:  # assume script
@@ -211,22 +212,32 @@ class HTTPServer:
                 break
         return None
 
-    def fetch_file(self, path: str) -> tuple[Generator[bytes, None, None], dict[str, str]] | None:
+    def fetch_file_headers(self, path: str) -> dict[str, Any] | None:
+        """
+        Fetcher file header data
+        :param path: filepath
+        :return: headers
+        """
+
+        if path in self.path_map:
+            return self.path_map[path]["headers"]
+        return None
+
+    def fetch_file(self, path: str) -> Generator[bytes, None, None] | None:
         """
         Fetches file
         :param path: filepath
-        :return: data stream, headers
+        :return: data stream
         """
 
         if path in self.path_map:
             filepath = self.path_map[path]["path"]
-            headers = self.path_map[path]["headers"]
             with open(filepath, "rb") as file:
-                yield file.read(BUFFER_LENGTH), headers
+                yield file.read(BUFFER_LENGTH)
+        yield None
 
 
 def main():
-
     server = HTTPServer(port=13700, enable_ssl=False)
     server.start()
 
