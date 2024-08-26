@@ -93,8 +93,9 @@ class HTTPServer:
         self.buf_len: int = packet_size
         self.port: int = port
 
-        # client thread list and server thread
+        # client thread list
         self.client_threads: list[threading.Thread] = []
+        self.semaphore: threading.Semaphore = threading.Semaphore(CLIENT_MAX_PROCESS)
 
         # add signaling
         self.stop_event = threading.Event()
@@ -141,6 +142,7 @@ class HTTPServer:
         :param client: client ssl socket
         """
 
+        self.semaphore.acquire()
         try:
             request = self._recv_request(client)
             if request is not None:
@@ -159,6 +161,7 @@ class HTTPServer:
 
         # Remove self from thread list and close the connection
         self.client_threads.remove(threading.current_thread())
+        self.semaphore.release()
         client.close()
 
     def _client_request_handler(self, client: usocket, request: Request):
@@ -289,7 +292,7 @@ class HTTPServer:
 
 
 def main():
-    init_path_map(True)
+    init_path_map(verbose=True)
     server = HTTPServer(port=13700)
     server.start()
 
