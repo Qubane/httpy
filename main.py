@@ -91,7 +91,16 @@ class HTTPServer:
         # listen and respond handler
         while not self.stop_event.is_set():
             # accept new client
-            client = self._accept()
+            try:
+                client = self._accept()
+            except ssl.SSLError:
+                continue
+            except OSError as e:
+                logging.info(f"Client dropped due to: {e}")
+                continue
+            except Exception:
+                logging.warning(f"ignoring exception:\n{traceback.format_exc()}")
+                continue
             if client is None:
                 continue
 
@@ -109,12 +118,13 @@ class HTTPServer:
         :param client: client ssl socket
         """
 
+        client.setblocking(True)  # in ssl it's the default, in plain sockets it's not
         self.semaphore.acquire()
         try:
             request = self._recv_request(client)
             if request is not None:
                 self._client_request_handler(client, request)
-        except ssl.SSLEOFError:
+        except ssl.SSLError:
             pass
         except OSError as e:
             logging.info(f"request dropped due to: {e}")
@@ -152,8 +162,6 @@ class HTTPServer:
         # send message
         client.sendall(message)
         for packet in response.get_data_stream():
-            if packet is None:
-                break
             client.sendall(packet)
 
             # check for stop event
@@ -217,14 +225,6 @@ class HTTPServer:
                     return self.sock.accept()[0]
             except BlockingIOError:
                 time.sleep(0.005)
-            except ssl.SSLEOFError:
-                break
-            except OSError as e:
-                logging.info(f"Client dropped due to: {e}")
-                break
-            except Exception:
-                logging.warning(f"ignoring exception:\n{traceback.format_exc()}")
-                break
         return None
 
     def fetch_file_headers(self, path: str) -> dict[str, Any] | None:
@@ -247,8 +247,9 @@ class HTTPServer:
 
         if path in self.path_map:
             with open(self.path_map[path]["path"], "rb") as file:
-                while (msg := file.read(BUFFER_LENGTH)):
+                while (msg := file.read(BUFFER_LENGTH)) is not None:
                     yield msg
+                raise StopIteration
         yield None
 
 

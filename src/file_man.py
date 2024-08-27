@@ -80,7 +80,7 @@ def compress_path_map(path_map: dict[str, dict[str, Any]], path_prefix: str = "c
     """
 
     import brotli
-    from src.minimizer import minimize_html
+    import htmlmin
     if not os.path.exists(path_prefix):
         os.mkdir(path_prefix)
     for val in path_map.values():
@@ -95,8 +95,12 @@ def compress_path_map(path_map: dict[str, dict[str, Any]], path_prefix: str = "c
                 with open(filepath, "wb") as comp:
                     with open(val["path"], "rb") as file:
                         comp.write(
-                            brotli.compress(minimize_html(file.read()))
-                        )
+                            brotli.compress(htmlmin.minify(
+                                file.read().decode("utf-8"),
+                                remove_comments=True,
+                                remove_empty_space=True,
+                                remove_all_empty_space=True,
+                                reduce_boolean_attributes=True).encode("utf-8")))
             else:
                 with open(filepath, "wb") as comp:
                     br = brotli.Compressor()
