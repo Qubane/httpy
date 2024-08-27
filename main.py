@@ -289,7 +289,7 @@ class HTTPServer:
 def main():
     path_map = file_man.generate_path_map()
     if not ARGS.dont_compress_path:
-        path_map = file_man.compress_path_map(path_map, path_prefix=ARGS.compress_path)
+        path_map = file_man.compress_path_map(path_map, path_prefix=ARGS.compressed_path)
 
     server = HTTPServer(
         port=ARGS.port,
