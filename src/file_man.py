@@ -127,8 +127,3 @@ def compress_path_map(path_map: dict[str, dict[str, Any]], path_prefix: str = "c
         print("END OF LIST.", len(path_map), end="\n\n")
 
     return path_map
-
-
-PATH_MAP = generate_path_map()
-if FILE_MAN_COMPRESS:
-    PATH_MAP = compress_path_map(PATH_MAP, regen=True)

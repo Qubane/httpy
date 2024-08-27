@@ -8,6 +8,7 @@ import time
 import socket
 import signal
 import logging
+import argparse
 import threading
 import traceback
 from src import APIv1
@@ -18,9 +19,21 @@ from src.file_man import PATH_MAP
 
 
 # typing
-usocket = socket.socket | ssl.SSLSocket
+_usocket = socket.socket | ssl.SSLSocket
+
+# parser
+_parser = argparse.ArgumentParser(
+        prog="httpy",
+        description="https web server")
+_parser.add_argument("-p", "--port", default=13700)
+_parser.add_argument("-c", "--cert", required=True)
+_parser.add_argument("-k", "--priv-key", required=True)
+_parser.add_argument("--enable-ssl", default=False, action="store_true")
+ARGS = _parser.parse_args()
 
 # logging
+logging.getLogger().addHandler(logging.StreamHandler())
+logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
 logging.basicConfig(
     filename="runtime.log",
     encoding="utf-8",
@@ -39,8 +52,8 @@ class HTTPServer:
             *,
             port: int,
             enable_ssl: bool = True,
-            path_map: dict[str, dict] | None = None,
-            key_pair: tuple[str, str] | None = None
+            key_pair: tuple[str, str] | None = None,
+            path_map: dict[str, dict] | None = None
     ):
         """
         :param port: binding port
@@ -56,9 +69,9 @@ class HTTPServer:
             context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             context.check_hostname = False
             context.load_cert_chain(certfile=key_pair[0], keyfile=key_pair[1])
-            self.sock: usocket = context.wrap_socket(sock, server_side=True)
+            self.sock: _usocket = context.wrap_socket(sock, server_side=True)
         else:
-            self.sock: usocket = sock
+            self.sock: _usocket = sock
         self.port: int = port
 
         # client thread list
@@ -97,7 +110,6 @@ class HTTPServer:
             # accept new client
             try:
                 client = self._accept()
-                client.setblocking(True)  # ensures that client sockets are blocking
             except ssl.SSLError:
                 continue
             except OSError as e:
@@ -117,13 +129,14 @@ class HTTPServer:
         # close server socket
         self.sock.close()
 
-    def _client_thread(self, client: usocket):
+    def _client_thread(self, client: _usocket):
         """
         Handles getting client's requests
         :param client: client ssl socket
         """
 
         self.semaphore.acquire()
+        client.setblocking(True)  # ensures that client sockets are blocking
         try:
             request = self._recv_request(client)
             if request is not None:
@@ -140,7 +153,7 @@ class HTTPServer:
         client.close()
         self.semaphore.release()
 
-    def _client_request_handler(self, client: usocket, request: Request):
+    def _client_request_handler(self, client: _usocket, request: Request):
         """
         Handles responses to client's requests
         :param client: client
@@ -172,7 +185,7 @@ class HTTPServer:
             if self.stop_event.is_set():
                 break
 
-    def _handle_get(self, client: usocket, request: Request) -> Response:
+    def _handle_get(self, client: _usocket, request: Request) -> Response:
         """
         Handles GET requests from a client
         """
@@ -195,12 +208,12 @@ class HTTPServer:
         else:
             return Response(b'', STATUS_CODE_NOT_FOUND)
 
-    def _handle_post(self, client: usocket, request: Request) -> Response:
+    def _handle_post(self, client: _usocket, request: Request) -> Response:
         """
         Handles POST request from a client
         """
 
-    def _recv_request(self, client: usocket) -> Request | None:
+    def _recv_request(self, client: _usocket) -> Request | None:
         """
         Receive request from client
         :return: request
@@ -218,7 +231,7 @@ class HTTPServer:
                 break
         return None
 
-    def _accept(self) -> usocket | None:
+    def _accept(self) -> _usocket | None:
         """
         socket.accept, but for more graceful closing
         """
@@ -253,13 +266,10 @@ class HTTPServer:
             with open(self.path_map[path]["path"], "rb") as file:
                 while msg := file.read(BUFFER_LENGTH):
                     yield msg
-                raise StopIteration
-        yield None
 
 
 def main():
-    server = HTTPServer(port=13700, key_pair=("fullchain.pem", "privkey.pem"))
-    server.start()
+    HTTPServer(port=ARGS.port, key_pair=(ARGS.cert, ARGS.priv_key), enable_ssl=ARGS.enable_ssl).start()
 
 
 if __name__ == '__main__':
