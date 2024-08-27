@@ -7,9 +7,9 @@ import ssl
 import time
 import socket
 import signal
+import logging
 import threading
 import traceback
-
 from src import APIv1
 from src.config import *
 from src.request import *
@@ -19,6 +19,9 @@ from src.file_man import PATH_MAP
 
 # typing
 usocket = socket.socket | ssl.SSLSocket
+
+# logging
+logging.basicConfig(filename="runtime.log", encoding="utf-8", level=logging.INFO)
 
 
 class HTTPServer:
@@ -114,9 +117,9 @@ class HTTPServer:
         except ssl.SSLEOFError:
             pass
         except OSError as e:
-            print(f"Request dropped due to: {e}")
+            logging.info(f"request dropped due to: {e}")
         except Exception:
-            print("Ignoring exception:\n", traceback.format_exc())
+            logging.warning(f"ignoring exception:\n{traceback.format_exc()}")
 
         # Remove self from thread list and close the connection
         self.client_threads.remove(threading.current_thread())
@@ -216,8 +219,11 @@ class HTTPServer:
                 time.sleep(0.005)
             except ssl.SSLEOFError:
                 break
-            except OSError:
-                print(f"Client dropped due to: {traceback.format_exc()}")
+            except OSError as e:
+                logging.info(f"Client dropped due to: {e}")
+                break
+            except Exception:
+                logging.warning(f"ignoring exception:\n{traceback.format_exc()}")
                 break
         return None
 
