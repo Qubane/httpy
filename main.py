@@ -168,8 +168,8 @@ class HTTPServer:
 
         # Remove self from thread list and close the connection
         self.client_threads.remove(threading.current_thread())
-        client.close()
         self.semaphore.release()
+        client.close()
 
     def _client_request_handler(self, client: _usocket, request: Request):
         """

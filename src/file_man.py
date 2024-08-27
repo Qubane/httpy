@@ -79,7 +79,7 @@ def compress_path_map(path_map: dict[str, dict[str, Any]], path_prefix: str = "c
     Compresses all files using brotli
     """
 
-    import brotli
+    import gzip
     import htmlmin
     if not os.path.exists(path_prefix):
         os.mkdir(path_prefix)
@@ -90,28 +90,24 @@ def compress_path_map(path_map: dict[str, dict[str, Any]], path_prefix: str = "c
         if not os.path.exists((dirs := os.path.dirname(filepath))):  # add missing folders
             os.makedirs(dirs)
         if not os.path.exists(filepath) or regen:
-            # brotli compress
             if val["headers"]["Content-Type"] == "text/html":
                 with open(filepath, "wb") as comp:
                     with open(val["path"], "rb") as file:
                         comp.write(
-                            brotli.compress(htmlmin.minify(
+                            gzip.compress(htmlmin.minify(
                                 file.read().decode("utf-8"),
                                 remove_comments=True,
                                 remove_empty_space=True,
                                 remove_all_empty_space=True,
                                 reduce_boolean_attributes=True).encode("utf-8")))
             else:
-                with open(filepath, "wb") as comp:
-                    br = brotli.Compressor()
+                with gzip.open(filepath, "wb") as comp:
                     with open(val["path"], "rb") as file:
-                        while (chunk := file.read(65536)):
-                            br.process(chunk)
-                            comp.write(br.flush())
+                        comp.writelines(file)
 
         val["path"] = filepath
         val["headers"]["Content-Length"] = os.path.getsize(filepath)
-        val["headers"]["Content-Encoding"] = "br"
+        val["headers"]["Content-Encoding"] = "gzip"
 
     if FILE_MAN_VERBOSE:
         print("COMPRESSED PATH:")
