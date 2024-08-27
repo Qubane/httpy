@@ -44,7 +44,7 @@ _parser.add_argument("--compressed-path",
                      default="compress")
 _parser.add_argument("--disable-ssl",
                      help="SSL for HTTPs encrypted connection (default True)",
-                     default=True,
+                     default=False,
                      action="store_true")
 ARGS = _parser.parse_args()
 
