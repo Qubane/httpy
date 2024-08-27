@@ -21,7 +21,11 @@ from src.file_man import PATH_MAP
 usocket = socket.socket | ssl.SSLSocket
 
 # logging
-logging.basicConfig(filename="runtime.log", encoding="utf-8", level=logging.INFO)
+logging.basicConfig(
+    filename="runtime.log",
+    encoding="utf-8",
+    datefmt="%H:%M:%S",
+    level=logging.INFO)
 
 
 class HTTPServer:
@@ -93,6 +97,7 @@ class HTTPServer:
             # accept new client
             try:
                 client = self._accept()
+                client.setblocking(True)  # ensures that client sockets are blocking
             except ssl.SSLError:
                 continue
             except OSError as e:
@@ -118,7 +123,6 @@ class HTTPServer:
         :param client: client ssl socket
         """
 
-        client.setblocking(True)  # in ssl it's the default, in plain sockets it's not
         self.semaphore.acquire()
         try:
             request = self._recv_request(client)
@@ -133,8 +137,8 @@ class HTTPServer:
 
         # Remove self from thread list and close the connection
         self.client_threads.remove(threading.current_thread())
-        self.semaphore.release()
         client.close()
+        self.semaphore.release()
 
     def _client_request_handler(self, client: usocket, request: Request):
         """
@@ -247,7 +251,7 @@ class HTTPServer:
 
         if path in self.path_map:
             with open(self.path_map[path]["path"], "rb") as file:
-                while (msg := file.read(BUFFER_LENGTH)) is not None:
+                while msg := file.read(BUFFER_LENGTH):
                     yield msg
                 raise StopIteration
         yield None
