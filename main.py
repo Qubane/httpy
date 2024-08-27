@@ -12,10 +12,10 @@ import argparse
 import threading
 import traceback
 from src import APIv1
+from src import file_man
 from src.config import *
 from src.request import *
 from src.status_code import *
-from src.file_man import PATH_MAP
 
 
 # typing
@@ -25,20 +25,37 @@ _usocket = socket.socket | ssl.SSLSocket
 _parser = argparse.ArgumentParser(
         prog="httpy",
         description="https web server")
-_parser.add_argument("-p", "--port", default=13700)
-_parser.add_argument("-c", "--cert", required=True)
-_parser.add_argument("-k", "--priv-key", required=True)
-_parser.add_argument("--enable-ssl", default=False, action="store_true")
+_parser.add_argument("-p", "--port",
+                     help="binding port (default 13700)",
+                     default=13700)
+_parser.add_argument("-c", "--cert",
+                     help="certificate (or fullchain.pem)",
+                     required=True)
+_parser.add_argument("-k", "--priv-key",
+                     help="private key",
+                     required=True)
+_parser.add_argument("--disable-ssl",
+                     help="SSL for HTTPs encrypted connection (default True)",
+                     default=True,
+                     action="store_true")
+_parser.add_argument("--dont-compress-path",
+                     help="disables pre-compression of files in 'www' folder (default True)",
+                     default=True,
+                     action="store_true")
+_parser.add_argument("--compress-path",
+                     help="path where compressed directory will be stored (default 'compress')",
+                     default="compress")
 ARGS = _parser.parse_args()
 
 # logging
-logging.getLogger().addHandler(logging.StreamHandler())
-logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
 logging.basicConfig(
-    filename="runtime.log",
-    encoding="utf-8",
-    datefmt="%H:%M:%S",
-    level=logging.INFO)
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("runtime.log"),
+        logging.StreamHandler()
+    ]
+)
 
 
 class HTTPServer:
@@ -51,9 +68,9 @@ class HTTPServer:
             self,
             *,
             port: int,
+            path_map: dict[str, dict],
             enable_ssl: bool = True,
-            key_pair: tuple[str, str] | None = None,
-            path_map: dict[str, dict] | None = None
+            key_pair: tuple[str, str] | None = None
     ):
         """
         :param port: binding port
@@ -83,7 +100,7 @@ class HTTPServer:
         signal.signal(signal.SIGINT, self._signal_interrupt)
 
         # path mapping
-        self.path_map: dict[str, dict] = path_map if path_map else PATH_MAP
+        self.path_map: dict[str, dict] = path_map
 
     def _signal_interrupt(self, *args):
         """
@@ -269,7 +286,16 @@ class HTTPServer:
 
 
 def main():
-    HTTPServer(port=ARGS.port, key_pair=(ARGS.cert, ARGS.priv_key), enable_ssl=ARGS.enable_ssl).start()
+    path_map = file_man.generate_path_map()
+    if not ARGS.dont_compress_path:
+        path_map = file_man.compress_path_map(path_map, path_prefix=ARGS.compress_path)
+
+    server = HTTPServer(
+        port=ARGS.port,
+        path_map=path_map,
+        key_pair=(ARGS.cert, ARGS.priv_key),
+        enable_ssl=not ARGS.disable_ssl)
+    server.start()
 
 
 if __name__ == '__main__':
