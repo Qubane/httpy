@@ -27,6 +27,7 @@ _parser = argparse.ArgumentParser(
         description="https web server")
 _parser.add_argument("-p", "--port",
                      help="binding port (default 13700)",
+                     type=int,
                      default=13700)
 _parser.add_argument("-c", "--cert",
                      help="certificate (or fullchain.pem)",
@@ -34,17 +35,17 @@ _parser.add_argument("-c", "--cert",
 _parser.add_argument("-k", "--priv-key",
                      help="private key",
                      required=True)
+_parser.add_argument("--dont-compress-path",
+                     help="disables pre-compression of files in 'www' folder (default True)",
+                     default=False,
+                     action="store_true")
+_parser.add_argument("--compressed-path",
+                     help="path where compressed directory will be stored (default 'compress')",
+                     default="compress")
 _parser.add_argument("--disable-ssl",
                      help="SSL for HTTPs encrypted connection (default True)",
                      default=True,
                      action="store_true")
-_parser.add_argument("--dont-compress-path",
-                     help="disables pre-compression of files in 'www' folder (default True)",
-                     default=True,
-                     action="store_true")
-_parser.add_argument("--compress-path",
-                     help="path where compressed directory will be stored (default 'compress')",
-                     default="compress")
 ARGS = _parser.parse_args()
 
 # logging
