@@ -167,3 +167,4 @@ cython_debug/
 /compress/
 /fullchain.pem
 /privkey.pem
+/logs/

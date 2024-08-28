@@ -19,20 +19,20 @@ from src.status_code import *
 _usocket = socket.socket | ssl.SSLSocket
 
 # logging
-if not os.path.exists("logs"):
-    os.mkdir("logs")
-if os.path.isfile("logs/latest.log"):
+if not os.path.exists(f"{LOGGER_PATH}"):
+    os.makedirs(f"{LOGGER_PATH}")
+if os.path.isfile(f"{LOGGER_PATH}/latest.log"):
     import gzip
     from datetime import datetime
-    with open("logs/latest.log", "rb") as file:
-        with gzip.open(f"{datetime.now().strftime('%d-%m-%y %H-%M-%S')}.log.gz", "wb") as comp:
+    with open(f"{LOGGER_PATH}/latest.log", "rb") as file:
+        with gzip.open(f"{LOGGER_PATH}/{datetime.now().strftime('%d-%m-%y %H-%M-%S')}.log.gz", "wb") as comp:
             comp.writelines(file)
-    os.remove("logs/latest.log")
+    os.remove(f"{LOGGER_PATH}/latest.log")
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler("logs/latest.log"),
+        logging.FileHandler(f"{LOGGER_PATH}/latest.log"),
         logging.StreamHandler()
     ]
 )

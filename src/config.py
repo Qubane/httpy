@@ -1,4 +1,5 @@
 # generic
+LOGGER_PATH = "logs"
 BUFFER_LENGTH = 65536           # 64 KiB
 BUFFER_MAX_SIZE = 2**30 * 0.5   # 512 MiB
 CLIENT_MAX_AMOUNT = 512         # max requests at once, after which the connections are dropped
