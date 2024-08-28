@@ -9,7 +9,6 @@ import signal
 import logging
 import argparse
 import threading
-import traceback
 from src import APIv1
 from src import file_man
 from src.config import *
@@ -18,6 +17,16 @@ from src.status_code import *
 
 # typing
 _usocket = socket.socket | ssl.SSLSocket
+
+# logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("runtime.log"),
+        logging.StreamHandler()
+    ]
+)
 
 # parser
 _parser = argparse.ArgumentParser(
@@ -49,17 +58,6 @@ _parser.add_argument("-v", "--verbose",
                      default=False,
                      action="store_true")
 ARGS = _parser.parse_args()
-
-# logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler("runtime.log"),
-        logging.StreamHandler()
-    ]
-)
-
 
 class HTTPServer:
     """
@@ -125,17 +123,22 @@ class HTTPServer:
         self.sock.setblocking(False)
         self.sock.listen()
 
-        # listen and respond handler
-        while not self.stop_event.is_set():
-            # accept new client
+        def _accept_client():
             client = self._accept()
             if client is None:
-                continue
+                return
 
             # create thread for new client and append it to the list
             th = threading.Thread(target=self._client_thread, args=[client])
             self.client_threads.append(th)
             th.start()
+
+        # loop
+        while not self.stop_event.is_set():
+            try:
+                _accept_client()
+            except Exception as e:
+                logging.warning(f"ignoring exception:", exc_info=e)
 
         # close server socket
         self.sock.close()
@@ -147,11 +150,14 @@ class HTTPServer:
         """
 
         self.semaphore.acquire()
-        client.setblocking(False)
-        request = self._recv_request(client)
-        # logging.info(f"ip: {client.getpeername()[0]}\n{request}")
-        if request is not None:
-            self._client_request_handler(client, request)
+
+        try:
+            client.setblocking(False)
+            request = self._recv_request(client)
+            if request is not None:
+                self._client_request_handler(client, request)
+        except Exception as e:
+            logging.warning("ignoring error:", exc_info=e)
 
         # Remove self from thread list and close the connection
         self.client_threads.remove(threading.current_thread())
