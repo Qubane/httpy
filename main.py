@@ -2,7 +2,6 @@
 The mighty silly webserver written in python for no good reason
 """
 
-
 import ssl
 import time
 import socket
@@ -17,14 +16,13 @@ from src.config import *
 from src.request import *
 from src.status_code import *
 
-
 # typing
 _usocket = socket.socket | ssl.SSLSocket
 
 # parser
 _parser = argparse.ArgumentParser(
-        prog="httpy",
-        description="https web server")
+    prog="httpy",
+    description="https web server")
 _parser.add_argument("-p", "--port",
                      help="binding port (default 13700)",
                      type=int,
@@ -130,16 +128,7 @@ class HTTPServer:
         # listen and respond handler
         while not self.stop_event.is_set():
             # accept new client
-            try:
-                client = self._accept()
-            except ssl.SSLError:
-                continue
-            except OSError as e:
-                logging.info(f"Client dropped due to: {e}")
-                continue
-            except Exception:
-                logging.warning(f"ignoring exception:\n{traceback.format_exc()}")
-                continue
+            client = self._accept()
             if client is None:
                 continue
 
@@ -160,7 +149,7 @@ class HTTPServer:
         self.semaphore.acquire()
         client.setblocking(False)
         request = self._recv_request(client)
-        logging.info(f"ip: {client.getpeername()[0]}\n{request}")
+        # logging.info(f"ip: {client.getpeername()[0]}\n{request}")
         if request is not None:
             self._client_request_handler(client, request)
 
@@ -181,7 +170,6 @@ class HTTPServer:
                 response = self._handle_get(client, request)
             case _:
                 response = Response(b'', STATUS_CODE_NOT_FOUND)
-
         self._send_response(client, response)
 
     def _handle_get(self, client: _usocket, request: Request) -> Response:
@@ -193,9 +181,7 @@ class HTTPServer:
         if request.path in self.path_map:  # assume browser
             filedata = self.fetch_file(request.path)
             headers = self.fetch_file_headers(request.path)
-            response = Response(b'', STATUS_CODE_OK, headers, data_stream=filedata)
-
-            return response
+            return Response(b'', STATUS_CODE_OK, headers, data_stream=filedata)
         elif len(split_path) >= 2 and split_path[0] in API_VERSIONS:  # assume script
             # unsupported API version
             if not API_VERSIONS[split_path[0]]:
@@ -205,7 +191,7 @@ class HTTPServer:
             # return API response
             return APIv1.api_call(client, request)
         else:
-            return Response(b'', STATUS_CODE_NOT_FOUND)
+            return Response(b'Page not found...', STATUS_CODE_NOT_FOUND)
 
     def _handle_post(self, client: _usocket, request: Request) -> Response:
         """
@@ -240,6 +226,11 @@ class HTTPServer:
         Send response to client
         """
 
+        # make blocking socket
+        blk = client.getblocking()
+        client.setblocking(True)
+
+        # append connection status headers
         response.headers["Connection"] = "close"
 
         # generate basic message
@@ -249,15 +240,16 @@ class HTTPServer:
         message += b'\r\n'
 
         # send message
-        blk = client.getblocking()
-        client.setblocking(True)  # easier to transmit
         client.sendall(message)
         for packet in response.get_data_stream():
-            client.sendall(packet)
-
-            # check for stop event
+            try:
+                client.sendall(packet)
+            except (ssl.SSLError, OSError):
+                break
             if self.stop_event.is_set():
                 break
+
+        # return to previous state
         client.setblocking(blk)
 
     def _accept(self) -> _usocket | None:
@@ -269,6 +261,8 @@ class HTTPServer:
             try:
                 if len(self.client_threads) < CLIENT_MAX_AMOUNT:
                     return self.sock.accept()[0]
+            except (ssl.SSLError, OSError):
+                pass
             except BlockingIOError:
                 time.sleep(0.005)
         return None
