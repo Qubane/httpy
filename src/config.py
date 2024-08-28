@@ -12,8 +12,6 @@ API_VERSIONS = {
 }
 
 # file manager
-FILE_MAN_VERBOSE = True
-FILE_MAN_COMPRESS = True    # do compress all files
 FILE_MAN_PATH_MAP = {
     # external
     "/":                {"path": "www/index.html", "compress": True},

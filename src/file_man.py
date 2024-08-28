@@ -1,6 +1,7 @@
 import os
+import logging
 from typing import Any
-from src.config import FILE_MAN_PATH_MAP, FILE_MAN_VERBOSE, FILE_MAN_COMPRESS
+from src.config import FILE_MAN_PATH_MAP
 
 
 def list_path(path) -> list[str]:
@@ -12,7 +13,7 @@ def list_path(path) -> list[str]:
     return paths
 
 
-def generate_path_map() -> dict[str, dict[str, Any]]:
+def generate_path_map(verbose: bool = False) -> dict[str, dict[str, Any]]:
     """
     Generate a full path map for HTTP server
     """
@@ -21,8 +22,7 @@ def generate_path_map() -> dict[str, dict[str, Any]]:
     path_map = {}
     for key in FILE_MAN_PATH_MAP.keys():
         if not (os.path.exists(FILE_MAN_PATH_MAP[key]["path"]) or os.path.exists(FILE_MAN_PATH_MAP[key]["path"][:-2])):
-            if FILE_MAN_VERBOSE:
-                print(f"Undefined path for '{key}' ({FILE_MAN_PATH_MAP[key]['path']})")
+            logging.warning(f"Undefined path for '{key}' ({FILE_MAN_PATH_MAP[key]['path']})")
             continue
         if key[-1] == "*":
             keypath = FILE_MAN_PATH_MAP[key]["path"][:-2]
@@ -61,20 +61,23 @@ def generate_path_map() -> dict[str, dict[str, Any]]:
         val["headers"] = headers
 
     # print list of paths
-    if FILE_MAN_VERBOSE:
-        print("LIST OF ALLOWED PATHS:")
+    if verbose:
+        logging.info("LIST OF ALLOWED PATHS:")
         max_key_len = max([len(x) for x in path_map.keys()])
         max_val_len = max([len(x["path"]) for x in path_map.values()])
-        print(f"\t{'web': ^{max_key_len}} | {'path': ^{max_val_len}}\n"
-              f"\t{'='*max_key_len}=#={'='*max_val_len}")
+        logging.info(f"\t{'web': ^{max_key_len}} | {'path': ^{max_val_len}}\n"
+                     f"\t{'='*max_key_len}=#={'='*max_val_len}")
         for key, val in path_map.items():
-            print(f"\t{key: <{max_key_len}} | {val['path']}")
-        print("END OF LIST.", len(path_map), end="\n\n")
+            logging.info(f"\t{key: <{max_key_len}} | {val['path']}")
+        logging.info(f"END OF LIST. {len(path_map)}")
 
     return path_map
 
 
-def compress_path_map(path_map: dict[str, dict[str, Any]], path_prefix: str = "compress", regen: bool = False):
+def compress_path_map(path_map: dict[str, dict[str, Any]],
+                      path_prefix: str = "compress",
+                      regen: bool = False,
+                      verbose: bool = False):
     """
     Compresses all files using brotli
     """
@@ -109,17 +112,17 @@ def compress_path_map(path_map: dict[str, dict[str, Any]], path_prefix: str = "c
         val["headers"]["Content-Length"] = os.path.getsize(filepath)
         val["headers"]["Content-Encoding"] = "gzip"
 
-    if FILE_MAN_VERBOSE:
-        print("COMPRESSED PATH:")
+    if verbose:
+        logging.info("COMPRESSED PATH:")
         max_key_len = max([len(x) for x in path_map.keys()])
         max_val_len = max([len(x["path"]) for x in path_map.values()])
         max_size_len = max([len(x["headers"]["Content-Length"].__repr__()) for x in path_map.values()])
-        print(f"\t{'web': ^{max_key_len}} | {'path': ^{max_val_len}} | {'size': ^{max_size_len}}\n"
-              f"\t{'=' * max_key_len}=#={'=' * max_val_len}=#={'=' * max_size_len}")
+        logging.info(f"\t{'web': ^{max_key_len}} | {'path': ^{max_val_len}} | {'size': ^{max_size_len}}\n"
+                     f"\t{'=' * max_key_len}=#={'=' * max_val_len}=#={'=' * max_size_len}")
         for key, val in path_map.items():
-            print(f"\t{key: <{max_key_len}} | "
+            logging.info(f"\t{key: <{max_key_len}} | "
                   f"{val['path']: <{max_val_len}} | "
                   f"{val['headers']['Content-Length']: <{max_size_len}}")
-        print("END OF LIST.", len(path_map), end="\n\n")
+        logging.info(f"END OF LIST. {len(path_map)}")
 
     return path_map
