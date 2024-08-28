@@ -1,7 +1,7 @@
 """
 The mighty silly webserver written in python for no good reason
 """
-
+import os
 import ssl
 import time
 import socket
@@ -19,11 +19,20 @@ from src.status_code import *
 _usocket = socket.socket | ssl.SSLSocket
 
 # logging
+if not os.path.exists("logs"):
+    os.mkdir("logs")
+if os.path.isfile("logs/latest.log"):
+    import gzip
+    from datetime import datetime
+    with open("logs/latest.log", "rb") as file:
+        with gzip.open(f"{datetime.now().strftime('%d-%m-%y %H-%M-%S')}.log.gz", "wb") as comp:
+            comp.writelines(file)
+    os.remove("logs/latest.log")
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler("runtime.log"),
+        logging.FileHandler("logs/latest.log"),
         logging.StreamHandler()
     ]
 )
@@ -58,6 +67,7 @@ _parser.add_argument("-v", "--verbose",
                      default=False,
                      action="store_true")
 ARGS = _parser.parse_args()
+
 
 class HTTPServer:
     """
