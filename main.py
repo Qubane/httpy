@@ -46,6 +46,10 @@ _parser.add_argument("--disable-ssl",
                      help="SSL for HTTPs encrypted connection (default True)",
                      default=False,
                      action="store_true")
+_parser.add_argument("-v", "--verbose",
+                     help="verbose (default False)",
+                     default=False,
+                     action="store_true")
 ARGS = _parser.parse_args()
 
 # logging
@@ -154,17 +158,11 @@ class HTTPServer:
         """
 
         self.semaphore.acquire()
-        client.setblocking(True)  # ensures that client sockets are blocking
-        try:
-            request = self._recv_request(client)
-            if request is not None:
-                self._client_request_handler(client, request)
-        except ssl.SSLError:
-            pass
-        except OSError as e:
-            logging.info(f"request dropped due to: {e}")
-        except Exception:
-            logging.warning(f"ignoring exception:\n{traceback.format_exc()}")
+        client.setblocking(False)
+        request = self._recv_request(client)
+        logging.info(f"ip: {client.getpeername()[0]}\n{request}")
+        if request is not None:
+            self._client_request_handler(client, request)
 
         # Remove self from thread list and close the connection
         self.client_threads.remove(threading.current_thread())
@@ -184,24 +182,7 @@ class HTTPServer:
             case _:
                 response = Response(b'', STATUS_CODE_NOT_FOUND)
 
-        # process header data
-        if response.headers.get("Connection") is None:
-            response.headers["Connection"] = "close"
-
-        # generate basic message
-        message = b'HTTP/1.1 ' + response.status.__bytes__() + b'\r\n'
-        for key, value in response.headers.items():
-            message += f"{key}: {value}\r\n".encode("utf8")
-        message += b'\r\n'
-
-        # send message
-        client.sendall(message)
-        for packet in response.get_data_stream():
-            client.sendall(packet)
-
-            # check for stop event
-            if self.stop_event.is_set():
-                break
+        self._send_response(client, response)
 
     def _handle_get(self, client: _usocket, request: Request) -> Response:
         """
@@ -239,15 +220,45 @@ class HTTPServer:
         """
 
         buffer = bytearray()
+        size = 0
         while not self.stop_event.is_set():
-            if len(msg := client.recv(BUFFER_LENGTH)) == 0:
-                break
-            buffer += msg
-            if buffer[-4:] == b'\r\n\r\n':
-                return Request.create(buffer)
-            if len(buffer) > BUFFER_MAX_SIZE:  # ignore big messages
-                break
+            try:
+                buffer += client.recv(BUFFER_LENGTH)
+                if buffer[-4:] == b'\r\n\r\n':
+                    return Request.create(buffer)
+                if size == len(buffer):  # got 0 bytes
+                    break
+                if size > BUFFER_MAX_SIZE:
+                    break
+                size = len(buffer)
+            except (ssl.SSLWantReadError, BlockingIOError):
+                time.sleep(0.005)
         return None
+
+    def _send_response(self, client: _usocket, response: Response) -> None:
+        """
+        Send response to client
+        """
+
+        response.headers["Connection"] = "close"
+
+        # generate basic message
+        message = b'HTTP/1.1 ' + response.status.__bytes__() + b'\r\n'
+        for key, value in response.headers.items():
+            message += f"{key}: {value}\r\n".encode("utf8")
+        message += b'\r\n'
+
+        # send message
+        blk = client.getblocking()
+        client.setblocking(True)  # easier to transmit
+        client.sendall(message)
+        for packet in response.get_data_stream():
+            client.sendall(packet)
+
+            # check for stop event
+            if self.stop_event.is_set():
+                break
+        client.setblocking(blk)
 
     def _accept(self) -> _usocket | None:
         """
@@ -287,9 +298,13 @@ class HTTPServer:
 
 
 def main():
-    path_map = file_man.generate_path_map()
+    path_map = file_man.generate_path_map(verbose=ARGS.verbose)
     if not ARGS.dont_compress_path:
-        path_map = file_man.compress_path_map(path_map, path_prefix=ARGS.compressed_path, regen=True)
+        path_map = file_man.compress_path_map(
+            path_map,
+            path_prefix=ARGS.compressed_path,
+            regen=True,
+            verbose=ARGS.verbose)
 
     server = HTTPServer(
         port=ARGS.port,
