@@ -65,8 +65,9 @@ def generate_path_map(verbose: bool = False) -> dict[str, dict[str, Any]]:
         logging.info("LIST OF ALLOWED PATHS:")
         max_key_len = max([len(x) for x in path_map.keys()])
         max_val_len = max([len(x["path"]) for x in path_map.values()])
-        logging.info(f"\t{'web': ^{max_key_len}} | {'path': ^{max_val_len}}\n"
-                     f"\t{'='*max_key_len}=#={'='*max_val_len}")
+        logging.info(
+            f"\t{'web': ^{max_key_len}} | {'path': ^{max_val_len}}\n"
+            f"\t{'='*max_key_len}=#={'='*max_val_len}")
         for key, val in path_map.items():
             logging.info(f"\t{key: <{max_key_len}} | {val['path']}")
         logging.info(f"END OF LIST. {len(path_map)}")
@@ -117,12 +118,14 @@ def compress_path_map(path_map: dict[str, dict[str, Any]],
         max_key_len = max([len(x) for x in path_map.keys()])
         max_val_len = max([len(x["path"]) for x in path_map.values()])
         max_size_len = max([len(x["headers"]["Content-Length"].__repr__()) for x in path_map.values()])
-        logging.info(f"\t{'web': ^{max_key_len}} | {'path': ^{max_val_len}} | {'size': ^{max_size_len}}\n"
-                     f"\t{'=' * max_key_len}=#={'=' * max_val_len}=#={'=' * max_size_len}")
+        logging.info(
+            f"\t{'web': ^{max_key_len}} | {'path': ^{max_val_len}} | {'size': ^{max_size_len}}\n"
+            f"\t{'=' * max_key_len}=#={'=' * max_val_len}=#={'=' * max_size_len}")
         for key, val in path_map.items():
-            logging.info(f"\t{key: <{max_key_len}} | "
-                  f"{val['path']: <{max_val_len}} | "
-                  f"{val['headers']['Content-Length']: <{max_size_len}}")
+            logging.info(
+                f"\t{key: <{max_key_len}} | "
+                f"{val['path']: <{max_val_len}} | "
+                f"{val['headers']['Content-Length']: <{max_size_len}}")
         logging.info(f"END OF LIST. {len(path_map)}")
 
     return path_map
