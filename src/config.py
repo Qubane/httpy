@@ -2,8 +2,15 @@
 LOGGER_PATH = "logs"
 BUFFER_LENGTH = 2**16           # 64 KiB
 BUFFER_MAX_SIZE = 2**30 * 0.5   # 512 MiB
+
+# threading
 CLIENT_MAX_AMOUNT = 2**15       # max requests at once, after which the connections are dropped
 CLIENT_MAX_PROCESS = 64         # max processing threads at once
+
+# sockets
+SOCKET_TIMEOUT = 10.0
+SOCKET_ACK_INTERVAL = 0.005
+SOCKET_TIMER = SOCKET_TIMEOUT / SOCKET_ACK_INTERVAL
 
 # API
 API_FILE_RANDOM_MIN_SIZE_LIMIT = 1              # 1 byte

@@ -21,7 +21,7 @@ _usocket = socket.socket | ssl.SSLSocket
 # logging
 if not os.path.exists(f"{LOGGER_PATH}"):
     os.makedirs(f"{LOGGER_PATH}")
-if os.path.isfile(f"{LOGGER_PATH}/latest.log"):
+if os.path.isfile(f"{LOGGER_PATH}/latest.log") and os.path.getsize(f"{LOGGER_PATH}/latest.log") > 0:
     import gzip
     from datetime import datetime
     with open(f"{LOGGER_PATH}/latest.log", "rb") as file:
@@ -173,7 +173,11 @@ class HTTPServer:
         # Remove self from thread list and close the connection
         self.client_threads.remove(threading.current_thread())
         self.semaphore.release()
-        client.close()
+
+        try:
+            client.close()
+        except (ssl.SSLError, OSError):
+            pass
 
     def _client_request_handler(self, client: _usocket, request: Request):
         """
@@ -224,7 +228,8 @@ class HTTPServer:
 
         buffer = bytearray()
         size = 0
-        while not self.stop_event.is_set():
+        timer = SOCKET_TIMER
+        while not self.stop_event.is_set() and timer > 0:
             try:
                 buffer += client.recv(BUFFER_LENGTH)
                 if buffer[-4:] == b'\r\n\r\n':
@@ -235,17 +240,16 @@ class HTTPServer:
                     break
                 size = len(buffer)
             except (ssl.SSLWantReadError, BlockingIOError):
-                time.sleep(0.005)
+                time.sleep(SOCKET_ACK_INTERVAL)
+            except (ssl.SSLError, OSError):
+                break
+            timer -= 1
         return None
 
     def _send_response(self, client: _usocket, response: Response) -> None:
         """
         Send response to client
         """
-
-        # make blocking socket
-        blk = client.getblocking()
-        client.setblocking(True)
 
         # append connection status headers
         response.headers["Connection"] = "close"
@@ -257,17 +261,28 @@ class HTTPServer:
         message += b'\r\n'
 
         # send message
-        client.sendall(message)
+        is_first = True
         for packet in response.get_data_stream():
-            try:
-                client.sendall(packet)
-            except (ssl.SSLError, OSError):
-                break
-            if self.stop_event.is_set():
-                break
-
-        # return to previous state
-        client.setblocking(blk)
+            timer = SOCKET_TIMER
+            while timer > 0:
+                try:
+                    # doesn't work with 'else' or if no 'print(is_first)' is present
+                    # I have no clue as to why
+                    if is_first:
+                        client.sendall(message)
+                        is_first = False
+                    if not is_first:
+                        client.sendall(packet)
+                        break
+                except (ssl.SSLWantWriteError, BlockingIOError):
+                    pass
+                except (ssl.SSLError, OSError):
+                    return
+                time.sleep(SOCKET_ACK_INTERVAL)
+                timer -= 1
+                print(timer)
+            if self.stop_event.is_set() or timer <= 0:
+                return
 
     def _accept(self) -> _usocket | None:
         """
@@ -278,10 +293,9 @@ class HTTPServer:
             try:
                 if len(self.client_threads) < CLIENT_MAX_AMOUNT:
                     return self.sock.accept()[0]
-            except (ssl.SSLError, OSError):
+            except (ssl.SSLError, OSError, BlockingIOError):
                 pass
-            except BlockingIOError:
-                time.sleep(0.005)
+            time.sleep(SOCKET_ACK_INTERVAL)
         return None
 
     def fetch_file_headers(self, path: str) -> dict[str, Any] | None:
