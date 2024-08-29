@@ -1,9 +1,9 @@
 # generic
 LOGGER_PATH = "logs"
-BUFFER_LENGTH = 65536           # 64 KiB
+BUFFER_LENGTH = 2**16           # 64 KiB
 BUFFER_MAX_SIZE = 2**30 * 0.5   # 512 MiB
-CLIENT_MAX_AMOUNT = 512         # max requests at once, after which the connections are dropped
-CLIENT_MAX_PROCESS = 32         # max processing threads at once
+CLIENT_MAX_AMOUNT = 2**15       # max requests at once, after which the connections are dropped
+CLIENT_MAX_PROCESS = 64         # max processing threads at once
 
 # API
 API_FILE_RANDOM_MIN_SIZE_LIMIT = 1              # 1 byte
