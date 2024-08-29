@@ -162,6 +162,7 @@ class HTTPServer:
         self.semaphore.acquire()
 
         try:
+            client.settimeout(10)
             client.setblocking(False)
             request = self._recv_request(client)
             if request is not None:
