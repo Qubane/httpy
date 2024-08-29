@@ -166,6 +166,12 @@ class HTTPServer:
             client.setblocking(False)
             request = self._recv_request(client)
             if request is not None:
+                # log request
+                logging.info(f"IP: {client.getpeername()[0]}")
+                for key, val in request.__dict__.items():
+                    logging.info(f"{key}: {val}")
+
+                # handle request
                 self._client_request_handler(client, request)
         except Exception as e:
             logging.warning("ignoring error:", exc_info=e)
@@ -280,7 +286,6 @@ class HTTPServer:
                     return
                 time.sleep(SOCKET_ACK_INTERVAL)
                 timer -= 1
-                print(timer)
             if self.stop_event.is_set() or timer <= 0:
                 return
 
