@@ -51,13 +51,10 @@ _parser.add_argument("-c", "--cert",
 _parser.add_argument("-k", "--priv-key",
                      help="private key",
                      required=True)
-_parser.add_argument("--dont-compress-path",
-                     help="disables pre-compression of files in 'www' folder (default True)",
-                     default=False,
+_parser.add_argument("--compress-path",
+                     help="enables pre-compression of files in 'www' folder (default True)",
+                     default=True,
                      action="store_true")
-_parser.add_argument("--compressed-path",
-                     help="path where compressed directory will be stored (default 'compress')",
-                     default="compress")
 _parser.add_argument("--disable-ssl",
                      help="SSL for HTTPs encrypted connection (default True)",
                      default=False,
@@ -329,10 +326,10 @@ class HTTPServer:
 
 def main():
     path_map = file_man.generate_path_map(verbose=ARGS.verbose)
-    if not ARGS.dont_compress_path:
+    if ARGS.compress_path:
         path_map = file_man.compress_path_map(
             path_map,
-            path_prefix=ARGS.compressed_path,
+            path_prefix=FILE_MAN_COMPRESSED_PATH,
             regen=True,
             verbose=ARGS.verbose)
 

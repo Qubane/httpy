@@ -20,6 +20,7 @@ API_VERSIONS = {
 }
 
 # file manager
+FILE_MAN_COMPRESSED_PATH = "compress"
 FILE_MAN_PATH_MAP = {
     # external
     "/":                {"path": "www/index.html", "compress": True},
