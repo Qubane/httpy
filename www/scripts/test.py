@@ -13,7 +13,6 @@ And made it follow PEP8 a bit more. That code still looks painful tho
 mouse = THREE.Vector2.new()
 
 renderer = THREE.WebGLRenderer.new({"antialias": True})
-renderer.setSize(1000, 1000)
 renderer.shadowMap.enabled = False
 renderer.shadowMap.type = THREE.PCFSoftShadowMap
 renderer.shadowMap.needsUpdate = True
@@ -34,7 +33,7 @@ cameraRange = 3
 
 camera.aspect = window.innerWidth / window.innerHeight
 camera.updateProjectionMatrix()
-renderer.setSize(window.innerWidth, window.innerHeight)
+renderer.setSize(window.innerWidth, window.innerHeight * 0.89)
 
 setcolor = "#000000"
 
