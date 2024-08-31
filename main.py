@@ -52,8 +52,8 @@ _parser.add_argument("-k", "--priv-key",
                      help="private key",
                      required=True)
 _parser.add_argument("--compress-path",
-                     help="enables pre-compression of files in 'www' folder (default True)",
-                     default=True,
+                     help="enables pre-compression of files in 'www' folder (default False)",
+                     default=False,
                      action="store_true")
 _parser.add_argument("--disable-ssl",
                      help="SSL for HTTPs encrypted connection (default True)",
