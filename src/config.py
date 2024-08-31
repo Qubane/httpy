@@ -32,4 +32,6 @@ FILE_MAN_PATH_MAP = {
     "/robots.txt":      {"path": "www/robots.txt", "compress": False},
     "/favicon.ico":     {"path": "www/favicon.ico", "compress": True},
     "/css/styles.css":  {"path": "www/css/styles.css", "compress": True},
+
+    "/testing/pyscript": {"path": "www/pyscript.html", "compress": True},
 }
