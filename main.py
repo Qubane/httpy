@@ -66,10 +66,9 @@ if not ARGS.disable_ssl and (ARGS.certificate is None or ARGS.private_key is Non
     _parser.error("enabled SSL requires CERTIFICATE and PRIVATE_KEY arguments")
 
 
-class HTTPServer:
+class HTTPyServer:
     """
-    The mightier HTTP server!
-    Now uses threading
+    Tiny HTTPy server
     """
 
     def __init__(
@@ -135,15 +134,42 @@ class HTTPServer:
         else:  # if ssl is off -> assign generic socket
             self.sock = http_socket
 
+    def bind_listen(self):
+        """
+        Binds socket to 0.0.0.0:port and starts listening
+        """
+
+        self.sock.bind(('', self.port))
+        self.sock.listen()
+
+    def reconnect(self):
+        """
+        Reconnects HTTPy server
+        """
+
+        # stop all threads
+        self.stop_event.set()
+        for thread in self.client_threads:
+            thread.join()
+
+        # ensure closed socket
+        self.sock.close()
+
+        # make and bind listen socket
+        self.make_socket()
+        self.bind_listen()
+
+        # clear the event
+        self.stop_event.clear()
+
     def start(self):
         """
         Method to start the web server
         """
 
         # bind and start listening to port
-        self.sock.bind(('', self.port))
+        self.bind_listen()
         self.sock.setblocking(False)
-        self.sock.listen()
 
         def _accept_client():
             client = self._accept()
@@ -311,10 +337,9 @@ class HTTPServer:
                 if len(self.client_threads) < CLIENT_MAX_AMOUNT:
                     return self.sock.accept()[0]
             except OSError as e:
-                if e.winerror == 10038:
-                    self.make_socket()
-                    # TODO: make reconnect
-                else:
+                if e.winerror == 10038:  # operation on something that is not a socket
+                    self.reconnect()
+                else:  # anything else
                     pass
             except (ssl.SSLError, BlockingIOError):
                 pass
@@ -354,7 +379,7 @@ def main():
             regen=True,
             verbose=ARGS.verbose)
 
-    server = HTTPServer(
+    server = HTTPyServer(
         port=ARGS.port,
         path_map=path_map,
         keypair=(ARGS.certificate, ARGS.private_key),
