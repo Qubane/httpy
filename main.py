@@ -45,12 +45,10 @@ _parser.add_argument("-p", "--port",
                      help="binding port (default 13700)",
                      type=int,
                      default=13700)
-_parser.add_argument("-c", "--cert",
-                     help="certificate (or fullchain.pem)",
-                     required=True)
-_parser.add_argument("-k", "--priv-key",
-                     help="private key",
-                     required=True)
+_parser.add_argument("-c", "--certificate",
+                     help="certificate (or fullchain.pem)")
+_parser.add_argument("-k", "--private-key",
+                     help="private key")
 _parser.add_argument("--compress-path",
                      help="enables pre-compression of files in 'www' folder (default False)",
                      default=False,
@@ -64,6 +62,8 @@ _parser.add_argument("-v", "--verbose",
                      default=False,
                      action="store_true")
 ARGS = _parser.parse_args()
+if not ARGS.disable_ssl and (ARGS.certificate is None or ARGS.private_key is None):
+    _parser.error("enabled SSL requires CERTIFICATE and PRIVATE_KEY arguments")
 
 
 class HTTPServer:
@@ -357,7 +357,7 @@ def main():
     server = HTTPServer(
         port=ARGS.port,
         path_map=path_map,
-        keypair=(ARGS.cert, ARGS.priv_key),
+        keypair=(ARGS.certificate, ARGS.private_key),
         enable_ssl=not ARGS.disable_ssl)
     server.start()
 
