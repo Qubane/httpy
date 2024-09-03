@@ -337,7 +337,7 @@ class HTTPyServer:
                 if len(self.client_threads) < CLIENT_MAX_AMOUNT:
                     return self.sock.accept()[0]
             except OSError as e:
-                if e.winerror == 10038:  # operation on something that is not a socket
+                if e.errno == 38:  # operation on something that is not a socket
                     self.reconnect()
                 else:  # anything else
                     pass
