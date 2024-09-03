@@ -341,6 +341,7 @@ class HTTPyServer:
             except OSError as e:
                 if e.errno == 38:  # operation on something that is not a socket
                     self.reconnect()
+                    logging.info("Socket reconnected")
                 else:  # anything else
                     pass
             time.sleep(SOCKET_ACK_INTERVAL)
