@@ -78,26 +78,21 @@ class HTTPServer:
             port: int,
             path_map: dict[str, dict],
             enable_ssl: bool = True,
-            key_pair: tuple[str, str] | None = None
+            keypair: tuple[str, str] | None = None
     ):
         """
         :param port: binding port
         :param enable_ssl: use https
         :param path_map: path map
-        :param key_pair: fullchain.pem + privkey.pem
+        :param keypair: fullchain.pem + privkey.pem
         """
 
         # Sockets
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if enable_ssl:
-            # SSL context
-            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-            context.check_hostname = False
-            context.load_cert_chain(certfile=key_pair[0], keyfile=key_pair[1])
-            self.sock: _usocket = context.wrap_socket(sock, server_side=True)
-        else:
-            self.sock: _usocket = sock
         self.port: int = port
+        self.sock: _usocket | None = None
+        self.ssl_enabled: bool = enable_ssl
+        self.ssl_context: ssl.SSLContext | None = None
+        self.make_socket(keypair)
 
         # client thread list
         self.client_threads: list[threading.Thread] = []
@@ -119,6 +114,26 @@ class HTTPServer:
         self.stop_event.set()
         for thread in self.client_threads:
             thread.join()
+
+    def make_socket(self, keypair: tuple | None = None):
+        """
+        Binds server to 0.0.0.0:PORT.
+        """
+
+        http_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if self.ssl_enabled and self.ssl_context is None:  # if ssl is on, but ssl context is None
+            # if keypair was not given, raise an exception
+            if keypair is None:
+                raise KeyError("Key pair was not provided; unable to create ssl context.")
+
+            # create new ssl context
+            self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            self.ssl_context.check_hostname = False
+            self.ssl_context.load_cert_chain(certfile=keypair[0], keyfile=keypair[1])
+        if self.ssl_enabled:  # if ssl is on -> wrap socket
+            self.sock = self.ssl_context.wrap_socket(http_socket, server_side=True)
+        else:  # if ssl is off -> assign generic socket
+            self.sock = http_socket
 
     def start(self):
         """
@@ -295,7 +310,13 @@ class HTTPServer:
             try:
                 if len(self.client_threads) < CLIENT_MAX_AMOUNT:
                     return self.sock.accept()[0]
-            except (ssl.SSLError, OSError, BlockingIOError):
+            except OSError as e:
+                if e.winerror == 10038:
+                    self.make_socket()
+                    # TODO: make reconnect
+                else:
+                    pass
+            except (ssl.SSLError, BlockingIOError):
                 pass
             time.sleep(SOCKET_ACK_INTERVAL)
         return None
@@ -336,7 +357,7 @@ def main():
     server = HTTPServer(
         port=ARGS.port,
         path_map=path_map,
-        key_pair=(ARGS.cert, ARGS.priv_key),
+        keypair=(ARGS.cert, ARGS.priv_key),
         enable_ssl=not ARGS.disable_ssl)
     server.start()
 
