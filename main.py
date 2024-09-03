@@ -336,13 +336,13 @@ class HTTPyServer:
             try:
                 if len(self.client_threads) < CLIENT_MAX_AMOUNT:
                     return self.sock.accept()[0]
+            except (ssl.SSLError, BlockingIOError):
+                pass
             except OSError as e:
                 if e.errno == 38:  # operation on something that is not a socket
                     self.reconnect()
                 else:  # anything else
                     pass
-            except (ssl.SSLError, BlockingIOError):
-                pass
             time.sleep(SOCKET_ACK_INTERVAL)
         return None
 
