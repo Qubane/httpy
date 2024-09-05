@@ -168,3 +168,4 @@ cython_debug/
 /fullchain.pem
 /privkey.pem
 /logs/
+/www/pdf/

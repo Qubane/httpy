@@ -33,5 +33,8 @@ FILE_MAN_PATH_MAP = {
     "/favicon.ico":     {"path": "www/favicon.ico", "compress": True},
     "/css/styles.css":  {"path": "www/css/styles.css", "compress": True},
 
+    "/study":           {"path": "www/study.html", "compress": True},
+    "/study/books/*":   {"path": "www/pdf/*", "compress": True},
+
     "/testing/pyscript": {"path": "www/pyscript.html", "compress": True},
 }
