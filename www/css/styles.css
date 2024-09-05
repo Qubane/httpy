@@ -4,6 +4,10 @@
   background: transparent;
 }
 
+a {
+  color: #7FFFD4
+}
+
 p, li {
   padding-top: 4px;
 }
