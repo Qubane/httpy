@@ -15,6 +15,7 @@ from src.config import *
 from src.request import *
 from src.status_code import *
 
+
 # typing
 _usocket = socket.socket | ssl.SSLSocket
 
