@@ -15,6 +15,14 @@ class Request:
         self.path_args: dict[str, str | None] = dict()
 
     @staticmethod
+    def construct(raw_request: bytes):
+        """
+        Constructs request for raw bytes
+        :param raw_request: bytes of request
+        :return: Request
+        """
+
+    @staticmethod
     def create(raw_request: bytes):
         """
         Creates self class from raw request
