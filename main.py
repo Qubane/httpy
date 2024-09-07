@@ -97,6 +97,7 @@ class HTTPyServer:
         """
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setblocking(False)
         if self.ssl_ctx is None:  # context doesn't exist -> ssl is disabled
             self.sock = sock
         else:  # ssl is enabled
@@ -114,6 +115,10 @@ class HTTPyServer:
         """
         Starts the HTTPy Server
         """
+
+        # make and bind server socket
+        self._make_socket()
+        self._bind_listen()
 
         # main loop
         while not self.halted.is_set():
@@ -182,7 +187,7 @@ class HTTPyServer:
                 # handle request
                 self._client_request_handler(client, request)
         except Exception as e:
-            logging.warning("ignoring error:", exc_info=e)
+            logging.warning("ignoring exception in thread:", exc_info=e)
         self.semaphore.release()
 
         try:
@@ -296,7 +301,7 @@ class HTTPyServer:
 
     def _accept(self) -> unified_socket | None:
         """
-        socket.accept, but for more graceful closing
+        socket.socket.accept(), but for graceful exit handling
         """
 
         while not self.halted.is_set():
