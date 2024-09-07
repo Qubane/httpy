@@ -72,7 +72,10 @@ class HTTPyServer:
     Tiny HTTPy server
     """
 
-    def __init__(self, port: int, keypair: tuple[str, str] | None, disable_ssl: bool = False):
+    def __init__(self, port: int, keypair: tuple[str, str] | None, path_map: dict, disable_ssl: bool = False):
+        # path map
+        self.path_map: dict[str, dict] = path_map
+
         # sockets
         self.port: int = port
         self.sock: unified_socket | None = None
