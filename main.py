@@ -161,7 +161,7 @@ class HTTPyServer:
         if client is None:
             return
 
-        threading.Thread(args=[client]).start()
+        threading.Thread(target=self._client_thread, args=[client]).start()
 
     def _client_thread(self, client: unified_socket):
         """
@@ -240,7 +240,7 @@ class HTTPyServer:
         buffer = bytearray()
         size = 0
         timer = SOCKET_TIMER
-        while not self.stop_event.is_set() and timer > 0:
+        while not self.halted.is_set() and timer > 0:
             try:
                 buffer += client.recv(BUFFER_LENGTH)
                 if buffer[-4:] == b'\r\n\r\n':
@@ -291,7 +291,7 @@ class HTTPyServer:
                     return
                 time.sleep(SOCKET_ACK_INTERVAL)
                 timer -= 1
-            if self.stop_event.is_set() or timer <= 0:
+            if self.halted.is_set() or timer <= 0:
                 return
 
     def _accept(self) -> unified_socket | None:
@@ -299,9 +299,9 @@ class HTTPyServer:
         socket.accept, but for more graceful closing
         """
 
-        while not self.stop_event.is_set():
+        while not self.halted.is_set():
             try:
-                if len(self.client_threads) < CLIENT_MAX_AMOUNT:
+                if len(threading.enumerate()) < CLIENT_MAX_AMOUNT:
                     return self.sock.accept()[0]
             except (ssl.SSLError, BlockingIOError):
                 pass
