@@ -2,6 +2,9 @@
 LOGGER_PATH = "logs"
 BUFFER_LENGTH = 2**16           # 64 KiB
 BUFFER_MAX_SIZE = 2**30 * 0.5   # 512 MiB
+PATH_MAX_LENGTH = 255           # actually 256
+PATH_ARGS_MAX_COUNT = 32
+PATH_HEADER_MAX_COUNT = 256
 
 # threading
 CLIENT_MAX_AMOUNT = 2**15       # max requests at once, after which the connections are dropped

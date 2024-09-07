@@ -1,6 +1,6 @@
 from typing import Any
-from src.config import BUFFER_LENGTH
 from collections.abc import Generator
+from src.config import *
 from src.status_code import StatusCode
 
 
@@ -19,8 +19,45 @@ class Request:
         """
         Constructs request for raw bytes
         :param raw_request: bytes of request
-        :return: Request
+        :return: Request | None
         """
+
+        request = Request()
+
+        # get type
+        index = raw_request.find(b' ', 0, 10)
+        if index == -1:
+            return None
+        request.type = raw_request[:index].decode("ascii")
+
+        # get path
+        index = raw_request.find(b' ', len(request.type)+1, PATH_MAX_LENGTH+len(request.type))
+        if index == -1:
+            return None
+        raw_path = raw_request[len(request.type)+1:index].decode("ascii")
+        q_split = raw_path.split("?", maxsplit=1)
+        request.path = q_split[0]
+
+        # get args
+        raw_args = q_split[1] if len(q_split) == 2 else ""
+        for raw_arg in raw_args.split("&", maxsplit=PATH_ARGS_MAX_COUNT):
+            split = raw_arg.split("=", maxsplit=1)
+            if len(split) == 2:                         # if there is a key value pair present
+                request.path_args[split[0]] = split[1]
+            elif len(split) == 1 and split[0] != "":    # if there is only a key present (and it's a valid key)
+                request.path_args[split[0]] = None
+
+        # get headers
+        header_data = raw_request.split(b'\r\n', maxsplit=PATH_HEADER_MAX_COUNT)
+        for raw_header in header_data:
+            if len(pair := raw_header.decode("utf8").split(":", maxsplit=1)) == 2:
+                key, val = pair
+                val = val.strip()
+
+                # set attribute to key value pair
+                setattr(request, key, val)
+
+        return request
 
     @staticmethod
     def create(raw_request: bytes):
