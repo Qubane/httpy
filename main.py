@@ -17,7 +17,7 @@ from src.status_code import *
 
 
 # typing
-_usocket = socket.socket | ssl.SSLSocket
+unified_socket = socket.socket | ssl.SSLSocket
 
 # logging
 if not os.path.exists(f"{LOGGER_PATH}"):
@@ -72,38 +72,21 @@ class HTTPyServer:
     Tiny HTTPy server
     """
 
-    def __init__(
-            self,
-            *,
-            port: int,
-            path_map: dict[str, dict],
-            enable_ssl: bool = True,
-            keypair: tuple[str, str] | None = None
-    ):
-        """
-        :param port: binding port
-        :param enable_ssl: use https
-        :param path_map: path map
-        :param keypair: fullchain.pem + privkey.pem
-        """
-
-        # Sockets
+    def __init__(self, port: int, keypair: tuple[str, str] | None, disable_ssl: bool = False):
+        # sockets
         self.port: int = port
-        self.sock: _usocket | None = None
-        self.ssl_enabled: bool = enable_ssl
-        self.ssl_context: ssl.SSLContext | None = None
-        self.make_socket(keypair)
+        self.sock: unified_socket | None = None
+        self.ssl_ctx: ssl.SSLContext | None = None
+        if not disable_ssl:
+            self.ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
+            self.ssl_ctx.load_cert_chain(certfile=keypair[0], keyfile=keypair[1])
 
-        # client thread list
-        self.client_threads: list[threading.Thread] = []
-        self.semaphore: threading.Semaphore = threading.Semaphore(CLIENT_MAX_PROCESS)
+        # threading
+        self.semaphore: threading.Semaphore = threading.Semaphore(128)
 
-        # add signaling
-        self.stop_event = threading.Event()
-        signal.signal(signal.SIGINT, self._signal_interrupt)
-
-        # path mapping
-        self.path_map: dict[str, dict] = path_map
+        # signals
+        self.halted: threading.Event = threading.Event()
+        signal.signal(signal.SIGINT, self.stop)
 
     def _signal_interrupt(self, *args):
         """
