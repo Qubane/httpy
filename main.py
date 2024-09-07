@@ -88,103 +88,86 @@ class HTTPyServer:
         self.halted: threading.Event = threading.Event()
         signal.signal(signal.SIGINT, self.stop)
 
-    def _signal_interrupt(self, *args):
+    def _make_socket(self):
         """
-        Checks for CTRL+C keyboard interrupt, to properly stop the HTTP server
-        """
-
-        # stop all threads
-        self.stop_event.set()
-        for thread in self.client_threads:
-            thread.join()
-
-    def make_socket(self, keypair: tuple | None = None):
-        """
-        Binds server to 0.0.0.0:PORT.
+        Creates / recreates the socket
         """
 
-        http_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if self.ssl_enabled and self.ssl_context is None:  # if ssl is on, but ssl context is None
-            # if keypair was not given, raise an exception
-            if keypair is None:
-                raise KeyError("Key pair was not provided; unable to create ssl context.")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        if self.ssl_ctx is None:  # context doesn't exist -> ssl is disabled
+            self.sock = sock
+        else:  # ssl is enabled
+            self.sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
 
-            # create new ssl context
-            self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-            self.ssl_context.check_hostname = False
-            self.ssl_context.load_cert_chain(certfile=keypair[0], keyfile=keypair[1])
-        if self.ssl_enabled:  # if ssl is on -> wrap socket
-            self.sock = self.ssl_context.wrap_socket(http_socket, server_side=True)
-        else:  # if ssl is off -> assign generic socket
-            self.sock = http_socket
-
-    def bind_listen(self):
+    def _bind_listen(self):
         """
-        Binds socket to 0.0.0.0:port and starts listening
+        Binds and listens to socket
         """
 
-        self.sock.bind(('', self.port))
+        self.sock.bind(("", self.port))
         self.sock.listen()
-
-    def reconnect(self):
-        """
-        Reconnects HTTPy server
-        """
-
-        # stop all threads
-        self.stop_event.set()
-        for thread in self.client_threads:
-            thread.join()
-
-        # ensure closed socket
-        self.sock.close()
-
-        # make and bind listen socket
-        self.make_socket()
-        self.bind_listen()
-
-        # clear the event
-        self.stop_event.clear()
 
     def start(self):
         """
-        Method to start the web server
+        Starts the HTTPy Server
         """
 
-        # bind and start listening to port
-        self.bind_listen()
-        self.sock.setblocking(False)
+        # main loop
+        while not self.halted.is_set():
+            try:  # try to accept new client
+                self._accept_call()
+            except Exception as e:  # in case of exception -> log and continue
+                logging.warning("ignoring exception:", exc_info=e)
 
-        def _accept_client():
-            client = self._accept()
-            if client is None:
-                return
-
-            # create thread for new client and append it to the list
-            th = threading.Thread(target=self._client_thread, args=[client])
-            self.client_threads.append(th)
-            th.start()
-
-        # loop
-        while not self.stop_event.is_set():
-            try:
-                _accept_client()
-            except Exception as e:
-                logging.warning(f"ignoring exception:", exc_info=e)
-
-        # close server socket
+        # close server after interrupt
         self.sock.close()
 
-    def _client_thread(self, client: _usocket):
+    def stop(self, *args, **kwargs):
+        """
+        Stops all threads
+        """
+
+        self.halted.set()
+        for thread in threading.enumerate():
+            if thread is threading.main_thread():
+                continue
+            thread.join()
+
+    def reconnect(self):
+        """
+        Reconnects the socket in case of some wierd error
+        """
+
+        # stop the server
+        self.stop()
+        self.sock.close()
+
+        # remake the socket
+        self._make_socket()
+        self._bind_listen()
+
+        # clear halted flag
+        self.halted.clear()
+
+    def _accept_call(self):
+        """
+        Accept call to server socket
+        """
+
+        client = self._accept()
+        if client is None:
+            return
+
+        threading.Thread(args=[client]).start()
+
+    def _client_thread(self, client: unified_socket):
         """
         Handles getting client's requests
         :param client: client ssl socket
         """
 
         self.semaphore.acquire()
-
         try:
-            client.settimeout(10)
             client.setblocking(False)
             request = self._recv_request(client)
             if request is not None:
@@ -197,9 +180,6 @@ class HTTPyServer:
                 self._client_request_handler(client, request)
         except Exception as e:
             logging.warning("ignoring error:", exc_info=e)
-
-        # Remove self from thread list and close the connection
-        self.client_threads.remove(threading.current_thread())
         self.semaphore.release()
 
         try:
@@ -207,7 +187,7 @@ class HTTPyServer:
         except (ssl.SSLError, OSError):
             pass
 
-    def _client_request_handler(self, client: _usocket, request: Request):
+    def _client_request_handler(self, client: unified_socket, request: Request):
         """
         Handles responses to client's requests
         :param client: client
@@ -221,7 +201,7 @@ class HTTPyServer:
                 response = Response(b'', STATUS_CODE_NOT_FOUND)
         self._send_response(client, response)
 
-    def _handle_get(self, client: _usocket, request: Request) -> Response:
+    def _handle_get(self, client: unified_socket, request: Request) -> Response:
         """
         Handles GET requests from a client
         """
@@ -242,12 +222,12 @@ class HTTPyServer:
         else:
             return Response(b'Page not found...', STATUS_CODE_NOT_FOUND)
 
-    def _handle_post(self, client: _usocket, request: Request) -> Response:
+    def _handle_post(self, client: unified_socket, request: Request) -> Response:
         """
         Handles POST request from a client
         """
 
-    def _recv_request(self, client: _usocket) -> Request | None:
+    def _recv_request(self, client: unified_socket) -> Request | None:
         """
         Receive request from client
         :return: request
@@ -274,7 +254,7 @@ class HTTPyServer:
             timer -= 1
         return None
 
-    def _send_response(self, client: _usocket, response: Response) -> None:
+    def _send_response(self, client: unified_socket, response: Response) -> None:
         """
         Send response to client
         """
@@ -311,7 +291,7 @@ class HTTPyServer:
             if self.stop_event.is_set() or timer <= 0:
                 return
 
-    def _accept(self) -> _usocket | None:
+    def _accept(self) -> unified_socket | None:
         """
         socket.accept, but for more graceful closing
         """
@@ -368,7 +348,7 @@ def main():
         port=ARGS.port,
         path_map=path_map,
         keypair=(ARGS.certificate, ARGS.private_key),
-        enable_ssl=not ARGS.disable_ssl)
+        disable_ssl=ARGS.disable_ssl)
     server.start()
 
 
