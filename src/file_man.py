@@ -55,6 +55,8 @@ def generate_path_map(verbose: bool = False) -> dict[str, dict[str, Any]]:
                 headers["Content-Type"] = "image/webp"
             case ".jpg" | ".jpeg":
                 headers["Content-Type"] = "image/jpeg"
+            case ".ico":
+                headers["Content-Type"] = "image/*"
             case _:
                 headers["Content-Type"] = "*/*"
         headers["Content-Length"] = os.path.getsize(val["path"])
