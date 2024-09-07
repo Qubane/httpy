@@ -249,7 +249,7 @@ class HTTPyServer:
             try:
                 buffer += client.recv(BUFFER_LENGTH)
                 if buffer[-4:] == b'\r\n\r\n':
-                    return Request.create(buffer)
+                    return Request.construct(buffer)
                 if size == len(buffer):  # got 0 bytes
                     break
                 if size > BUFFER_MAX_SIZE:

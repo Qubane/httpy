@@ -54,53 +54,13 @@ class Request:
                 key, val = pair
                 val = val.strip()
 
-                # set attribute to key value pair
-                setattr(request, key, val)
-
-        return request
-
-    @staticmethod
-    def create(raw_request: bytes):
-        """
-        Creates self class from raw request
-        :param raw_request: bytes
-        :return: self
-        """
-
-        # new request
-        request = Request()
-
-        # change type and path
-        request.type = raw_request[:raw_request.find(b' ')].decode("utf8")
-        raw_path = raw_request[len(request.type)+1:raw_request.find(b' ', len(request.type)+1)].decode("utf8")
-
-        # remove path args from path
-        request.path = raw_path.split("?")[0]
-
-        # decode path args
-        raw_args = raw_path.split("/")[-1].split("?")
-        raw_args = raw_args[1] if len(raw_args) == 2 else ""
-        for raw_arg in raw_args.split("&"):
-            split = raw_arg.split("=")
-
-            # if there is a key value pair present
-            if len(split) == 2:
-                request.path_args[split[0]] = split[1]
-
-            # if there is only a key present (and it's a valid key)
-            elif len(split) == 1 and split[0] != "":
-                request.path_args[split[0]] = None
-
-        # decode headers
-        for raw_header in raw_request.split(b'\r\n'):
-            if len(pair := raw_header.decode("utf8").split(":")) == 2:
-                key, val = pair
-                val = val.strip()
+                # check attribute
+                if key in request.__dict__:
+                    return None
 
                 # set attribute to key value pair
                 setattr(request, key, val)
 
-        # return request
         return request
 
     def __str__(self):
