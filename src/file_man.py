@@ -13,6 +13,46 @@ def list_path(path) -> list[str]:
     return paths
 
 
+class File:
+    """
+    Class that stores information about the file
+    """
+
+    def __init__(self, filepath: str, compress: bool = True, **kwargs):
+        """
+        :param filepath: path to file
+        :param compress: turn on compression for the file
+        :key ram_stored: always store file in ram
+        """
+
+        self.filepath: str = filepath
+        self._compress: bool = compress
+        self._ram_stored: bool = kwargs.get("ram_stored", False)
+
+        if not os.path.isfile(self.filepath):
+            raise FileNotFoundError(f"File '{self.filepath}' not found.")
+
+    def update_data(self):
+        """
+        Updates data in file
+        """
+
+    def __repr__(self):
+        return self.filepath.__repr__()
+
+
+class FileManager:
+    """
+    Class that manages files
+    """
+
+    def __init__(self):
+        self._path_map: dict[str, File] = dict()
+
+    def get(self, path: str, default=None) -> File:
+        return self._path_map.get(path, default)
+
+
 def generate_path_map(verbose: bool = False) -> dict[str, dict[str, Any]]:
     """
     Generate a full path map for HTTP server
