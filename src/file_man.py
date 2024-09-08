@@ -2,7 +2,6 @@ import os
 import gzip
 import brotli
 import logging
-from src.config import FILE_MAN_PATH_MAP, FILE_MAN_COMPRESSED_PATH
 from src.argparser import ARGS
 
 
@@ -105,56 +104,66 @@ class FileManager:
         # webpath: {"-": ..., "br": ..., "gz": ..., "compressed": ...}
         #                      nullable   nullable
 
-        if ARGS.compress_path:
-            if not os.path.exists(FILE_MAN_COMPRESSED_PATH):
-                os.makedirs(FILE_MAN_COMPRESSED_PATH)
-            self._compressed_br_path: str = os.path.join(FILE_MAN_COMPRESSED_PATH, "br")
+        self._compressed_br_path: str = ""
+        self._compressed_gz_path: str = ""
+
+    def configure(self, path_config: dict[str, dict], compress_path: bool, compressed_path: str):
+        """
+        Configures new path map to the file manager
+        """
+
+        # add compress path directories
+        if compress_path:
+            if not os.path.exists(compressed_path):
+                os.makedirs(compressed_path)
+            self._compressed_br_path: str = os.path.join(compressed_path, "br")
             if not os.path.exists(self._compressed_br_path):
                 os.mkdir(self._compressed_br_path)
-            self._compressed_gz_path: str = os.path.join(FILE_MAN_COMPRESSED_PATH, "gz")
+            self._compressed_gz_path: str = os.path.join(compressed_path, "gz")
             if not os.path.exists(self._compressed_gz_path):
                 os.mkdir(self._compressed_gz_path)
 
-        # generate path map
-        self._generate_path_map()
-        if ARGS.compress_path:
-            self._add_compression()
+        # generate a path map
+        self._generate_path_map(path_config=path_config)
 
-    def _generate_path_map(self):
+    def _generate_path_map(self, path_config: dict[str, dict]):
         """
         Generate full path map for HTTPy Server
         """
 
         if ARGS.verbose:
             logging.info("Started processing path map...")
-        for key in FILE_MAN_PATH_MAP.keys():
-            path = FILE_MAN_PATH_MAP[key]["path"]
+        for key in path_config.keys():
+            path = path_config[key]["path"]
+
+            # check for file's existence
             if not (os.path.exists(path) or os.path.exists(path[:-2])):
-                logging.warning(f"Undefined path for '{key}' ({FILE_MAN_PATH_MAP[key]['path']})")
+                logging.warning(f"Undefined path for '{key}' ({path_config[key]['path']})")
                 continue
+
             if ARGS.verbose:
                 logging.info(f"Processing path '{path}'")
-            if key[-1] == "*":  # list whole directory
+            if key[-1] == "*":  # lists whole directory
                 keypath = path[:-2]
                 for filepath in list_path(keypath):
                     web_path = key[:-1] + filepath.replace(keypath + "/", "")
                     if ARGS.verbose:
                         logging.info(f"Processing '*' path '{filepath}'")
                     file_dictionary = {
-                        "-": File(filepath=filepath, cached=FILE_MAN_PATH_MAP[key].get("caching", False)),
-                        "compressed": FILE_MAN_PATH_MAP[key].get("compress", True)}
+                        "-": File(filepath=filepath, cached=path_config[key].get("caching", False)),
+                        "compressed": path_config[key].get("compress", True)}
                     self._path_map[web_path] = file_dictionary
             else:  # single file
                 file_dictionary = {
-                    "-": File(filepath=path, cached=FILE_MAN_PATH_MAP[key].get("caching", False)),
-                    "compressed": FILE_MAN_PATH_MAP[key].get("compress", True)}
+                    "-": File(filepath=path, cached=path_config[key].get("caching", False)),
+                    "compressed": path_config[key].get("compress", True)}
                 self._path_map[key] = file_dictionary
         if ARGS.verbose:
             logging.info("Finished processing path map.")
 
     def _add_compression(self):
         """
-        Compresses all files that should be compressed
+        Adds compression to current path map. Excludes any
         """
 
         if ARGS.verbose:
