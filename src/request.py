@@ -106,3 +106,6 @@ class Response:
     @property
     def status(self) -> StatusCode:
         return self._status_code
+
+    def __str__(self):
+        return '\n'.join([f"{key}: {val}" for key, val in self.__dict__.items()])
