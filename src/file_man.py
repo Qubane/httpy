@@ -1,9 +1,11 @@
+import json
 import os
 import gzip
 import brotli
 import logging
 from typing import Any
 from src.config import FILE_MAN_PATH_MAP, FILE_MAN_COMPRESSED_PATH
+from src.argparser import ARGS
 
 
 def list_path(path) -> list[str]:
@@ -23,63 +25,76 @@ class File:
     def __init__(self, filepath: str, **kwargs):
         """
         :param filepath: path to file
-        :key compress: turn on compression for the file
-        :key ram_stored: always store file in ram
+        :key cached: always store file in ram
         """
 
-        self.filepaths: list[str] = [filepath, "", ""]
-        # 0 - uncompressed path
-        # 1 - brotli path
-        # 2 - gzip path
-        self._compress: bool = kwargs.get("compress", True)
+        if not os.path.isfile(filepath):
+            raise FileNotFoundError(f"File '{self.filepath}' not found.")
 
-        self._ram_stored: bool = kwargs.get("ram_stored", False)
-        self._data: list[bytes] = [b'' for _ in range(3)]
-        # 0 - uncompressed data
-        # 1 - brotli data
-        # 2 - gzip data
+        self._filepath: str = filepath
+        self._cached: bool = kwargs.get("cached", False)
+        self._data: bytes = b''
 
-        if not os.path.isfile(self.filepaths[0]):
-            raise FileNotFoundError(f"File '{self.filepaths[0]}' not found.")
+        # http related
+        self._content_length: int = 0
+        self._content_type: str = "*/*"
 
-    def update_data(self):
+        self.update_data()
+
+    def update_data(self) -> None:
         """
         Updates data in file
         """
 
-        if self._ram_stored:
-            with open(self.filepaths[0], "rb") as file:
-                self._data[0] = file.read()                     # uncompressed data
-            if self._compress:
-                self._data[1] = brotli.compress(self._data[0])  # br compressed data
-                self._data[2] = brotli.compress(self._data[0])  # gz compressed data
-        elif self._compress:
-            # brotli compression
-            with open(self.filepath_br, "wb") as compressed:
-                br = brotli.Compressor()
-                with open(self.filepath, "rb") as file:
-                    while chunk := file.read(65536):
-                        br.process(chunk)
-                        compressed.write(br.flush())
-            # gzip compression
-            with gzip.open(self.filepath_gz, "wb") as compressed:
-                with open(self.filepath, "rb") as file:
-                    compressed.writelines(file)
+        if self._cached:
+            with open(self.filepath, "rb") as file:
+                self._data = file.read()
+        self._content_length = os.path.getsize(self.filepath)
+
+    def _define_type(self) -> None:
+        """
+        Defines type for itself
+        """
+
+        extension = os.path.splitext(self.filepath)[1]
+        match extension:
+            case ".htm" | ".html":
+                self._content_type = "text/html"
+            case ".css":
+                self._content_type = "text/css"
+            case ".txt":
+                self._content_type = "text/plain"
+            case ".js":
+                self._content_type = "text/javascript"
+            case ".png":
+                self._content_type = "image/png"
+            case ".webp":
+                self._content_type = "image/webp"
+            case ".jpg" | ".jpeg":
+                self._content_type = "image/jpeg"
+            case ".ico":
+                self._content_type = "image/*"
+            case _:
+                self._content_type = "*/*"
 
     @property
-    def filepath(self):
-        return self.filepaths[0]
+    def filepath(self) -> str:
+        return self._filepath
 
     @property
-    def filepath_br(self):
-        return self.filepaths[1]
+    def content_length(self) -> int:
+        return self._content_length
 
     @property
-    def filepath_gz(self):
-        return self.filepaths[2]
+    def content_type(self) -> str:
+        return self._content_type
 
-    def __repr__(self):
-        return self.filepaths.__repr__()
+    @property
+    def cached(self) -> bool:
+        return self.cached
+
+    def __repr__(self) -> str:
+        return f"[file at: '{self._filepath}']"
 
 
 class FileManager:
@@ -88,15 +103,59 @@ class FileManager:
     """
 
     def __init__(self):
-        self._path_map: dict[str, File] = dict()
+        self._path_map: dict[str, dict[str, File]] = dict()
+        # webpath: {"-": ..., "br": ..., "gz": ..., "compressed": ...}
+        #                      nullable   nullable
 
-        if not os.path.exists(FILE_MAN_COMPRESSED_PATH):
-            os.makedirs(FILE_MAN_COMPRESSED_PATH)
-            os.mkdir(os.path.join(FILE_MAN_COMPRESSED_PATH, "br"))
-            os.mkdir(os.path.join(FILE_MAN_COMPRESSED_PATH, "gz"))
+        if ARGS.compress_path:
+            if not os.path.exists(FILE_MAN_COMPRESSED_PATH):
+                os.makedirs(FILE_MAN_COMPRESSED_PATH)
+            if not os.path.exists(os.path.join(FILE_MAN_COMPRESSED_PATH, "br")):
+                os.mkdir(os.path.join(FILE_MAN_COMPRESSED_PATH, "br"))
+            if not os.path.exists(os.path.join(FILE_MAN_COMPRESSED_PATH, "gz")):
+                os.mkdir(os.path.join(FILE_MAN_COMPRESSED_PATH, "gz"))
 
-    def get(self, path: str, default=None) -> File:
-        return self._path_map.get(path, default)
+        # generate path map
+        self._generate_path_map()
+        if ARGS.compress_path and False:
+            self._add_compression()
+
+    def _generate_path_map(self):
+        """
+        Generate full path map for HTTPy Server
+        """
+
+        if ARGS.verbose:
+            logging.info("Started processing path map...")
+        for key in FILE_MAN_PATH_MAP.keys():
+            path = FILE_MAN_PATH_MAP[key]["path"]
+            if not (os.path.exists(path) or os.path.exists(path[:-2])):
+                logging.warning(f"Undefined path for '{key}' ({FILE_MAN_PATH_MAP[key]['path']})")
+                continue
+            if ARGS.verbose:
+                logging.info(f"Processing path '{path}'")
+            if key[-1] == "*":  # list whole directory
+                keypath = path[:-2]
+                for filepath in list_path(keypath):
+                    web_path = os.path.join(keypath, path)
+                    if ARGS.verbose:
+                        logging.info(f"Processing '*' path '{filepath}'")
+                    file_dictionary = {
+                        "-": File(filepath=filepath, cached=FILE_MAN_PATH_MAP[key].get("caching", False)),
+                        "compressed": FILE_MAN_PATH_MAP[key].get("compress", True)}
+                    self._path_map[web_path] = file_dictionary
+            else:  # single file
+                file_dictionary = {
+                    "-": File(filepath=path, cached=FILE_MAN_PATH_MAP[key].get("caching", False)),
+                    "compressed": FILE_MAN_PATH_MAP[key].get("compress", True)}
+                self._path_map[key] = file_dictionary
+        if ARGS.verbose:
+            logging.info("Finished processing path map.")
+
+    def _add_compression(self):
+        """
+        Compresses all files that should be compressed
+        """
 
 
 def generate_path_map(verbose: bool = False) -> dict[str, dict[str, Any]]:
