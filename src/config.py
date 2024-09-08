@@ -26,7 +26,7 @@ API_VERSIONS = {
 FILE_MAN_COMPRESSED_PATH = "compress"
 FILE_MAN_PATH_MAP = {
     # external
-    "/":                {"path": "www/index.html", "compress": True},
+    "/":                {"path": "www/index.html", "compress": True, "caching": True},
     "/about":           {"path": "www/about.html", "compress": True},
     "/testing":         {"path": "www/testing.html", "compress": True},
     "/projects":        {"path": "www/projects.html", "compress": True},
