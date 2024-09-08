@@ -139,6 +139,8 @@ class FileManager:
 
         # generate a path map
         self._generate_path_map(path_config=path_config)
+        if compress_path:
+            self._add_compression()
 
     def _generate_path_map(self, path_config: dict[str, dict]) -> None:
         """
