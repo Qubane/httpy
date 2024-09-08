@@ -139,7 +139,7 @@ class FileManager:
             if key[-1] == "*":  # list whole directory
                 keypath = path[:-2]
                 for filepath in list_path(keypath):
-                    web_path = os.path.join(keypath, path).replace("\\", "/")
+                    web_path = key[:-1] + filepath.replace(keypath + "/", "")
                     if ARGS.verbose:
                         logging.info(f"Processing '*' path '{filepath}'")
                     file_dictionary = {
@@ -183,7 +183,7 @@ class FileManager:
                         compress.write(br.flush())
             file_dictionary["br"] = File(filepath=path, cached=file_dictionary["-"].cached)
             if ARGS.verbose:
-                logging.info(f"Finishing brotli compression for file '{file_dictionary['-'].filepath}'")
+                logging.info(f"Finished brotli compression for file '{file_dictionary['-'].filepath}'")
 
             # gzip compression
             path = os.path.join(self._compressed_gz_path, file_dictionary["-"].filepath)
@@ -194,7 +194,7 @@ class FileManager:
                     compress.writelines(file)
             file_dictionary["gz"] = File(filepath=path, cached=file_dictionary["-"].cached)
             if ARGS.verbose:
-                logging.info(f"Finishing gzip compression for file '{file_dictionary['-'].filepath}'")
+                logging.info(f"Finished gzip compression for file '{file_dictionary['-'].filepath}'")
         if ARGS.verbose:
             logging.info("Finished file compression.")
 
