@@ -38,6 +38,7 @@ class File:
         self._content_length: int = 0
         self._content_type: str = "*/*"
 
+        self._define_type()
         self.update_data()
 
     def update_data(self) -> None:
