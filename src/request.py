@@ -1,7 +1,8 @@
+import logging
 from typing import Any
 from collections.abc import Generator
 from src.config import *
-from src.status_code import StatusCode
+from src.status_code import StatusCode, STATUS_CODE_NOT_FOUND
 
 
 class Request:
@@ -72,30 +73,32 @@ class Response:
     Server response
     """
 
-    def __init__(self, data: bytes, status: StatusCode, headers: dict[str, Any] = None, **kwargs):
+    def __init__(
+            self,
+            data: bytes | None = None,
+            data_stream: Generator[bytes, None, None] | None = None,
+            status: StatusCode | None = None,
+            headers: dict[str, str] | None = None):
         """
-
         :param data: response data
+        :param data_stream: stream of data
         :param status: response status code
         :param headers: headers to include
-        :key compress: compress data or not
-        :key data_stream: stream of data
         """
 
-        self.data: bytes = data
-        self.data_stream: Generator[bytes, None, None] | None = kwargs.get("data_stream")
-        self.status: StatusCode = status
+        self._data: bytes | None = data
+        self._data_stream: Generator[bytes, None, None] | None = data_stream
+        self._status_code: StatusCode = status if status is not None else STATUS_CODE_NOT_FOUND
         self.headers: dict[str, Any] = headers if headers is not None else dict()
 
-        # # check for content-length when using data_stream
-        # if self.data_stream is not None and self.headers.get("Content-Length") is None:
-        #     raise Exception("Undefined length for data stream")
+        if self._data is None and self._data_stream is None:
+            self._data = b'server did not respond...'
 
     def get_data_stream(self):
-        if self.data_stream is None:
-            def generator() -> bytes:
-                for i in range(0, len(self.data), BUFFER_LENGTH):
-                    yield self.data[i:i+BUFFER_LENGTH]
-            return generator()
-        else:
-            return self.data_stream
+        if self._data_stream:
+            return self._data_stream
+
+        def gen() -> bytes:
+            for i in range(0, len(self._data), BUFFER_LENGTH):
+                yield self._data[i:i+BUFFER_LENGTH]
+        return gen()
