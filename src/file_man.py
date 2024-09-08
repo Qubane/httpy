@@ -91,7 +91,7 @@ class File:
 
     @property
     def cached(self) -> bool:
-        return self.cached
+        return self._cached
 
     def __repr__(self) -> str:
         return f"[file at: '{self._filepath}']"
@@ -110,10 +110,12 @@ class FileManager:
         if ARGS.compress_path:
             if not os.path.exists(FILE_MAN_COMPRESSED_PATH):
                 os.makedirs(FILE_MAN_COMPRESSED_PATH)
-            if not os.path.exists(os.path.join(FILE_MAN_COMPRESSED_PATH, "br")):
-                os.mkdir(os.path.join(FILE_MAN_COMPRESSED_PATH, "br"))
-            if not os.path.exists(os.path.join(FILE_MAN_COMPRESSED_PATH, "gz")):
-                os.mkdir(os.path.join(FILE_MAN_COMPRESSED_PATH, "gz"))
+            self._compressed_br_path: str = os.path.join(FILE_MAN_COMPRESSED_PATH, "br")
+            if not os.path.exists(self._compressed_br_path):
+                os.mkdir(self._compressed_br_path)
+            self._compressed_gz_path: str = os.path.join(FILE_MAN_COMPRESSED_PATH, "gz")
+            if not os.path.exists(self._compressed_gz_path):
+                os.mkdir(self._compressed_gz_path)
 
         # generate path map
         self._generate_path_map()
@@ -157,7 +159,44 @@ class FileManager:
         Compresses all files that should be compressed
         """
 
+        if ARGS.verbose:
+            logging.info("Started file compression...")
+        for file_dictionary in self._path_map.values():
+            if ARGS.verbose:
+                logging.info(f"Processing file '{file_dictionary['-'].filepath}'")
 
+            # skip if not compressed
+            if not file_dictionary["compressed"]:
+                if ARGS.verbose:
+                    logging.info(f"Skipping file '{file_dictionary['-'].filepath}'; compression forced off")
+                continue
+
+            # brotli compression
+            path = os.path.join(self._compressed_br_path, file_dictionary["-"].filepath)
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+            with open(path, "wb") as compress:
+                br = brotli.Compressor()
+                with open(file_dictionary["-"].filepath, "rb") as file:
+                    while chunk := file.read(65536):
+                        br.process(chunk)
+                        compress.write(br.flush())
+            file_dictionary["br"] = File(filepath=path, cached=file_dictionary["-"].cached)
+            if ARGS.verbose:
+                logging.info(f"Finishing brotli compression for file '{file_dictionary['-'].filepath}'")
+
+            # gzip compression
+            path = os.path.join(self._compressed_gz_path, file_dictionary["-"].filepath)
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+            with gzip.open(path, "wb") as compress:
+                with open(file_dictionary["-"].filepath, "rb") as file:
+                    compress.writelines(file)
+            file_dictionary["gz"] = File(filepath=path, cached=file_dictionary["-"].cached)
+            if ARGS.verbose:
+                logging.info(f"Finishing gzip compression for file '{file_dictionary['-'].filepath}'")
+        if ARGS.verbose:
+            logging.info("Finished file compression.")
 
 
 def generate_path_map(verbose: bool = False) -> dict[str, dict[str, Any]]:
@@ -231,48 +270,48 @@ def compress_path_map(path_map: dict[str, dict[str, Any]],
     Compresses all files using brotli
     """
 
-    import gzip
-    import htmlmin
-    if not os.path.exists(path_prefix):
-        os.mkdir(path_prefix)
-    for val in path_map.values():
-        filepath = f"{path_prefix}/{val["path"]}"
-        if not val["compress"]:
-            continue
-        if not os.path.exists((dirs := os.path.dirname(filepath))):  # add missing folders
-            os.makedirs(dirs)
-        if not os.path.exists(filepath) or regen:
-            if val["headers"]["Content-Type"] == "text/html":
-                with open(filepath, "wb") as comp:
-                    with open(val["path"], "rb") as file:
-                        comp.write(
-                            gzip.compress(htmlmin.minify(
-                                file.read().decode("utf-8"),
-                                remove_comments=True,
-                                remove_empty_space=True,
-                                remove_all_empty_space=True,
-                                reduce_boolean_attributes=True).encode("utf-8")))
-            else:
-                with gzip.open(filepath, "wb") as comp:
-                    with open(val["path"], "rb") as file:
-                        comp.writelines(file)
-
-        val["path"] = filepath
-        val["headers"]["Content-Length"] = os.path.getsize(filepath)
-        val["headers"]["Content-Encoding"] = "gzip"
-
-    if verbose:
-        logging.info("COMPRESSED PATH:")
-        max_key_len = max([len(x) for x in path_map.keys()])
-        max_val_len = max([len(x["path"]) for x in path_map.values()])
-        max_size_len = max([len(x["headers"]["Content-Length"].__repr__()) for x in path_map.values()])
-        logging.info(f"{'web': ^{max_key_len}} | {'path': ^{max_val_len}} | {'size': ^{max_size_len}}")
-        logging.info(f"{'=' * max_key_len}=#={'=' * max_val_len}=#={'=' * max_size_len}")
-        for key, val in path_map.items():
-            logging.info(
-                f"{key: <{max_key_len}} | "
-                f"{val['path']: <{max_val_len}} | "
-                f"{val['headers']['Content-Length']: <{max_size_len}}")
-        logging.info(f"END OF LIST. {len(path_map)}")
+    # import gzip
+    # import htmlmin
+    # if not os.path.exists(path_prefix):
+    #     os.mkdir(path_prefix)
+    # for val in path_map.values():
+    #     filepath = f"{path_prefix}/{val["path"]}"
+    #     if not val["compress"]:
+    #         continue
+    #     if not os.path.exists((dirs := os.path.dirname(filepath))):  # add missing folders
+    #         os.makedirs(dirs)
+    #     if not os.path.exists(filepath) or regen:
+    #         if val["headers"]["Content-Type"] == "text/html":
+    #             with open(filepath, "wb") as comp:
+    #                 with open(val["path"], "rb") as file:
+    #                     comp.write(
+    #                         gzip.compress(htmlmin.minify(
+    #                             file.read().decode("utf-8"),
+    #                             remove_comments=True,
+    #                             remove_empty_space=True,
+    #                             remove_all_empty_space=True,
+    #                             reduce_boolean_attributes=True).encode("utf-8")))
+    #         else:
+    #             with gzip.open(filepath, "wb") as comp:
+    #                 with open(val["path"], "rb") as file:
+    #                     comp.writelines(file)
+    #
+    #     val["path"] = filepath
+    #     val["headers"]["Content-Length"] = os.path.getsize(filepath)
+    #     val["headers"]["Content-Encoding"] = "gzip"
+    #
+    # if verbose:
+    #     logging.info("COMPRESSED PATH:")
+    #     max_key_len = max([len(x) for x in path_map.keys()])
+    #     max_val_len = max([len(x["path"]) for x in path_map.values()])
+    #     max_size_len = max([len(x["headers"]["Content-Length"].__repr__()) for x in path_map.values()])
+    #     logging.info(f"{'web': ^{max_key_len}} | {'path': ^{max_val_len}} | {'size': ^{max_size_len}}")
+    #     logging.info(f"{'=' * max_key_len}=#={'=' * max_val_len}=#={'=' * max_size_len}")
+    #     for key, val in path_map.items():
+    #         logging.info(
+    #             f"{key: <{max_key_len}} | "
+    #             f"{val['path']: <{max_val_len}} | "
+    #             f"{val['headers']['Content-Length']: <{max_size_len}}")
+    #     logging.info(f"END OF LIST. {len(path_map)}")
 
     return path_map
