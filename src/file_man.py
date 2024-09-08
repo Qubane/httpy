@@ -4,6 +4,7 @@ import brotli
 import logging
 from src.argparser import ARGS
 from src.config import BUFFER_LENGTH
+from collections.abc import Generator
 
 
 def list_path(path) -> list[str]:
@@ -75,7 +76,7 @@ class File:
             case _:
                 self._content_type = "*/*"
 
-    def get_data_stream(self) -> bytes:
+    def get_data_stream(self) -> Generator[bytes, None, None]:
         """
         Yields data from file
         """
