@@ -1,7 +1,9 @@
 import os
+import gzip
+import brotli
 import logging
 from typing import Any
-from src.config import FILE_MAN_PATH_MAP
+from src.config import FILE_MAN_PATH_MAP, FILE_MAN_COMPRESSED_PATH
 
 
 def list_path(path) -> list[str]:
@@ -18,27 +20,66 @@ class File:
     Class that stores information about the file
     """
 
-    def __init__(self, filepath: str, compress: bool = True, **kwargs):
+    def __init__(self, filepath: str, **kwargs):
         """
         :param filepath: path to file
-        :param compress: turn on compression for the file
+        :key compress: turn on compression for the file
         :key ram_stored: always store file in ram
         """
 
-        self.filepath: str = filepath
-        self._compress: bool = compress
-        self._ram_stored: bool = kwargs.get("ram_stored", False)
+        self.filepaths: list[str] = [filepath, "", ""]
+        # 0 - uncompressed path
+        # 1 - brotli path
+        # 2 - gzip path
+        self._compress: bool = kwargs.get("compress", True)
 
-        if not os.path.isfile(self.filepath):
-            raise FileNotFoundError(f"File '{self.filepath}' not found.")
+        self._ram_stored: bool = kwargs.get("ram_stored", False)
+        self._data: list[bytes] = [b'' for _ in range(3)]
+        # 0 - uncompressed data
+        # 1 - brotli data
+        # 2 - gzip data
+
+        if not os.path.isfile(self.filepaths[0]):
+            raise FileNotFoundError(f"File '{self.filepaths[0]}' not found.")
 
     def update_data(self):
         """
         Updates data in file
         """
 
+        if self._ram_stored:
+            with open(self.filepaths[0], "rb") as file:
+                self._data[0] = file.read()                     # uncompressed data
+            if self._compress:
+                self._data[1] = brotli.compress(self._data[0])  # br compressed data
+                self._data[2] = brotli.compress(self._data[0])  # gz compressed data
+        elif self._compress:
+            # brotli compression
+            with open(self.filepath_br, "wb") as compressed:
+                br = brotli.Compressor()
+                with open(self.filepath, "rb") as file:
+                    while chunk := file.read(65536):
+                        br.process(chunk)
+                        compressed.write(br.flush())
+            # gzip compression
+            with gzip.open(self.filepath_gz, "wb") as compressed:
+                with open(self.filepath, "rb") as file:
+                    compressed.writelines(file)
+
+    @property
+    def filepath(self):
+        return self.filepaths[0]
+
+    @property
+    def filepath_br(self):
+        return self.filepaths[1]
+
+    @property
+    def filepath_gz(self):
+        return self.filepaths[2]
+
     def __repr__(self):
-        return self.filepath.__repr__()
+        return self.filepaths.__repr__()
 
 
 class FileManager:
@@ -48,6 +89,11 @@ class FileManager:
 
     def __init__(self):
         self._path_map: dict[str, File] = dict()
+
+        if not os.path.exists(FILE_MAN_COMPRESSED_PATH):
+            os.makedirs(FILE_MAN_COMPRESSED_PATH)
+            os.mkdir(os.path.join(FILE_MAN_COMPRESSED_PATH, "br"))
+            os.mkdir(os.path.join(FILE_MAN_COMPRESSED_PATH, "gz"))
 
     def get(self, path: str, default=None) -> File:
         return self._path_map.get(path, default)
