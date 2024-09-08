@@ -185,7 +185,7 @@ class HTTPyServer:
             case "GET":
                 response = self._handle_get(client, request)
             case _:
-                response = Response(b'', STATUS_CODE_NOT_FOUND)
+                response = Response(b'Unable to process any request, other than GET')
         self._send_response(client, response)
 
     def _handle_get(self, client: unified_socket, request: Request) -> Response:
@@ -193,18 +193,36 @@ class HTTPyServer:
         Handles GET requests from a client
         """
 
+        # get supported compression algorithms
+        encodings = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
+
         split_path = request.path.split("/", maxsplit=16)[1:]
         if self.fileman.exists(request.path):  # assume browser
-            return Response(b'', STATUS_CODE_OK, headers, data_stream=filedata)
+            file_dict = self.fileman.get_file_dict(request.path)
+            headers = {
+                "Content-Type": file_dict["-"].content_type,
+                "Content-Length": file_dict["-"].content_length}
+            data_stream = file_dict["-"].get_data_stream()
+            if ARGS.compress_path and file_dict["compressed"]:
+                if "br" in encodings:  # brotli compression
+                    headers["Content-Encoding"] = "br"
+                    headers["Content-Length"] = file_dict["br"].content_length
+                    data_stream = file_dict["br"].get_data_stream()
+                elif "gzip" in encodings:  # gzip compression
+                    headers["Content-Encoding"] = "gzip"
+                    headers["Content-Length"] = file_dict["gz"].content_length
+                    data_stream = file_dict["gz"].get_data_stream()
+            return Response(
+                status=STATUS_CODE_OK, headers=headers, data_stream=data_stream)
         elif len(split_path) >= 2 and split_path[0] in API_VERSIONS:  # assume script
             # unsupported API version
             if not API_VERSIONS[split_path[0]]:
-                return Response(b'API unavailable / deprecated', STATUS_CODE_BAD_REQUEST)
+                return Response(b'API unavailable / deprecated', status=STATUS_CODE_BAD_REQUEST)
 
             # return API response
             return APIv1.api_call(client, request)
         else:
-            return Response(b'Page not found...', STATUS_CODE_NOT_FOUND)
+            return Response(b'Page not found...', status=STATUS_CODE_NOT_FOUND)
 
     def _handle_post(self, client: unified_socket, request: Request) -> Response:
         """
