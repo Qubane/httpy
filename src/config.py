@@ -37,7 +37,7 @@ FILE_MAN_PATH_MAP = {
     "/css/styles.css":  {"path": "www/css/styles.css", "compress": True},
 
     "/study":           {"path": "www/study.html", "compress": True},
-    "/study/books/*":   {"path": "www/pdf/*", "compress": True},
+    "/study/books/*":   {"path": "www/pdf/*", "compress": False},
 
     "/testing/pyscript": {"path": "www/pyscript.html", "compress": True},
 }
