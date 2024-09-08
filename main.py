@@ -43,9 +43,17 @@ class HTTPyServer:
     Tiny HTTPy server
     """
 
-    def __init__(self, port: int, keypair: tuple[str, str] | None, path_map: dict, disable_ssl: bool = False):
-        # path map
-        self.path_map: dict[str, dict] = path_map
+    def __init__(
+            self,
+            port: int,
+            keypair: tuple[str, str] | None,
+            path_config: dict,
+            compress_path: bool,
+            compressed_path: str,
+            disable_ssl: bool = False):
+        # file manager
+        self.fileman: file_man.FileManager = file_man.FileManager()
+        self.fileman.configure(path_config=path_config, compress_path=compress_path, compressed_path=compressed_path)
 
         # sockets
         self.port: int = port
@@ -186,15 +194,12 @@ class HTTPyServer:
         """
 
         split_path = request.path.split("/", maxsplit=16)[1:]
-        if request.path in self.path_map:  # assume browser
-            filedata = self.fetch_file(request.path)
-            headers = self.fetch_file_headers(request.path)
+        if self.fileman.exists(request.path):  # assume browser
             return Response(b'', STATUS_CODE_OK, headers, data_stream=filedata)
         elif len(split_path) >= 2 and split_path[0] in API_VERSIONS:  # assume script
             # unsupported API version
             if not API_VERSIONS[split_path[0]]:
-                if request.type == "GET":
-                    return Response(b'API unavailable / deprecated', STATUS_CODE_BAD_REQUEST)
+                return Response(b'API unavailable / deprecated', STATUS_CODE_BAD_REQUEST)
 
             # return API response
             return APIv1.api_call(client, request)
@@ -290,42 +295,13 @@ class HTTPyServer:
             time.sleep(SOCKET_ACK_INTERVAL)
         return None
 
-    def fetch_file_headers(self, path: str) -> dict[str, Any] | None:
-        """
-        Fetcher file header data
-        :param path: filepath
-        :return: headers
-        """
-
-        if path in self.path_map:
-            return self.path_map[path]["headers"]
-        return None
-
-    def fetch_file(self, path: str) -> Generator[bytes, None, None] | None:
-        """
-        Fetches file
-        :param path: filepath
-        :return: data stream
-        """
-
-        if path in self.path_map:
-            with open(self.path_map[path]["path"], "rb") as file:
-                while msg := file.read(BUFFER_LENGTH):
-                    yield msg
-
 
 def main():
-    path_map = file_man.generate_path_map(verbose=ARGS.verbose)
-    if ARGS.compress_path:
-        path_map = file_man.compress_path_map(
-            path_map,
-            path_prefix=FILE_MAN_COMPRESSED_PATH,
-            regen=True,
-            verbose=ARGS.verbose)
-
     server = HTTPyServer(
         port=ARGS.port,
-        path_map=path_map,
+        path_config=FILE_MAN_PATH_MAP,
+        compress_path=ARGS.compress_path,
+        compressed_path=FILE_MAN_COMPRESSED_PATH,
         keypair=(ARGS.certificate, ARGS.private_key),
         disable_ssl=ARGS.disable_ssl)
     server.start()

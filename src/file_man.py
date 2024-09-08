@@ -3,6 +3,7 @@ import gzip
 import brotli
 import logging
 from src.argparser import ARGS
+from src.config import BUFFER_LENGTH
 
 
 def list_path(path) -> list[str]:
@@ -74,6 +75,19 @@ class File:
             case _:
                 self._content_type = "*/*"
 
+    def get_data_stream(self) -> bytes:
+        """
+        Yields data from file
+        """
+
+        if self.cached:
+            for i in range(0, len(self._data), BUFFER_LENGTH):
+                yield self._data[i:i+BUFFER_LENGTH]
+        else:
+            with open(self.filepath, "rb") as file:
+                while chunk := file.read(BUFFER_LENGTH):
+                    yield chunk
+
     @property
     def filepath(self) -> str:
         return self._filepath
@@ -107,7 +121,7 @@ class FileManager:
         self._compressed_br_path: str = ""
         self._compressed_gz_path: str = ""
 
-    def configure(self, path_config: dict[str, dict], compress_path: bool, compressed_path: str):
+    def configure(self, path_config: dict[str, dict], compress_path: bool, compressed_path: str) -> None:
         """
         Configures new path map to the file manager
         """
@@ -126,7 +140,7 @@ class FileManager:
         # generate a path map
         self._generate_path_map(path_config=path_config)
 
-    def _generate_path_map(self, path_config: dict[str, dict]):
+    def _generate_path_map(self, path_config: dict[str, dict]) -> None:
         """
         Generate full path map for HTTPy Server
         """
@@ -161,7 +175,7 @@ class FileManager:
         if ARGS.verbose:
             logging.info("Finished processing path map.")
 
-    def _add_compression(self):
+    def _add_compression(self) -> None:
         """
         Adds compression to current path map. Excludes any
         """
@@ -204,3 +218,33 @@ class FileManager:
                 logging.info(f"Finished gzip compression for file '{file_dictionary['-'].filepath}'")
         if ARGS.verbose:
             logging.info("Finished file compression.")
+
+    def exists(self, web_path: str) -> bool:
+        """
+        Returns True if given path is valid, False in any other case
+        :param web_path: page path
+        :return: boolean
+        """
+
+        return self._path_map.get(web_path) is not None
+
+    def get_file(self, web_path: str, encoding: str = "-") -> File:
+        """
+        Returns File for given web path
+        :param web_path: page path
+        :param encoding: compression used
+        :return: file with given encoding
+        :raises KeyError: when path doesn't exist
+        """
+
+        return self._path_map[web_path][encoding]
+
+    def get_file_dict(self, web_path: str) -> dict[str, File | bool]:
+        """
+        Returns file dictionary
+        :param web_path: page path
+        :return: file dictionary
+        :raises KeyError: when path doesn't exist
+        """
+
+        return self._path_map[web_path]
