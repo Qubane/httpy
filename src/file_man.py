@@ -117,7 +117,7 @@ class FileManager:
 
         # generate path map
         self._generate_path_map()
-        if ARGS.compress_path and False:
+        if ARGS.compress_path:
             self._add_compression()
 
     def _generate_path_map(self):
@@ -137,7 +137,7 @@ class FileManager:
             if key[-1] == "*":  # list whole directory
                 keypath = path[:-2]
                 for filepath in list_path(keypath):
-                    web_path = os.path.join(keypath, path)
+                    web_path = os.path.join(keypath, path).replace("\\", "/")
                     if ARGS.verbose:
                         logging.info(f"Processing '*' path '{filepath}'")
                     file_dictionary = {
@@ -156,6 +156,8 @@ class FileManager:
         """
         Compresses all files that should be compressed
         """
+
+
 
 
 def generate_path_map(verbose: bool = False) -> dict[str, dict[str, Any]]:
