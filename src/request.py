@@ -94,11 +94,15 @@ class Response:
         if self._data is None and self._data_stream is None:
             self._data = b'server did not respond...'
 
-    def get_data_stream(self):
+    def get_data_stream(self) -> Generator[bytes, None, None]:
         if self._data_stream:
             return self._data_stream
 
-        def gen() -> bytes:
+        def gen() -> Generator[bytes, None, None]:
             for i in range(0, len(self._data), BUFFER_LENGTH):
                 yield self._data[i:i+BUFFER_LENGTH]
         return gen()
+
+    @property
+    def status(self) -> StatusCode:
+        return self._status_code
