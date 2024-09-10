@@ -116,7 +116,7 @@ class HTTPyServer:
 
         self.halted.set()
         for thread in threading.enumerate():
-            if thread is threading.main_thread():
+            if thread is threading.main_thread() or thread.daemon:
                 continue
             thread.join()
 

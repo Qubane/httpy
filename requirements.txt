@@ -1,4 +1,3 @@
-htmlmin==0.1.12
-pyscript~=0.3.2
-Brotli~=1.1.0
-js~=1.0
+Brotli==1.1.0
+js==1.0
+pyscript==0.3.2
