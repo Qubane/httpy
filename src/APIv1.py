@@ -1,11 +1,12 @@
 import random
+from collections.abc import Generator
 from ssl import SSLSocket
 from src.config import *
 from src.request import *
 from src.status_code import *
 
 
-def random_data_gen(size: int, chunk_size: int = 65536) -> bytes:
+def random_data_gen(size: int, chunk_size: int = 65536) -> Generator[bytes, None, None]:
     """
     Generates SIZE bytes of random data in CHUNK_SIZE byte chunks
     :param size: bytes to generate
@@ -76,11 +77,7 @@ def api_call(client: SSLSocket, request: Request) -> Response:
                 return Response(b'', STATUS_CODE_BAD_REQUEST)
 
             return Response(
-                b'',
-                STATUS_CODE_OK,
-                headers={"Content-Length": size},
+                status=STATUS_CODE_OK,
+                headers={"Content-Length": str(size)},
                 data_stream=random_data_gen(size))
-        else:
-            return Response(b'', STATUS_CODE_BAD_REQUEST)
-    else:
-        return Response(b'', STATUS_CODE_BAD_REQUEST)
+    return Response(status=STATUS_CODE_BAD_REQUEST)
