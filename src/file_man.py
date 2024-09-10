@@ -31,6 +31,7 @@ class File:
             raise FileNotFoundError(f"File '{self.filepath}' not found.")
 
         self._filepath: str = filepath
+        self._modification_date: float = 0
         self._cached: bool = kwargs.get("cached", False)
         self._data: bytes = b''
 
@@ -49,6 +50,7 @@ class File:
         if self._cached:
             with open(self.filepath, "rb") as file:
                 self._data = file.read()
+        self._modification_date = os.path.getmtime(self._filepath)
         self._content_length = os.path.getsize(self.filepath)
 
     def _define_type(self) -> None:
