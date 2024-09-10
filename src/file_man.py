@@ -1,4 +1,5 @@
 import os
+import time
 import gzip
 import brotli
 import logging
@@ -145,6 +146,11 @@ class FileManager:
         self._generate_path_map(path_config=path_config)
         if compress_path:
             self._add_compression()
+
+    def _live_update_routine(self):
+        """
+        Updates files where changes were detected
+        """
 
     def _generate_path_map(self, path_config: dict[str, dict]) -> None:
         """
