@@ -50,7 +50,7 @@ class HTTPyServer:
             path_config: dict,
             compress_path: bool,
             compressed_path: str,
-            disable_ssl: bool = False):
+            enable_ssl: bool = False):
         # file manager
         self.fileman: file_man.FileManager = file_man.FileManager()
         self.fileman.configure(path_config=path_config, compress_path=compress_path, compressed_path=compressed_path)
@@ -59,7 +59,7 @@ class HTTPyServer:
         self.port: int = port
         self.sock: unified_socket | None = None
         self.ssl_ctx: ssl.SSLContext | None = None
-        if not disable_ssl:
+        if enable_ssl:
             self.ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
             self.ssl_ctx.load_cert_chain(certfile=keypair[0], keyfile=keypair[1])
 
@@ -321,7 +321,7 @@ def main():
         compress_path=ARGS.compress_path,
         compressed_path=FILE_MAN_COMPRESSED_PATH,
         keypair=(ARGS.certificate, ARGS.private_key),
-        disable_ssl=ARGS.disable_ssl)
+        enable_ssl=ARGS.enable_ssl)
     server.start()
 
 
