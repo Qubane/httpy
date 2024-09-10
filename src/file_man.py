@@ -173,7 +173,6 @@ class FileManager:
                     continue
 
                 file_dictionary["-"].update_data()
-
                 if file_dictionary["compressed"] and ARGS.compress_path:
                     # brotli compression
                     with open(file_dictionary["br"].filepath, "wb") as compress:
