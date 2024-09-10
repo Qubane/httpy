@@ -24,6 +24,10 @@ _parser.add_argument("-v", "--verbose",
                      help="verbose (default False)",
                      default=False,
                      action="store_true")
+_parser.add_argument("-lu", "--live-update",
+                     help="verbose (default False)",
+                     default=False,
+                     action="store_true")
 ARGS = _parser.parse_args()
 if not ARGS.disable_ssl and (ARGS.certificate is None or ARGS.private_key is None):
     _parser.error("enabled SSL requires CERTIFICATE and PRIVATE_KEY arguments")

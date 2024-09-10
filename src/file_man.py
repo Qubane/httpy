@@ -157,8 +157,9 @@ class FileManager:
         if compress_path:
             self._add_compression()
 
-        # start live update routine
-        threading.Thread(target=self._live_update_routine, daemon=True).start()
+        if ARGS.live_update:
+            # start live update routine
+            threading.Thread(target=self._live_update_routine, daemon=True).start()
 
     def _live_update_routine(self) -> None:
         """
@@ -167,26 +168,27 @@ class FileManager:
 
         while True:
             for file_dictionary in self._path_map.values():
-                # skip unmodified files
+                # skip unmodified/uncompressed files
                 if not file_dictionary["-"].is_modified():
                     continue
 
                 file_dictionary["-"].update_data()
 
-                # brotli compression
-                with open(file_dictionary["br"].filepath, "wb") as compress:
-                    br = brotli.Compressor()
-                    with open(file_dictionary["-"].filepath, "rb") as file:
-                        while chunk := file.read(65536):
-                            br.process(chunk)
-                            compress.write(br.flush())
-                file_dictionary["br"].update_data()
+                if file_dictionary["compressed"] and ARGS.compress_path:
+                    # brotli compression
+                    with open(file_dictionary["br"].filepath, "wb") as compress:
+                        br = brotli.Compressor()
+                        with open(file_dictionary["-"].filepath, "rb") as file:
+                            while chunk := file.read(65536):
+                                br.process(chunk)
+                                compress.write(br.flush())
+                    file_dictionary["br"].update_data()
 
-                # gzip compression
-                with gzip.open(file_dictionary["gz"].filepath, "wb") as compress:
-                    with open(file_dictionary["-"].filepath, "rb") as file:
-                        compress.writelines(file)
-                file_dictionary["gz"].update_data()
+                    # gzip compression
+                    with gzip.open(file_dictionary["gz"].filepath, "wb") as compress:
+                        with open(file_dictionary["-"].filepath, "rb") as file:
+                            compress.writelines(file)
+                    file_dictionary["gz"].update_data()
 
                 if ARGS.verbose:
                     logging.info(f"Updated file '{file_dictionary['-'].filepath}'")
