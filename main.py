@@ -158,10 +158,11 @@ class HTTPyServer:
             client.setblocking(False)
             request = self._recv_request(client)
             if request is not None:
-                # log request
-                logging.info(f"IP: {client.getpeername()[0]}")
-                for key, val in request.__dict__.items():
-                    logging.info(f"{key}: {val}")
+                if ARGS.verbose:
+                    # log request
+                    logging.info(f"IP: {client.getpeername()[0]}")
+                    for key, val in request.__dict__.items():
+                        logging.info(f"{key}: {val}")
 
                 # handle request
                 self._client_request_handler(client, request)
