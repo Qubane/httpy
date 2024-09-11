@@ -87,6 +87,10 @@ class File:
                 self._content_type = "image/jpeg"
             case ".ico":
                 self._content_type = "image/*"
+            case ".pdf":
+                self._content_type = "application/pdf"
+            case ".json":
+                self._content_type = "application/json"
             case _:
                 self._content_type = "*/*"
 
