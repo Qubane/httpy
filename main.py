@@ -273,19 +273,13 @@ class HTTPyServer:
         message += b'\r\n'
 
         # send message
-        is_first = True
+        client.sendall(message)
         for packet in response.get_data_stream():
             timer = SOCKET_TIMER
             while timer > 0:
                 try:
-                    # doesn't work with 'else' or if no 'print(is_first)' is present
-                    # I have no clue as to why
-                    if is_first:
-                        client.sendall(message)
-                        is_first = False
-                    if not is_first:
-                        client.sendall(packet)
-                        break
+                    client.sendall(packet)
+                    break
                 except (ssl.SSLWantWriteError, BlockingIOError):
                     pass
                 except (ssl.SSLError, OSError):
