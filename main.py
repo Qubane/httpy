@@ -310,7 +310,7 @@ class HTTPyServer:
                     self.reconnect()
                     logging.info("Socket reconnected")
                 else:  # anything else
-                    logging.warning("Exception:", exc_info=e)
+                    pass
             time.sleep(SOCKET_ACK_INTERVAL)
         return None
 
