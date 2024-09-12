@@ -77,6 +77,7 @@ class HTTPyServer:
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setblocking(False)
+        sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         if self.ssl_ctx is None:  # context doesn't exist -> ssl is disabled
             self.sock = sock
         else:  # ssl is enabled
