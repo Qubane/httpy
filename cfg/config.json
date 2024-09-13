@@ -1,7 +1,8 @@
 {
   "socket": {
     "socket_recv_size": 65536,
-    "socket_send_size": 1048576
+    "socket_send_size": 1048576,
+    "socket_ack_interval": 1e-3
   },
   "logging": {
     "logging_path": "logs",
