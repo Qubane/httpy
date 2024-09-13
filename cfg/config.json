@@ -18,5 +18,8 @@
   },
   "api": {
     "api_versions": ["APIv1"]
+  },
+  "path": {
+    "path_compress_path": "cpd"
   }
 }
