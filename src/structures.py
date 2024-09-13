@@ -66,18 +66,18 @@ class Request:
                 setattr(self, key, val)
 
     @property
-    def type(self):
+    def type(self) -> str:
         return self._type
 
     @property
-    def path(self):
+    def path(self) -> str:
         return self._path
 
     @property
-    def args(self):
+    def args(self) -> dict[str, str]:
         return self._path_args
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '\n'.join([f"{key}: {val}" for key, val in self.__dict__.items()])
 
 
@@ -116,5 +116,5 @@ class Response:
     def status(self) -> StatusCode:
         return self._status
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '\n'.join([f"{key}: {val}" for key, val in self.__dict__.items()])

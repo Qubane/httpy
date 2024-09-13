@@ -19,11 +19,11 @@ class StatusCode:
         return f"{self._code} {self._message}"
 
     @property
-    def code(self):
+    def code(self) -> int:
         return self._code
 
     @property
-    def message(self):
+    def message(self) -> str:
         return self._message
 
 

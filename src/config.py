@@ -28,7 +28,7 @@ class Config:
     FILEMAN_COMPRESS_PATH: str
 
     @classmethod
-    def initialize(cls):
+    def initialize(cls) -> None:
         """
         Reads config files.
         """
