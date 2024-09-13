@@ -3,7 +3,9 @@ HTTPy server basic structures
 """
 
 
+from collections.abc import Generator
 from src.config import Config
+from src.status import StatusCode, STATUS_CODE_NOT_FOUND, STATUS_CODE_OK
 
 
 class Request:
@@ -58,11 +60,56 @@ class Request:
                 # set attribute to key value pair
                 setattr(self, key, val)
 
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def args(self):
+        return self._path_args
+
+    def __str__(self):
+        return '\n'.join([f"{key}: {val}" for key, val in self.__dict__.items()])
+
 
 class Response:
     """
     HTTP response
     """
 
-    def __init__(self):
-        pass
+    def __init__(
+            self,
+            data: bytes | None = None,
+            data_stream: Generator[bytes, None, None] | None = None,
+            status: StatusCode | None = None,
+            headers: dict[str, str] | None = None):
+        self.data: bytes | None = data
+        self._data_stream: Generator[bytes, None, None] | None = data_stream
+        self._status: StatusCode | None = status
+        self.headers: dict[str, str] | None = headers if headers else dict()
+
+        if self.data is None and self._data_stream is None:  # data not present
+            self._status = STATUS_CODE_NOT_FOUND
+        elif self._status is None:  # data present, but no status code
+            self._status = STATUS_CODE_OK
+
+    def get_data_stream(self) -> Generator[bytes, None, None]:
+        if self._data_stream:
+            return self._data_stream
+
+        def gen() -> Generator[bytes, None, None]:
+            for i in range(0, len(self.data), Config.SOCKET_SEND_SIZE):
+                yield self.data[i:i + Config.SOCKET_SEND_SIZE]
+
+        return gen()
+
+    @property
+    def status(self) -> StatusCode:
+        return self._status
+
+    def __str__(self):
+        return '\n'.join([f"{key}: {val}" for key, val in self.__dict__.items()])
