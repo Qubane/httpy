@@ -7,6 +7,7 @@ class Config:
     # sockets
     SOCKET_RECV_SIZE: int
     SOCKET_SEND_SIZE: int
+    SOCKET_ACK_INTERVAL: float
 
     # logging
     LOGGING_PATH: str
@@ -44,6 +45,7 @@ class Config:
         # sockets
         cls.SOCKET_RECV_SIZE = config["socket"]["socket_recv_size"]
         cls.SOCKET_SEND_SIZE = config["socket"]["socket_send_size"]
+        cls.SOCKET_ACK_INTERVAL = config["socket"]["socket_ack_interval"]
 
         # logging
         cls.LOGGING_PATH = config["logging"]["logging_path"]
