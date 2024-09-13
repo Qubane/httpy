@@ -1,7 +1,7 @@
 import ssl
 import socket
-import signal
 import threading
+from time import sleep
 from src.logger import *
 from src.structures import unified_socket
 
@@ -25,14 +25,15 @@ class HTTPyServer:
         self.sock: unified_socket | None = None
         self.ctx: ssl.SSLContext | None = None
         if enable_ssl:
-            self.ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
-            self.ssl_ctx.load_cert_chain(certfile=certificate, keyfile=private_key)
+            self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
+            self.ctx.load_cert_chain(certfile=certificate, keyfile=private_key)
 
         # signaling
+        import signal
         self.halted: threading.Event = threading.Event()
         signal.signal(signal.SIGINT, self.stop)
 
-    def _make_socket(self):
+    def _make_socket(self) -> None:
         """
         Creates / recreates the socket
         """
@@ -40,12 +41,12 @@ class HTTPyServer:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setblocking(False)
         sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
-        if self.ssl_ctx is None:  # context doesn't exist -> ssl is disabled
+        if self.ctx is None:  # context doesn't exist -> ssl is disabled
             self.sock = sock
         else:  # ssl is enabled
-            self.sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
+            self.sock = self.ctx.wrap_socket(sock, server_side=True)
 
-    def _bind_listen(self):
+    def _bind_listen(self) -> None:
         """
         Binds and listens to socket
         """
@@ -53,7 +54,7 @@ class HTTPyServer:
         self.sock.bind(("", self.port))
         self.sock.listen()
 
-    def start(self):
+    def start(self) -> None:
         """
         Starts the HTTPy Server
         """
@@ -65,14 +66,14 @@ class HTTPyServer:
         # main loop
         while not self.halted.is_set():
             try:  # try to accept new client
-                self._accept_call()
+                self._accept_request()
             except Exception as e:  # in case of exception -> log and continue
                 logging.warning("ignoring exception:", exc_info=e)
 
         # close server after interrupt
         self.sock.close()
 
-    def stop(self, *args, **kwargs):
+    def stop(self, *args, **kwargs) -> None:
         """
         Stops all threads
         """
@@ -83,7 +84,7 @@ class HTTPyServer:
                 continue
             thread.join()
 
-    def reconnect(self):
+    def reconnect(self) -> None:
         """
         Reconnects the socket in case of some wierd error
         """
@@ -99,6 +100,38 @@ class HTTPyServer:
         # clear halted flag
         self.halted.clear()
 
+    def _accept_request(self) -> None:
+        """
+        Accepts client's requests
+        """
+
+        client = self._accept()
+        if client is None:
+            return
+
+    def _accept(self) -> unified_socket | None:
+        """
+        Accepts new connections
+        """
+
+        while not self.halted.is_set():
+            if len(threading.enumerate()) > Config.THREADING_MAX_NUMBER:
+                continue
+            try:
+                return self.sock.accept()[0]
+            except BlockingIOError:
+                pass
+            sleep(Config.SOCKET_ACK_INTERVAL)
+
+
+def main():
+    httpy = HTTPyServer(
+        port=13700,
+        certificate=None,
+        private_key=None,
+        enable_ssl=False)
+    httpy.start()
+
 
 if __name__ == '__main__':
-    pass
+    main()
