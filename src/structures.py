@@ -107,10 +107,10 @@ class Response:
         for key, val in self.headers.items():
             msg += f"{key}: {val}\r\n".encode("utf-8")
         yield msg + b'\r\n'
-        if self._data_stream:
+        if self._data_stream is not None:
             for val in self._data_stream:
                 yield val
-        else:
+        elif self.data is not None:
             for i in range(0, len(self.data), Config.SOCKET_SEND_SIZE):
                 yield self.data[i:i + Config.SOCKET_SEND_SIZE]
 
