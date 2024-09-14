@@ -109,8 +109,22 @@ class HTTPyServer:
         if client is None:
             return
 
-        print(self._recv(client))
-        client.close()
+    def _send(self, client: unified_socket, response: Response) -> None:
+        """
+        Send response to client
+        :param client: client connection
+        :param response: response
+        """
+
+        for data in response.get_data_stream():
+            sent = 0
+            while sent < len(data):
+                try:
+                    sent += client.send(data[sent:])
+                except (ssl.SSLWantWriteError, BlockingIOError):
+                    sleep(Config.SOCKET_ACK_INTERVAL)
+                except (ssl.SSLError, OSError):
+                    return
 
     def _recv(self, client: unified_socket) -> Request:
         """
