@@ -1,3 +1,4 @@
+import logging.config
 import ssl
 import socket
 import threading
@@ -63,12 +64,16 @@ class HTTPyServer:
         self._make_socket()
         self._bind_listen()
 
+        logging.info("Server started")
+
         # main loop
         while not self.halted.is_set():
             try:  # try to accept new client
                 self._accept_request()
             except Exception as e:  # in case of exception -> log and continue
                 logging.warning("ignoring exception:", exc_info=e)
+
+        logging.info("Server stopped.")
 
         # close server after interrupt
         self.sock.close()
@@ -77,6 +82,8 @@ class HTTPyServer:
         """
         Stops all threads
         """
+
+        logging.info("Server stopping...")
 
         self.halted.set()
         for thread in threading.enumerate():
@@ -106,8 +113,27 @@ class HTTPyServer:
         """
 
         client = self._accept()
-        if client is None:
-            return
+        if client:
+            threading.Thread(target=self._handle_client, args=(client,)).start()
+
+    def _handle_client(self, client: unified_socket) -> None:
+        """
+        Handles client's connection
+        """
+
+        threading.Thread(target=self._client_daemon, args=(client,), daemon=True).start()
+        timer = Config.THREADING_TIMEOUT / 100
+        while timer > 0 and not self.halted.is_set():
+            sleep(0.1)
+            timer -= 1
+
+    def _client_daemon(self, client: unified_socket):
+        """
+        Client's daemon thread
+        """
+
+        request = self._recv(client)
+        print(request)
 
     def _send(self, client: unified_socket, response: Response) -> None:
         """
