@@ -103,14 +103,16 @@ class Response:
             self._status = STATUS_CODE_OK
 
     def get_data_stream(self) -> Generator[bytes, None, None]:
+        msg = b'HTTP/1.1 ' + self._status.__bytes__() + b'\r\n'
+        for key, val in self.headers.items():
+            msg += f"{key}: {val}\r\n".encode("utf-8")
+        yield msg + b'\r\n'
         if self._data_stream:
-            return self._data_stream
-
-        def gen() -> Generator[bytes, None, None]:
+            for val in self._data_stream:
+                yield val
+        else:
             for i in range(0, len(self.data), Config.SOCKET_SEND_SIZE):
                 yield self.data[i:i + Config.SOCKET_SEND_SIZE]
-
-        return gen()
 
     @property
     def status(self) -> StatusCode:
