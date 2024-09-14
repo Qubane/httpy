@@ -3,7 +3,7 @@ import socket
 import threading
 from time import sleep
 from src.logger import *
-from src.structures import unified_socket
+from src.structures import unified_socket, Request, Response
 
 
 class HTTPyServer:
@@ -109,6 +109,30 @@ class HTTPyServer:
         if client is None:
             return
 
+        print(self._recv(client))
+        client.close()
+
+    def _recv(self, client: unified_socket) -> Request:
+        """
+        Recv request from client
+        :param client: client connection
+        :return: request
+        """
+
+        buffer = bytearray()
+        while not self.halted.is_set():
+            size = len(buffer)
+            try:
+                buffer += client.recv(Config.SOCKET_RECV_SIZE)
+            except (ssl.SSLWantReadError, BlockingIOError):
+                sleep(Config.SOCKET_ACK_INTERVAL)
+            except (ssl.SSLError, OSError):
+                break
+            if buffer[-4:] == b'\r\n\r\n':
+                return Request(buffer)
+            if size == len(buffer) or size > Config.SOCKET_MAX_SIZE:
+                break
+
     def _accept(self) -> unified_socket | None:
         """
         Accepts new connections
@@ -120,8 +144,7 @@ class HTTPyServer:
             try:
                 return self.sock.accept()[0]
             except BlockingIOError:
-                pass
-            sleep(Config.SOCKET_ACK_INTERVAL)
+                sleep(Config.SOCKET_ACK_INTERVAL)
 
 
 def main():
