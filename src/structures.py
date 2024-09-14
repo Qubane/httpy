@@ -5,7 +5,7 @@ HTTPy server basic structures
 
 from ssl import SSLSocket
 from socket import socket
-from collections.abc import Generator
+from collections.abc import Iterable, Generator
 from src.config import Config
 from src.status import StatusCode, STATUS_CODE_NOT_FOUND, STATUS_CODE_OK
 
@@ -89,11 +89,11 @@ class Response:
     def __init__(
             self,
             data: bytes | None = None,
-            data_stream: Generator[bytes, None, None] | None = None,
+            data_stream: Iterable | None = None,
             status: StatusCode | None = None,
             headers: dict[str, str] | None = None):
         self.data: bytes | None = data
-        self._data_stream: Generator[bytes, None, None] | None = data_stream
+        self._data_stream: Iterable | None = data_stream
         self._status: StatusCode | None = status
         self.headers: dict[str, str] | None = headers if headers else dict()
 
