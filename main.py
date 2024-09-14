@@ -4,6 +4,7 @@ import socket
 import threading
 from time import sleep
 from src.logger import *
+from src.status import *
 from src.structures import unified_socket, Request, Response
 
 
@@ -121,7 +122,8 @@ class HTTPyServer:
         Handles client's connection
         """
 
-        threading.Thread(target=self._client_daemon, args=(client,), daemon=True).start()
+        th = threading.Thread(target=self._client_daemon, args=(client,), daemon=True)
+        th.start()
         timer = Config.THREADING_TIMEOUT / 100
         while timer > 0 and not self.halted.is_set():
             sleep(0.1)
@@ -132,8 +134,35 @@ class HTTPyServer:
         Client's daemon thread
         """
 
+        # decode and respond to request
         request = self._recv(client)
-        print(request)
+        if request.type == "GET":
+            response = self._handle_get(request)
+        else:
+            response = Response(data=b'Not implemented :<', status=STATUS_CODE_NOT_IMPLEMENTED)
+
+        # send response
+        response.headers["Connection"] = "close"
+        self._send(client, response)
+
+        # close connection
+        client.close()
+
+    def _handle_get(self, request: Request) -> Response:
+        """
+        Handles GET requests
+        :param request: client's request
+        :return: response to request
+        """
+
+        if request.path == "/":
+            with open("www/index.html", "rb") as file:
+                return Response(data=file.read())
+        elif request.path == "/css/styles.css":
+            with open("www/css/styles.css", "rb") as file:
+                return Response(data=file.read())
+        else:
+            return Response(data=b'nothing :<')
 
     def _send(self, client: unified_socket, response: Response) -> None:
         """
