@@ -1,14 +1,14 @@
 {
-  "/":                 {"path": "www/index.html",      "compress": true, "caching": true },
-  "/about":            {"path": "www/about.html",      "compress": true                  },
-  "/testing":          {"path": "www/testing.html",    "compress": true                  },
-  "/projects":         {"path": "www/projects.html",   "compress": true                  },
-  "/images/*":         {"path": "www/images/*",        "compress": false                 },
-  "/scripts/*":        {"path": "www/scripts/*",       "compress": true                  },
-  "/robots.txt":       {"path": "www/robots.txt",      "compress": false                 },
-  "/favicon.ico":      {"path": "www/favicon.ico",     "compress": true                  },
-  "/css/styles.css":   {"path": "www/css/styles.css",  "compress": true                  },
-  "/study":            {"path": "www/study.html",      "compress": true                  },
-  "/study/books/*":    {"path": "www/pdf/*",           "compress": false                 },
-  "/testing/pyscript": {"path": "www/pyscript.html",   "compress": true                  }
+  "/":                 {"path": "www/index.html",      "compress": true, "cache": true  },
+  "/about":            {"path": "www/about.html",      "compress": true                 },
+  "/testing":          {"path": "www/testing.html",    "compress": true                 },
+  "/projects":         {"path": "www/projects.html",   "compress": true                 },
+  "/images/*":         {"path": "www/images/*",        "compress": false                },
+  "/scripts/*":        {"path": "www/scripts/*",       "compress": true                 },
+  "/robots.txt":       {"path": "www/robots.txt",      "compress": false                },
+  "/favicon.ico":      {"path": "www/favicon.ico",     "compress": true                 },
+  "/css/styles.css":   {"path": "www/css/styles.css",  "compress": true                 },
+  "/study":            {"path": "www/study.html",      "compress": true                 },
+  "/study/books/*":    {"path": "www/pdf/*",           "compress": false                },
+  "/testing/pyscript": {"path": "www/pyscript.html",   "compress": true                 }
 }
