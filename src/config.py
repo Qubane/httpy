@@ -3,6 +3,9 @@ Config manager
 """
 
 
+from typing import Any
+
+
 class Config:
     # sockets
     SOCKET_RECV_SIZE: int
@@ -43,30 +46,10 @@ class Config:
         with open("cfg/config.json", "r", encoding="utf-8") as file:
             config = json.loads(file.read())
 
-        # sockets
-        cls.SOCKET_RECV_SIZE = config["socket"]["socket_recv_size"]
-        cls.SOCKET_SEND_SIZE = config["socket"]["socket_send_size"]
-        cls.SOCKET_ACK_INTERVAL = config["socket"]["socket_ack_interval"]
-        cls.SOCKET_MAX_SIZE = config["socket"]["socket_max_size"]
-
-        # logging
-        cls.LOGGING_PATH = config["logging"]["logging_path"]
-        cls.LOGGING_MAX_SIZE = config["logging"]["logging_max_size"]
-
-        # http
-        cls.HTTP_MAX_PATH_LENGTH = config["http"]["http_max_path_length"]
-        cls.HTTP_MAX_ARG_NUMBER = config["http"]["http_max_arg_number"]
-        cls.HTTP_MAX_HEADER_NUMBER = config["http"]["http_max_header_number"]
-
-        # threading
-        cls.THREADING_MAX_NUMBER = config["threading"]["threading_max_number"]
-        cls.THREADING_TIMEOUT = config["threading"]["threading_timeout"]
-
-        # api
-        cls.API_VERSIONS = config["api"]["api_versions"]
-
-        # file manager (fileman)
-        cls.FILEMAN_COMPRESS_PATH = config["fileman"]["fileman_compress_path"]
+        config: dict[str, dict[str, Any]]
+        for category in config.values():
+            for key, value in category.items():
+                setattr(cls, key.upper(), value)
 
 
 Config.initialize()
