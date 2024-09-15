@@ -81,8 +81,15 @@ class FileContainer:
     Contains multiple files inside
     """
 
-    def __init__(self, filepath: str):
-        pass
+    def __init__(self, filepath: str, compress: bool = True, cache: bool = False):
+        self.uncompressed: File = File(filepath, cached=cache)
+        self.compressed: bool = compress
+
+        if compress:  # if compression is enabled
+            c_filepath = os.path.join(Config.FILEMAN_COMPRESS_PATH, "gzip", filepath)
+            self.gzip_compressed: File = File(c_filepath, cached=cache)
+            c_filepath = os.path.join(Config.FILEMAN_COMPRESS_PATH, "brotli", filepath)
+            self.brotli_compressed: File = File(c_filepath, cached=cache)
 
 
 class FileManager:
