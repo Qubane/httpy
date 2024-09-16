@@ -35,6 +35,7 @@ class File:
 
         self._filepath: str = filepath
         self._filetype: str = "*/*"
+        self._filesize: int = 0
         self._cached: bytes | None = b'empty' if cached else None
 
         self._define_type()
@@ -48,6 +49,7 @@ class File:
         if self._cached is not None:
             with open(self._filepath, "rb") as file:
                 self._cached = file.read()
+        self._filesize = os.path.getsize(self._filepath)
 
     def _define_type(self) -> None:
         """
@@ -98,6 +100,10 @@ class File:
     @property
     def filetype(self) -> str:
         return self._filetype
+
+    @property
+    def size(self) -> int:
+        return self._filesize
 
 
 class FileContainer:
