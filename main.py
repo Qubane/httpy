@@ -5,6 +5,7 @@ import threading
 from time import sleep
 from src.logger import *
 from src.status import *
+from src.fileman import FileManager
 from src.structures import unified_socket, Request, Response
 
 
@@ -20,7 +21,8 @@ class HTTPyServer:
             private_key: str | None = None,
             enable_ssl: bool = False):
         # file manager (fileman)
-        self.fileman = None
+        self.fileman: FileManager = FileManager()
+        self.fileman.update_paths()
 
         # sockets
         self.port: int = port
@@ -136,6 +138,8 @@ class HTTPyServer:
 
         # decode and respond to request
         request = self._recv(client)
+        if request is None:
+            return
         if request.type == "GET":
             response = self._handle_get(request)
         else:
@@ -155,14 +159,35 @@ class HTTPyServer:
         :return: response to request
         """
 
-        if request.path == "/":
-            with open("www/index.html", "rb") as file:
-                return Response(data=file.read())
-        elif request.path == "/css/styles.css":
-            with open("www/css/styles.css", "rb") as file:
-                return Response(data=file.read())
+        # supported compressions
+        encodings = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
+
+        if self.fileman.exists(request.path):
+            container = self.fileman.get_container(request.path)
+            headers = {"Content-Type": container.uncompressed.filetype, "Content-Length": container.uncompressed.size}
+            data_stream = container.uncompressed.get_data_stream()
+            if container.compressed:
+                if "br" in encodings:  # brotli encoding (preferred)
+                    headers["Content-Encoding"] = "br"
+                    headers["Content-Length"] = container.brotli_compressed.size
+                    data_stream = container.brotli_compressed.get_data_stream()
+                elif "gzip" in encodings:  # gzip encoding
+                    headers["Content-Encoding"] = "gzip"
+                    headers["Content-Length"] = container.gzip_compressed.size
+                    data_stream = container.gzip_compressed.get_data_stream()
+            return Response(
+                data_stream=data_stream,
+                status=STATUS_CODE_OK,
+                headers=headers)
         else:
-            return Response(data=b'nothing :<')
+            # This should be wrapped using File class
+            with open("www/err/response.html", "r", encoding="utf-8") as file:
+                data = file.read().format(
+                    status_code="404 Not Found",
+                    error_message=f"Page at '{request.path}' not found :<")
+            return Response(
+                data=data.encode("utf-8"),
+                status=STATUS_CODE_NOT_FOUND)
 
     def _send(self, client: unified_socket, response: Response) -> None:
         """
