@@ -201,15 +201,15 @@ class FileManager:
                     web_filepath = f"{web_dirpath}{filepath[len(real_dirpath):]}"
                     self._path_map[web_filepath] = FileContainer(
                         filepath=filepath,
-                        compress=val.get("compress", self._allow_compression),
-                        cache=val.get("cache", self._cache_everything))
+                        compress=val.get("compress", True) if self._allow_compression else False,
+                        cache=val.get("cache", False) if not self._cache_everything else True)
             else:  # direct path
                 if not os.path.exists(val["path"]):
                     continue  # some logging warning
                 self._path_map[key] = FileContainer(
                     filepath=val["path"],
-                    compress=val.get("compress", self._allow_compression),
-                    cache=val.get("cache", self._cache_everything))
+                    compress=val.get("compress", True) if self._allow_compression else False,
+                    cache=val.get("cache", False) if not self._cache_everything else True)
 
     def exists(self, webpath) -> bool:
         """
