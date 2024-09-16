@@ -200,3 +200,24 @@ class FileManager:
                     filepath=val["path"],
                     compress=val.get("compress", self._allow_compression),
                     cache=val.get("cache", self._cache_everything))
+
+    def exists(self, webpath) -> bool:
+        """
+        Checks if a given path exists
+        :param webpath: client request path
+        :return: True or False
+        """
+
+        return webpath in self._path_map
+
+    def get_container(self, webpath) -> FileContainer:
+        """
+        Returns a file container
+        :param webpath: client's request path
+        :return: FileContainer
+        :raises KeyError: when path is not found
+        """
+
+        if self.exists(webpath):
+            return self._path_map[webpath]
+        raise KeyError("Path not found")
