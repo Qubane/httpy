@@ -195,6 +195,8 @@ class FileManager:
             if key[-1] == "*":  # '*' path
                 web_dirpath = key[:-1]
                 real_dirpath = val["path"][:-1]
+                if not os.path.exists(real_dirpath):
+                    pass  # some logging warning
                 for filepath in list_directory(real_dirpath):
                     web_filepath = f"{web_dirpath}{filepath[len(real_dirpath):]}"
                     self._path_map[web_filepath] = FileContainer(
@@ -202,6 +204,8 @@ class FileManager:
                         compress=val.get("compress", self._allow_compression),
                         cache=val.get("cache", self._cache_everything))
             else:  # direct path
+                if not os.path.exists(val["path"]):
+                    pass  # some logging warning
                 self._path_map[key] = FileContainer(
                     filepath=val["path"],
                     compress=val.get("compress", self._allow_compression),
