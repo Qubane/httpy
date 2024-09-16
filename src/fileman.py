@@ -58,27 +58,27 @@ class File:
 
         match os.path.splitext(self._filepath)[1]:
             case ".htm" | ".html":
-                self._content_type = "text/html"
+                self._filetype = "text/html"
             case ".css":
-                self._content_type = "text/css"
+                self._filetype = "text/css"
             case ".txt":
-                self._content_type = "text/plain"
+                self._filetype = "text/plain"
             case ".js":
-                self._content_type = "text/javascript"
+                self._filetype = "text/javascript"
             case ".png":
-                self._content_type = "image/png"
+                self._filetype = "image/png"
             case ".webp":
-                self._content_type = "image/webp"
+                self._filetype = "image/webp"
             case ".jpg" | ".jpeg":
-                self._content_type = "image/jpeg"
+                self._filetype = "image/jpeg"
             case ".ico":
-                self._content_type = "image/*"
+                self._filetype = "image/*"
             case ".pdf":
-                self._content_type = "application/pdf"
+                self._filetype = "application/pdf"
             case ".json":
-                self._content_type = "application/json"
+                self._filetype = "application/json"
             case _:
-                self._content_type = "*/*"
+                self._filetype = "*/*"
 
     def get_data_stream(self) -> Generator[bytes, None, None]:
         """
