@@ -4,8 +4,8 @@ File Manager for controlling access to files
 
 
 import os
+from logging import Logger
 from collections.abc import Generator
-
 from src.config import Config
 
 
@@ -167,7 +167,8 @@ class FileManager:
     def __init__(
             self,
             allow_compression: bool = False,
-            cache_everything: bool = False):
+            cache_everything: bool = False,
+            logger: Logger | None = None):
         """
         File manager class
         :param allow_compression: allows file compression
@@ -179,6 +180,7 @@ class FileManager:
 
         self._allow_compression: bool = allow_compression
         self._cache_everything: bool = cache_everything
+        self._logger: Logger | None = logger
 
     def update_paths(self):
         """
@@ -191,25 +193,35 @@ class FileManager:
         with open("cfg/paths.json", "r", encoding="utf-8") as file:
             paths: dict[str, dict[str, str | bool]] = json.loads(file.read())
 
+        if self._logger:
+            self._logger.info("Updating paths...")
         for key, val in paths.items():
             if key[-1] == "*":  # '*' path
                 web_dirpath = key[:-1]
                 real_dirpath = val["path"][:-1]
-                if not os.path.exists(real_dirpath):
-                    continue  # some logging warning
+                if not os.path.exists(real_dirpath) and self._logger:  # file not found
+                    self._logger.warning(f"Unable to find directory at '{real_dirpath}'")
+                    continue
                 for filepath in list_directory(real_dirpath):
                     web_filepath = f"{web_dirpath}{filepath[len(real_dirpath):]}"
+                    if self._logger:  # log processed path
+                        self._logger.info(f"Processed '{web_filepath}' -> '{filepath}'")
                     self._path_map[web_filepath] = FileContainer(
                         filepath=filepath,
                         compress=val.get("compress", True) if self._allow_compression else False,
                         cache=val.get("cache", False) if not self._cache_everything else True)
             else:  # direct path
-                if not os.path.exists(val["path"]):
-                    continue  # some logging warning
+                if not os.path.exists(val["path"]) and self._logger:  # file not found
+                    self._logger.warning(f"Unable to find file at '{val['path']}'")
+                    continue
+                if self._logger:  # log processed path
+                    self._logger.info(f"Processed '{key}' -> '{val['path']}'")
                 self._path_map[key] = FileContainer(
                     filepath=val["path"],
                     compress=val.get("compress", True) if self._allow_compression else False,
                     cache=val.get("cache", False) if not self._cache_everything else True)
+        if self._logger:
+            self._logger.info("Paths updated.")
 
     def exists(self, webpath) -> bool:
         """

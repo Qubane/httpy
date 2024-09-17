@@ -21,7 +21,7 @@ class HTTPyServer:
             private_key: str | None = None,
             enable_ssl: bool = False):
         # file manager (fileman)
-        self.fileman: FileManager = FileManager()
+        self.fileman: FileManager = FileManager(logger=logging.getLogger())
         self.fileman.update_paths()
 
         # sockets
