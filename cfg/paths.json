@@ -7,7 +7,7 @@
   "/scripts/*":        {"path": "www/scripts/*",       "compress": true                 },
   "/robots.txt":       {"path": "www/robots.txt",      "compress": false                },
   "/favicon.ico":      {"path": "www/favicon.ico",     "compress": true                 },
-  "/css/styles.css":   {"path": "www/css/styles.css",  "compress": true                 },
+  "/css/styles.css":   {"path": "www/css/styles.css",  "compress": true, "cache": true  },
   "/study":            {"path": "www/study.html",      "compress": true                 },
   "/study/books/*":    {"path": "www/pdf/*",           "compress": false                },
   "/testing/pyscript": {"path": "www/pyscript.html",   "compress": true                 }
