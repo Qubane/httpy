@@ -1,7 +1,7 @@
-import logging.config
 import ssl
 import socket
 import threading
+import logging.config
 from time import sleep
 from src.logger import *
 from src.status import *
@@ -180,13 +180,12 @@ class HTTPyServer:
                 status=STATUS_CODE_OK,
                 headers=headers)
         else:
-            # This should be wrapped using File class
-            with open("www/err/response.html", "r", encoding="utf-8") as file:
-                data = file.read().format(
-                    status_code="404 Not Found",
-                    error_message=f"Page at '{request.path}' not found :<")
+            error = self.fileman.get_container("/err/response").uncompressed.get_full_data().decode("utf-8")
+            error = error.format(
+                status_code="404 Not Found",
+                error_message=f"Page at '{request.path[1:]}' not found :<")
             return Response(
-                data=data.encode("utf-8"),
+                data=error.encode("utf-8"),
                 status=STATUS_CODE_NOT_FOUND)
 
     def _send(self, client: unified_socket, response: Response) -> None:
