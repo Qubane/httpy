@@ -93,6 +93,17 @@ class File:
                 while data := file.read(Config.SOCKET_SEND_SIZE):
                     yield data
 
+    def get_full_data(self) -> bytes:
+        """
+        Returns all data from file
+        """
+
+        if self._cached is not None:  # file is cached
+            return self._cached
+        else:  # file is on the drive
+            with open(self._filepath, "rb") as file:
+                return file.read()
+
     @property
     def filepath(self) -> str:
         return self._filepath
