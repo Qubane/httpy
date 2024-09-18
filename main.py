@@ -60,7 +60,7 @@ class HTTPyServer:
         Binds and listens to socket
         """
 
-        self.sock.bind(("", self.port))
+        self.sock.bind(("0.0.0.0", self.port))
         self.sock.listen()
 
     def start(self) -> None:
