@@ -19,9 +19,14 @@ class HTTPyServer:
             port: int,
             certificate: str | None = None,
             private_key: str | None = None,
-            enable_ssl: bool = False):
+            enable_ssl: bool = False,
+            allow_compression: bool = False,
+            cache_everything: bool = False):
         # file manager (fileman)
-        self.fileman: FileManager = FileManager(logger=logging.getLogger())
+        self.fileman: FileManager = FileManager(
+            allow_compression=allow_compression,
+            cache_everything=cache_everything,
+            logger=logging.getLogger())
         self.fileman.update_paths()
 
         # sockets
@@ -240,12 +245,69 @@ class HTTPyServer:
                 sleep(Config.SOCKET_ACK_INTERVAL)
 
 
+def parse_args():
+    """
+    Parses terminal arguments
+    :return: args
+    """
+
+    from argparse import ArgumentParser
+
+    # parser
+    _parser = ArgumentParser(
+        prog="httpy",
+        description="https web server")
+
+    # add arguments
+    _parser.add_argument("-p", "--port",
+                         help="binding port",
+                         type=int,
+                         required=True)
+    _parser.add_argument("-c", "--certificate",
+                         help="SSL certificate (or fullchain.pem)")
+    _parser.add_argument("-k", "--private-key",
+                         help="SSL private key")
+    _parser.add_argument("--enable-ssl",
+                         help="SSL for HTTPs encrypted connection (default False)",
+                         default=False,
+                         action="store_true")
+    _parser.add_argument("--allow-compression",
+                         help="allows to compress configured files (default False)",
+                         default=False,
+                         action="store_true")
+    _parser.add_argument("--cache-everything",
+                         help="stores ALL files inside cache (including compressed ones) (default False)",
+                         default=False,
+                         action="store_true")
+    _parser.add_argument("-v", "--verbose",
+                         help="verbose (default False)",
+                         default=False,
+                         action="store_true")
+    # TODO: implement live update
+    # _parser.add_argument("-lu", "--live-update",
+    #                      help="updates files in real time (default False)",
+    #                      default=False,
+    #                      action="store_true")
+
+    # parse arguments
+    args = _parser.parse_args()
+    if args.enable_ssl and (args.certificate is None or args.private_key is None):  # check SSL keys
+        _parser.error("enabled SSL requires CERTIFICATE and PRIVATE_KEY arguments")
+
+    # return args
+    return args
+
+
 def main():
+    args = parse_args()
     httpy = HTTPyServer(
-        port=13700,
-        certificate=None,
-        private_key=None,
-        enable_ssl=False)
+        port=args.port,
+        certificate=getattr(args, "certificate", None),
+        private_key=getattr(args, "private-key", None),
+        enable_ssl=args.enable_ssl,
+        allow_compression=args.allow_compression,
+        cache_everything=args.cache_everything
+    )
     httpy.start()
 
 
