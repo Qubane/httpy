@@ -1,3 +1,8 @@
+"""
+HTTP status codes
+"""
+
+
 class StatusCode:
     """
     HTML status code
@@ -14,16 +19,19 @@ class StatusCode:
         return f"{self._code} {self._message}"
 
     @property
-    def code(self):
+    def code(self) -> int:
         return self._code
 
     @property
-    def message(self):
+    def message(self) -> str:
         return self._message
 
 
 # Status codes!
+# 2xx
 STATUS_CODE_OK = StatusCode(200, "OK")
+
+# 4xx
 STATUS_CODE_BAD_REQUEST = StatusCode(400, "Bad Request")
 STATUS_CODE_UNAUTHORIZED = StatusCode(401, "Unauthorized")
 STATUS_CODE_FORBIDDEN = StatusCode(403, "Forbidden")
@@ -32,3 +40,8 @@ STATUS_CODE_PAYLOAD_TOO_LARGE = StatusCode(413, "Payload Too Large")
 STATUS_CODE_URI_TOO_LONG = StatusCode(414, "URI Too Long")
 STATUS_CODE_IM_A_TEAPOT = StatusCode(418, "I'm a teapot")  # I followed mozilla's dev page, it was there
 STATUS_CODE_FUNNY_NUMBER = StatusCode(6969, "UwU")
+
+# 5xx
+STATUS_CODE_INTERNAL_SERVER_ERROR = StatusCode(500, "Internal Server Error")
+STATUS_CODE_NOT_IMPLEMENTED = StatusCode(501, "Not Implemented")
+STATUS_CODE_SERVICE_UNAVAILABLE = StatusCode(503, "Service Unavailable")

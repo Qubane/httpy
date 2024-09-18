@@ -164,8 +164,7 @@ cython_debug/
 /key.pem
 /www/yes.txt
 /www/images/
-/compress/
-/fullchain.pem
-/privkey.pem
 /logs/
 /www/pdf/
+/keys/
+/cpd/

@@ -1,41 +1,12 @@
-"""
-The mighty silly webserver written in python for no good reason
-"""
-import os
 import ssl
-import time
 import socket
-import signal
-import logging
 import threading
-from src import APIv1
-from src import file_man
-from src.request import *
-from src.status_code import *
-from src.argparser import ARGS
-
-
-# typing
-unified_socket = socket.socket | ssl.SSLSocket
-
-# logging
-if not os.path.exists(f"{LOGGER_PATH}"):
-    os.makedirs(f"{LOGGER_PATH}")
-if os.path.isfile(f"{LOGGER_PATH}/latest.log") and os.path.getsize(f"{LOGGER_PATH}/latest.log") > 0:
-    import gzip
-    from datetime import datetime
-    with open(f"{LOGGER_PATH}/latest.log", "rb") as file:
-        with gzip.open(f"{LOGGER_PATH}/{datetime.now().strftime('%d-%m-%y %H-%M-%S')}.log.gz", "wb") as comp:
-            comp.writelines(file)
-    os.remove(f"{LOGGER_PATH}/latest.log")
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler(f"{LOGGER_PATH}/latest.log"),
-        logging.StreamHandler()
-    ]
-)
+import logging.config
+from time import sleep
+from src.logger import *
+from src.status import *
+from src.fileman import FileManager
+from src.structures import unified_socket, Request, Response
 
 
 class HTTPyServer:
@@ -46,31 +17,32 @@ class HTTPyServer:
     def __init__(
             self,
             port: int,
-            keypair: tuple[str, str] | None,
-            path_config: dict,
-            compress_path: bool,
-            compressed_path: str,
-            enable_ssl: bool = False):
-        # file manager
-        self.fileman: file_man.FileManager = file_man.FileManager()
-        self.fileman.configure(path_config=path_config, compress_path=compress_path, compressed_path=compressed_path)
+            certificate: str | None = None,
+            private_key: str | None = None,
+            enable_ssl: bool = False,
+            allow_compression: bool = False,
+            cache_everything: bool = False):
+        # file manager (fileman)
+        self.fileman: FileManager = FileManager(
+            allow_compression=allow_compression,
+            cache_everything=cache_everything,
+            logger=logging.getLogger())
+        self.fileman.update_paths()
 
         # sockets
         self.port: int = port
         self.sock: unified_socket | None = None
-        self.ssl_ctx: ssl.SSLContext | None = None
+        self.ctx: ssl.SSLContext | None = None
         if enable_ssl:
-            self.ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
-            self.ssl_ctx.load_cert_chain(certfile=keypair[0], keyfile=keypair[1])
+            self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
+            self.ctx.load_cert_chain(certfile=certificate, keyfile=private_key)
 
-        # threading
-        self.semaphore: threading.Semaphore = threading.Semaphore(128)
-
-        # signals
+        # signaling
+        import signal
         self.halted: threading.Event = threading.Event()
         signal.signal(signal.SIGINT, self.stop)
 
-    def _make_socket(self):
+    def _make_socket(self) -> None:
         """
         Creates / recreates the socket
         """
@@ -78,12 +50,12 @@ class HTTPyServer:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setblocking(False)
         sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
-        if self.ssl_ctx is None:  # context doesn't exist -> ssl is disabled
+        if self.ctx is None:  # context doesn't exist -> ssl is disabled
             self.sock = sock
         else:  # ssl is enabled
-            self.sock = self.ssl_ctx.wrap_socket(sock, server_side=True)
+            self.sock = self.ctx.wrap_socket(sock, server_side=True)
 
-    def _bind_listen(self):
+    def _bind_listen(self) -> None:
         """
         Binds and listens to socket
         """
@@ -91,7 +63,7 @@ class HTTPyServer:
         self.sock.bind(("", self.port))
         self.sock.listen()
 
-    def start(self):
+    def start(self) -> None:
         """
         Starts the HTTPy Server
         """
@@ -100,20 +72,26 @@ class HTTPyServer:
         self._make_socket()
         self._bind_listen()
 
+        logging.info("Server started")
+
         # main loop
         while not self.halted.is_set():
             try:  # try to accept new client
-                self._accept_call()
+                self._accept_request()
             except Exception as e:  # in case of exception -> log and continue
                 logging.warning("ignoring exception:", exc_info=e)
+
+        logging.info("Server stopped.")
 
         # close server after interrupt
         self.sock.close()
 
-    def stop(self, *args, **kwargs):
+    def stop(self, *args, **kwargs) -> None:
         """
         Stops all threads
         """
+
+        logging.info("Server stopping...")
 
         self.halted.set()
         for thread in threading.enumerate():
@@ -121,7 +99,7 @@ class HTTPyServer:
                 continue
             thread.join()
 
-    def reconnect(self):
+    def reconnect(self) -> None:
         """
         Reconnects the socket in case of some wierd error
         """
@@ -137,188 +115,200 @@ class HTTPyServer:
         # clear halted flag
         self.halted.clear()
 
-    def _accept_call(self):
+    def _accept_request(self) -> None:
         """
-        Accept call to server socket
+        Accepts client's requests
         """
 
         client = self._accept()
-        if client is None:
+        if client:
+            threading.Thread(target=self._handle_client, args=(client,)).start()
+
+    def _handle_client(self, client: unified_socket) -> None:
+        """
+        Handles client's connection
+        """
+
+        th = threading.Thread(target=self._client_daemon, args=(client,), daemon=True)
+        th.start()
+        timer = Config.THREADING_TIMEOUT / 100
+        while timer > 0 and not self.halted.is_set():
+            sleep(0.1)
+            timer -= 1
+
+    def _client_daemon(self, client: unified_socket):
+        """
+        Client's daemon thread
+        """
+
+        # decode and respond to request
+        request = self._recv(client)
+        if request is None:
             return
+        if request.type == "GET":
+            response = self._handle_get(request)
+        else:
+            response = Response(data=b'Not implemented :<', status=STATUS_CODE_NOT_IMPLEMENTED)
 
-        threading.Thread(target=self._client_thread, args=[client]).start()
+        # send response
+        response.headers["Connection"] = "close"
+        self._send(client, response)
 
-    def _client_thread(self, client: unified_socket):
+        # close connection
+        client.close()
+
+    def _handle_get(self, request: Request) -> Response:
         """
-        Handles getting client's requests
-        :param client: client ssl socket
-        """
-
-        self.semaphore.acquire()
-        try:
-            client.setblocking(False)
-            request = self._recv_request(client)
-            if request is not None:
-                if ARGS.verbose:
-                    # log request
-                    logging.info(f"IP: {client.getpeername()[0]}")
-                    for key, val in request.__dict__.items():
-                        logging.info(f"{key}: {val}")
-
-                # handle request
-                self._client_request_handler(client, request)
-        except Exception as e:
-            logging.warning("ignoring exception in thread:", exc_info=e)
-        self.semaphore.release()
-
-        try:
-            client.close()
-        except (ssl.SSLError, OSError):
-            pass
-
-    def _client_request_handler(self, client: unified_socket, request: Request):
-        """
-        Handles responses to client's requests
-        :param client: client
+        Handles GET requests
         :param request: client's request
+        :return: response to request
         """
 
-        match request.type:
-            case "GET":
-                response = self._handle_get(client, request)
-            case _:
-                response = Response(b'Unable to process any request, other than GET')
-        self._send_response(client, response)
-
-    def _handle_get(self, client: unified_socket, request: Request) -> Response:
-        """
-        Handles GET requests from a client
-        """
-
-        # get supported compression algorithms
+        # supported compressions
         encodings = [x.strip() for x in getattr(request, "Accept-Encoding", "").split(",")]
 
-        split_path = request.path.split("/", maxsplit=16)[1:]
-        if self.fileman.exists(request.path):  # assume browser
-            file_dict = self.fileman.get_file_dict(request.path)
-            headers = {
-                "Content-Type": file_dict["-"].content_type,
-                "Content-Length": file_dict["-"].content_length}
-            data_stream = file_dict["-"].get_data_stream()
-            if ARGS.compress_path and file_dict["compressed"]:
-                if "br" in encodings:  # brotli compression
+        if self.fileman.exists(request.path):
+            container = self.fileman.get_container(request.path)
+            headers = {"Content-Type": container.uncompressed.filetype, "Content-Length": container.uncompressed.size}
+            data_stream = container.uncompressed.get_data_stream()
+            if container.compressed:
+                if "br" in encodings:  # brotli encoding (preferred)
                     headers["Content-Encoding"] = "br"
-                    headers["Content-Length"] = file_dict["br"].content_length
-                    data_stream = file_dict["br"].get_data_stream()
-                elif "gzip" in encodings:  # gzip compression
+                    headers["Content-Length"] = container.brotli_compressed.size
+                    data_stream = container.brotli_compressed.get_data_stream()
+                elif "gzip" in encodings:  # gzip encoding
                     headers["Content-Encoding"] = "gzip"
-                    headers["Content-Length"] = file_dict["gz"].content_length
-                    data_stream = file_dict["gz"].get_data_stream()
+                    headers["Content-Length"] = container.gzip_compressed.size
+                    data_stream = container.gzip_compressed.get_data_stream()
             return Response(
-                status=STATUS_CODE_OK, headers=headers, data_stream=data_stream)
-        elif len(split_path) >= 2 and split_path[0] in API_VERSIONS:  # assume script
-            # unsupported API version
-            if not API_VERSIONS[split_path[0]]:
-                return Response(b'API unavailable / deprecated', status=STATUS_CODE_BAD_REQUEST)
-
-            # return API response
-            return APIv1.api_call(client, request)
+                data_stream=data_stream,
+                status=STATUS_CODE_OK,
+                headers=headers)
         else:
-            return Response(b'Page not found...', status=STATUS_CODE_NOT_FOUND)
+            error = self.fileman.get_container("/err/response").uncompressed.get_full_data().decode("utf-8")
+            error = error.format(
+                status_code="404 Not Found",
+                error_message=f"Page at '{request.path[1:]}' not found :<")
+            return Response(
+                data=error.encode("utf-8"),
+                status=STATUS_CODE_NOT_FOUND)
 
-    def _handle_post(self, client: unified_socket, request: Request) -> Response:
+    def _send(self, client: unified_socket, response: Response) -> None:
         """
-        Handles POST request from a client
+        Send response to client
+        :param client: client connection
+        :param response: response
         """
 
-    def _recv_request(self, client: unified_socket) -> Request | None:
+        for data in response.get_data_stream():
+            sent = 0
+            while sent < len(data):
+                try:
+                    sent += client.send(data[sent:])
+                except (ssl.SSLWantWriteError, BlockingIOError):
+                    sleep(Config.SOCKET_ACK_INTERVAL)
+                except (ssl.SSLError, OSError):
+                    return
+
+    def _recv(self, client: unified_socket) -> Request:
         """
-        Receive request from client
+        Recv request from client
+        :param client: client connection
         :return: request
-        :raises: anything that recv raises
         """
 
         buffer = bytearray()
-        size = 0
-        timer = SOCKET_TIMER
-        while not self.halted.is_set() and timer > 0:
+        while not self.halted.is_set():
+            size = len(buffer)
             try:
-                buffer += client.recv(BUFFER_LENGTH)
-                if buffer[-4:] == b'\r\n\r\n':
-                    return Request.construct(buffer)
-                if size == len(buffer):  # got 0 bytes
-                    break
-                if size > BUFFER_MAX_SIZE:
-                    break
-                size = len(buffer)
+                buffer += client.recv(Config.SOCKET_RECV_SIZE)
             except (ssl.SSLWantReadError, BlockingIOError):
-                time.sleep(SOCKET_ACK_INTERVAL)
+                sleep(Config.SOCKET_ACK_INTERVAL)
             except (ssl.SSLError, OSError):
                 break
-            timer -= 1
-        return None
-
-    def _send_response(self, client: unified_socket, response: Response) -> None:
-        """
-        Send response to client
-        """
-
-        # append connection status headers
-        response.headers["Connection"] = "close"
-
-        # generate basic message
-        message = b'HTTP/1.1 ' + response.status.__bytes__() + b'\r\n'
-        for key, value in response.headers.items():
-            message += f"{key}: {value}\r\n".encode("utf8")
-        message += b'\r\n'
-
-        # send message
-        client.sendall(message)
-        for packet in response.get_data_stream():
-            timer = SOCKET_TIMER
-            while timer > 0:
-                try:
-                    client.sendall(packet)
-                    break
-                except (ssl.SSLWantWriteError, BlockingIOError):
-                    pass
-                except (ssl.SSLError, OSError):
-                    return
-                time.sleep(SOCKET_ACK_INTERVAL)
-                timer -= 1
-            if self.halted.is_set() or timer <= 0:
-                return
+            if buffer[-4:] == b'\r\n\r\n':
+                return Request(buffer)
+            if size == len(buffer) or size > Config.SOCKET_MAX_SIZE:
+                break
 
     def _accept(self) -> unified_socket | None:
         """
-        socket.socket.accept(), but for graceful exit handling
+        Accepts new connections
         """
 
         while not self.halted.is_set():
+            if len(threading.enumerate()) > Config.THREADING_MAX_NUMBER:
+                continue
             try:
-                if len(threading.enumerate()) < CLIENT_MAX_AMOUNT:
-                    return self.sock.accept()[0]
-            except (ssl.SSLError, BlockingIOError):
-                pass
-            except OSError as e:
-                if e.errno == 38:  # operation on something that is not a socket
-                    self.reconnect()
-                    logging.info("Socket reconnected")
-                else:  # anything else
-                    pass
-            time.sleep(SOCKET_ACK_INTERVAL)
-        return None
+                return self.sock.accept()[0]
+            except BlockingIOError:
+                sleep(Config.SOCKET_ACK_INTERVAL)
+
+
+def parse_args():
+    """
+    Parses terminal arguments
+    :return: args
+    """
+
+    from argparse import ArgumentParser
+
+    # parser
+    _parser = ArgumentParser(
+        prog="httpy",
+        description="https web server")
+
+    # add arguments
+    _parser.add_argument("-p", "--port",
+                         help="binding port",
+                         type=int,
+                         required=True)
+    _parser.add_argument("-c", "--certificate",
+                         help="SSL certificate (or fullchain.pem)")
+    _parser.add_argument("-k", "--private-key",
+                         help="SSL private key")
+    _parser.add_argument("--enable-ssl",
+                         help="SSL for HTTPs encrypted connection (default False)",
+                         default=False,
+                         action="store_true")
+    _parser.add_argument("--allow-compression",
+                         help="allows to compress configured files (default False)",
+                         default=False,
+                         action="store_true")
+    _parser.add_argument("--cache-everything",
+                         help="stores ALL files inside cache (including compressed ones) (default False)",
+                         default=False,
+                         action="store_true")
+    _parser.add_argument("-v", "--verbose",
+                         help="verbose (default False)",
+                         default=False,
+                         action="store_true")
+    # TODO: implement live update
+    # _parser.add_argument("-lu", "--live-update",
+    #                      help="updates files in real time (default False)",
+    #                      default=False,
+    #                      action="store_true")
+
+    # parse arguments
+    args = _parser.parse_args()
+    if args.enable_ssl and (args.certificate is None or args.private_key is None):  # check SSL keys
+        _parser.error("enabled SSL requires CERTIFICATE and PRIVATE_KEY arguments")
+
+    # return args
+    return args
 
 
 def main():
-    server = HTTPyServer(
-        port=ARGS.port,
-        path_config=FILE_MAN_PATH_MAP,
-        compress_path=ARGS.compress_path,
-        compressed_path=FILE_MAN_COMPRESSED_PATH,
-        keypair=(ARGS.certificate, ARGS.private_key),
-        enable_ssl=ARGS.enable_ssl)
-    server.start()
+    args = parse_args()
+    httpy = HTTPyServer(
+        port=args.port,
+        certificate=getattr(args, "certificate", None),
+        private_key=getattr(args, "private-key", None),
+        enable_ssl=args.enable_ssl,
+        allow_compression=args.allow_compression,
+        cache_everything=args.cache_everything
+    )
+    httpy.start()
 
 
 if __name__ == '__main__':
