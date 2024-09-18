@@ -303,7 +303,7 @@ def main():
     httpy = HTTPyServer(
         port=args.port,
         certificate=getattr(args, "certificate", None),
-        private_key=getattr(args, "private-key", None),
+        private_key=getattr(args, "private_key", None),
         enable_ssl=args.enable_ssl,
         allow_compression=args.allow_compression,
         cache_everything=args.cache_everything
