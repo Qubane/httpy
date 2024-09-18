@@ -10,12 +10,14 @@
 - enter `127.0.0.1` in browser path, and you should see the page
 ### Command line arguments
 - `-p / --port` - port to which the server will be binded
-- `-c / --certificate` - SSL certificate (full chain if using certbot)
+- `-c / --certificate` - SSL certificate
 - `-k / --private-key` - SSL private key
-- `--compress-path` - compresses all files in `www` directory (if not explicitly said not to in `src/config.py`)
 - `--enable-ssl` - enables SSL, which allows to connect using https, requires certificate and private key to be present
+- `--allow-compression` - allows to compress files in `www` directory
+- `--cache-everything` - caches ALL files in `www` directory (even compressed ones), obviously uses a lot of ram
 - `-v / --verbose` - prints a lot of information
-- `-lu / --live-update` - live updates files, even when using compression
+
+[//]: # (- `-lu / --live-update` - live updates files, even when using compression)
 
 # Run using docker
 - build image `docker build -t httpy .`
