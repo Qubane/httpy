@@ -283,10 +283,11 @@ def parse_args():
                          help="stores ALL files inside cache (including compressed ones) (default False)",
                          default=False,
                          action="store_true")
-    _parser.add_argument("-v", "--verbose",
-                         help="verbose (default False)",
-                         default=False,
-                         action="store_true")
+    # TODO: implement verbosity check
+    # _parser.add_argument("-v", "--verbose",
+    #                      help="verbose (default False)",
+    #                      default=False,
+    #                      action="store_true")
     # TODO: implement live update
     # _parser.add_argument("-lu", "--live-update",
     #                      help="updates files in real time (default False)",
