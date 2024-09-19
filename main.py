@@ -129,8 +129,7 @@ class HTTPyServer:
         Handles client's connection
         """
 
-        th = threading.Thread(target=self._client_daemon, args=(client,), daemon=True)
-        th.start()
+        threading.Thread(target=self._client_daemon, args=(client,), daemon=True).start()
         timer = Config.THREADING_TIMEOUT / 100
         while timer > 0 and not self.halted.is_set():
             sleep(0.1)
