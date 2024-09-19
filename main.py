@@ -242,6 +242,11 @@ class HTTPyServer:
                 return self.sock.accept()[0]
             except BlockingIOError:
                 sleep(Config.SOCKET_ACK_INTERVAL)
+            except ssl.SSLError as e:
+                if e.reason in ["HTTP_REQUEST", "UNSUPPORTED_PROTOCOL", "SSLV3_ALERT_CERTIFICATE_UNKNOWN"]:
+                    pass
+                else:
+                    raise e
 
 
 def parse_args():
