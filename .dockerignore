@@ -1,0 +1,10 @@
+# github stuff
+*.md
+.git/
+
+# pycharm stuff
+.idea/
+
+# HTTPy server stuff
+logs/
+cpd/
