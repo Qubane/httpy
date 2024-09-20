@@ -243,7 +243,14 @@ class HTTPyServer:
             except BlockingIOError:
                 sleep(Config.SOCKET_ACK_INTERVAL)
             except ssl.SSLError as e:
-                if e.reason in ["HTTP_REQUEST", "UNSUPPORTED_PROTOCOL", "SSLV3_ALERT_CERTIFICATE_UNKNOWN"]:
+                if e.reason in [
+                    "HTTP_REQUEST",
+                    "UNSUPPORTED_PROTOCOL",
+                    "SSLV3_ALERT_CERTIFICATE_UNKNOWN",
+                    "VERSION_TOO_LOW",
+                    "WRONG_VERSION_NUMBER",
+                    "UNEXPECTED_EOF_WHILE_READING",
+                ]:
                     pass
                 else:
                     raise e
