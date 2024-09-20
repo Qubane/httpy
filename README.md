@@ -15,11 +15,11 @@
 - `--enable-ssl` - enables SSL, which allows to connect using https, requires certificate and private key to be present
 - `--allow-compression` - allows to compress files in `www` directory
 - `--cache-everything` - caches ALL files in `www` directory (even compressed ones), obviously uses a lot of ram
-- `-v / --verbose` - prints a lot of information
 
+[//]: # (- `-v / --verbose` - prints a lot of information)
 [//]: # (- `-lu / --live-update` - live updates files, even when using compression)
 
 # Run using docker
 - build image `docker build -t httpy .`
-- start a new service `docker service create --name httpy_server -p 13700:13700 httpy`
+- start a new service `docker run -d -p 13700:13700 httpy -p 13700`
 - `-p A:B` is a port mapping from port host's port `13700 (A)` to container's port `13700 (B)`, change to the port you use
