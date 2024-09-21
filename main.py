@@ -79,6 +79,7 @@ class HTTPyServer:
         while self.is_running:
             try:  # try to accept new client
                 self._accept_request()
+                print(len(threading.enumerate()))
             except Exception as e:  # in case of exception -> log and continue
                 logging.warning("ignoring exception:", exc_info=e)
 
@@ -237,6 +238,8 @@ class HTTPyServer:
                     "UNEXPECTED_EOF_WHILE_READING",
                 ]:
                     raise
+            except ConnectionResetError:
+                pass
 
 
 def parse_args():
