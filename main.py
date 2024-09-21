@@ -38,9 +38,9 @@ class HTTPyServer:
             self.ctx.load_cert_chain(certfile=certificate, keyfile=private_key)
 
         # signaling
-        import signal
-        self.halted: threading.Event = threading.Event()
-        signal.signal(signal.SIGINT, self.stop)
+        from signal import signal, SIGINT
+        self.is_running: bool = False
+        signal(SIGINT, self.stop)
 
     def _make_socket(self) -> None:
         """
@@ -73,9 +73,10 @@ class HTTPyServer:
         self._bind_listen()
 
         logging.info("Server started")
+        self.is_running = True
 
         # main loop
-        while not self.halted.is_set():
+        while self.is_running:
             try:  # try to accept new client
                 self._accept_request()
             except Exception as e:  # in case of exception -> log and continue
@@ -93,7 +94,7 @@ class HTTPyServer:
 
         logging.info("Server stopping...")
 
-        self.halted.set()
+        self.is_running = False
         for thread in threading.enumerate():
             if thread is threading.main_thread() or thread.daemon:
                 continue
@@ -115,7 +116,7 @@ class HTTPyServer:
 
         threading.Thread(target=self._client_daemon, args=(client,), daemon=True).start()
         timer = Config.THREADING_TIMEOUT / 100
-        while timer > 0 and not self.halted.is_set():
+        while timer > 0 and self.is_running:
             sleep(0.1)
             timer -= 1
 
@@ -201,7 +202,7 @@ class HTTPyServer:
         """
 
         buffer = bytearray()
-        while not self.halted.is_set():
+        while self.is_running:
             size = len(buffer)
             try:
                 buffer += client.recv(Config.SOCKET_RECV_SIZE)
@@ -219,7 +220,7 @@ class HTTPyServer:
         Accepts new connections
         """
 
-        while not self.halted.is_set():
+        while self.is_running:
             if len(threading.enumerate()) > Config.THREADING_MAX_NUMBER:
                 continue
             try:
@@ -227,7 +228,7 @@ class HTTPyServer:
             except BlockingIOError:
                 sleep(Config.SOCKET_ACK_INTERVAL)
             except ssl.SSLError as e:
-                if e.reason in [
+                if e.reason not in [
                     "HTTP_REQUEST",
                     "UNSUPPORTED_PROTOCOL",
                     "SSLV3_ALERT_CERTIFICATE_UNKNOWN",
@@ -235,9 +236,7 @@ class HTTPyServer:
                     "WRONG_VERSION_NUMBER",
                     "UNEXPECTED_EOF_WHILE_READING",
                 ]:
-                    pass
-                else:
-                    raise e
+                    raise
 
 
 def parse_args():
