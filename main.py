@@ -212,7 +212,7 @@ class HTTPyServer:
                 break
             if buffer[-4:] == b'\r\n\r\n':
                 return Request(buffer)
-            if size == len(buffer) or size > Config.SOCKET_MAX_SIZE:
+            if size == len(buffer) or size > Config.HTTP_MAX_RECV_SIZE:
                 break
 
     def _accept(self) -> unified_socket | None:

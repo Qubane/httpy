@@ -11,7 +11,6 @@ class Config:
     SOCKET_RECV_SIZE: int
     SOCKET_SEND_SIZE: int
     SOCKET_ACK_INTERVAL: float
-    SOCKET_MAX_SIZE: int
 
     # logging
     LOGGING_PATH: str
@@ -21,6 +20,7 @@ class Config:
     HTTP_MAX_PATH_LENGTH: int
     HTTP_MAX_ARG_NUMBER: int
     HTTP_MAX_HEADER_NUMBER: int
+    HTTP_MAX_RECV_SIZE: int
 
     # threading
     THREADING_MAX_NUMBER: int
