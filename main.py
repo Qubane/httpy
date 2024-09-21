@@ -99,22 +99,6 @@ class HTTPyServer:
                 continue
             thread.join()
 
-    def reconnect(self) -> None:
-        """
-        Reconnects the socket in case of some wierd error
-        """
-
-        # stop the server
-        self.stop()
-        self.sock.close()
-
-        # remake the socket
-        self._make_socket()
-        self._bind_listen()
-
-        # clear halted flag
-        self.halted.clear()
-
     def _accept_request(self) -> None:
         """
         Accepts client's requests
