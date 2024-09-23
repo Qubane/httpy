@@ -76,8 +76,16 @@ class HTTPyServer:
         self._bind_listen()
         self._is_running.set()
 
+        # start server handle thread
+        # maybe that will help with server dying?
+        threading.Thread(target=self._server_handle).start()
+
         # log
         logging.info(f"Server now running on '{': '.join(map(str, self.sock.getsockname()))}'")
+
+        # keep main thread alive
+        while self._is_running.is_set():
+            sleep(0.1)
 
     def stop(self, *args) -> None:
         """
@@ -96,6 +104,14 @@ class HTTPyServer:
 
         # log
         logging.info("Server shutdown.")
+
+    def _server_handle(self):
+        """
+        Main server handle. Handles client connections reception
+        """
+
+        while self._is_running.is_set():
+            sleep(0.1)
 
     def _handle_get(self, request: Request) -> Response:
         """
