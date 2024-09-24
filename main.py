@@ -111,7 +111,34 @@ class HTTPyServer:
         """
 
         while self._is_running.is_set():
-            sleep(0.1)
+            client = self._accept()
+            if client is not None:
+                threading.Thread(target=self._client_handle, args=(client,)).start()
+
+    def _client_handle(self, client: unified_socket):
+        """
+        Main client handle. Handles client connection request processing
+        """
+
+        # try to fetch request
+        request = self._recv(client)
+        if request is None:
+            return
+
+        # get response
+        if request.type == "GET":
+            response = self._handle_get(request)
+        else:
+            response = Response(data=b'Not implemented :<', status=STATUS_CODE_NOT_IMPLEMENTED)
+
+        # modify header to close
+        response.headers["Connection"] = "close"
+
+        # send response
+        self._send(client, response)
+
+        # close connection
+        client.close()
 
     def _handle_get(self, request: Request) -> Response:
         """
@@ -151,13 +178,13 @@ class HTTPyServer:
 
     def _send(self, client: unified_socket, response: Response) -> None:
         """
-        Send response to client
+        Send response to client.
         :param client: client connection
         :param response: response
         """
 
+        sent = 0
         for data in response.get_data_stream():
-            sent = 0
             while sent < len(data):
                 try:
                     sent += client.send(data[sent:])
