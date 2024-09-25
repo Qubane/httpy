@@ -125,6 +125,8 @@ class HTTPyServer:
         if request is None:
             return
 
+        print(request)
+
         # get response
         if request.type == "GET":
             response = self._handle_get(request)
@@ -183,8 +185,8 @@ class HTTPyServer:
         :param response: response
         """
 
-        sent = 0
         for data in response.get_data_stream():
+            sent = 0
             while sent < len(data):
                 try:
                     sent += client.send(data[sent:])
