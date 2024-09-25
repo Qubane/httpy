@@ -39,7 +39,7 @@ class HTTPyServer:
 
         # signaling
         from signal import signal, SIGINT
-        self.is_running: bool = False
+        self._is_running: threading.Event = threading.Event()
         signal(SIGINT, self.stop)
 
     def _make_socket(self) -> None:
@@ -68,75 +68,74 @@ class HTTPyServer:
         Starts the HTTPy Server
         """
 
+        # log
+        logging.info("Starting the server...")
+
         # make and bind server socket
         self._make_socket()
         self._bind_listen()
+        self._is_running.set()
 
-        logging.info("Server started")
-        self.is_running = True
+        # start server handle thread
+        # maybe that will help with server dying?
+        threading.Thread(target=self._server_handle).start()
 
-        # main loop
-        while self.is_running:
-            try:  # try to accept new client
-                self._accept_request()
-                print(len(threading.enumerate()))
-            except Exception as e:  # in case of exception -> log and continue
-                logging.warning("ignoring exception:", exc_info=e)
+        # log
+        logging.info(f"Server now running on '{': '.join(map(str, self.sock.getsockname()))}'")
 
-        logging.info("Server stopped.")
+        # keep main thread alive
+        while self._is_running.is_set():
+            sleep(0.1)
 
-        # close server after interrupt
-        self.sock.close()
-
-    def stop(self, *args, **kwargs) -> None:
+    def stop(self, *args) -> None:
         """
-        Stops all threads
+        Stops the HTTPy server
         """
 
-        logging.info("Server stopping...")
+        # log
+        logging.info("Shutting the server down...")
 
-        self.is_running = False
+        self._is_running.clear()
         for thread in threading.enumerate():
+            # skip main and daemon threads
             if thread is threading.main_thread() or thread.daemon:
                 continue
             thread.join()
 
-    def _accept_request(self) -> None:
+        # log
+        logging.info("Server shutdown.")
+
+    def _server_handle(self):
         """
-        Accepts client's requests
+        Main server handle. Handles client connections reception
         """
 
-        client = self._accept()
-        if client:
-            threading.Thread(target=self._handle_client, args=(client,)).start()
+        while self._is_running.is_set():
+            client = self._accept()
+            sleep(Config.SOCKET_ACK_INTERVAL)
+            if client is not None:
+                threading.Thread(target=self._client_handle, args=(client,)).start()
 
-    def _handle_client(self, client: unified_socket) -> None:
+    def _client_handle(self, client: unified_socket):
         """
-        Handles client's connection
-        """
-
-        threading.Thread(target=self._client_daemon, args=(client,), daemon=True).start()
-        timer = Config.THREADING_TIMEOUT / 100
-        while timer > 0 and self.is_running:
-            sleep(0.1)
-            timer -= 1
-
-    def _client_daemon(self, client: unified_socket):
-        """
-        Client's daemon thread
+        Main client handle. Handles client connection request processing
         """
 
-        # decode and respond to request
+        # try to fetch request
         request = self._recv(client)
         if request is None:
             return
+
+        # get response
         if request.type == "GET":
             response = self._handle_get(request)
         else:
             response = Response(data=b'Not implemented :<', status=STATUS_CODE_NOT_IMPLEMENTED)
 
-        # send response
+        # modify header to close
         response.headers["Connection"] = "close"
+
+        # send response
         self._send(client, response)
 
         # close connection
@@ -180,7 +179,7 @@ class HTTPyServer:
 
     def _send(self, client: unified_socket, response: Response) -> None:
         """
-        Send response to client
+        Send response to client.
         :param client: client connection
         :param response: response
         """
@@ -203,7 +202,7 @@ class HTTPyServer:
         """
 
         buffer = bytearray()
-        while self.is_running:
+        while self._is_running.is_set():
             size = len(buffer)
             try:
                 buffer += client.recv(Config.SOCKET_RECV_SIZE)
@@ -221,7 +220,7 @@ class HTTPyServer:
         Accepts new connections
         """
 
-        while self.is_running:
+        while self._is_running.is_set():
             if len(threading.enumerate()) > Config.THREADING_MAX_NUMBER:
                 continue
             try:
@@ -238,8 +237,6 @@ class HTTPyServer:
                     "UNEXPECTED_EOF_WHILE_READING",
                 ]:
                     raise
-            except ConnectionResetError:
-                pass
 
 
 def parse_args():
