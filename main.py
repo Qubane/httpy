@@ -112,6 +112,7 @@ class HTTPyServer:
 
         while self._is_running.is_set():
             client = self._accept()
+            sleep(Config.SOCKET_ACK_INTERVAL)
             if client is not None:
                 threading.Thread(target=self._client_handle, args=(client,)).start()
 
@@ -124,8 +125,6 @@ class HTTPyServer:
         request = self._recv(client)
         if request is None:
             return
-
-        print(request)
 
         # get response
         if request.type == "GET":
@@ -238,8 +237,6 @@ class HTTPyServer:
                     "UNEXPECTED_EOF_WHILE_READING",
                 ]:
                     raise
-            except ConnectionResetError:
-                pass
 
 
 def parse_args():
