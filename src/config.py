@@ -10,7 +10,6 @@ class Config:
     # sockets
     SOCKET_RECV_SIZE: int
     SOCKET_SEND_SIZE: int
-    SOCKET_ACK_INTERVAL: float
 
     # logging
     LOGGING_PATH: str
