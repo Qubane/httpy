@@ -107,11 +107,11 @@ class FileContainer:
     Contains multiple files inside
     """
 
-    def __init__(self, filepath: str, compress: bool = True, cache: bool = False):
-        self.uncompressed: File = File(filepath, cached=cache)
-        self.compressed: bool = compress
+    def __init__(self, filepath: str, compressed: bool = True, cached: bool = False):
+        self.uncompressed: File = File(filepath, cached=cached)
+        self.compressed: bool = compressed
 
-        if compress:  # if compression is enabled
+        if compressed:  # if compression is enabled
             # gzip compression
             c_filepath = os.path.join(Config.FILEMAN_COMPRESS_PATH, "gzip", filepath)
             if not os.path.exists(c_filepath):  # ensure existence
@@ -119,7 +119,7 @@ class FileContainer:
                     os.makedirs(os.path.dirname(c_filepath))
                 with open(c_filepath, "wb") as f:
                     f.write(b'file')
-            self.gzip_compressed: File = File(c_filepath, cached=cache)
+            self.gzip_compressed: File = File(c_filepath, cached=cached)
 
             # brotli compression
             c_filepath = os.path.join(Config.FILEMAN_COMPRESS_PATH, "brotli", filepath)
@@ -128,7 +128,7 @@ class FileContainer:
                     os.makedirs(os.path.dirname(c_filepath))
                 with open(c_filepath, "wb") as f:
                     f.write(b'file')
-            self.brotli_compressed: File = File(c_filepath, cached=cache)
+            self.brotli_compressed: File = File(c_filepath, cached=cached)
 
             # actually compress files
             self.compress_files()
@@ -153,6 +153,17 @@ class FileContainer:
                 while data := file.read(chunk_size):
                     br.process(data)
                     compressed.write(br.flush())
+
+    def update(self) -> None:
+        """
+        Updates files inside
+        """
+
+        self.uncompressed.update_file()
+        if self.compressed:
+            self.compress_files()
+            self.gzip_compressed.update_file()
+            self.brotli_compressed.update_file()
 
 
 class FileManager:
@@ -224,7 +235,7 @@ class FileManager:
             filepath: str,
             compressed: bool | None,
             cached: bool | None,
-            verbose: bool = False):
+            verbose: bool = False) -> None:
         """
         Updates file container at a given web path.
         :param webpath: web path relative to /
@@ -243,10 +254,11 @@ class FileManager:
         if cached is None:
             cached = True if self._cache_everything else False
 
-        self._path_map[webpath] = FileContainer(
-            filepath=filepath,
-            compress=compressed,
-            cache=cached)
+        if webpath in self._path_map:
+            self._path_map[webpath].update()
+        else:
+            self._path_map[webpath] = FileContainer(
+                filepath=filepath, compressed=compressed, cached=cached)
 
         if verbose and self._logger:
             self._logger.info(f"Processed '{webpath}' -> '{filepath}'")
