@@ -81,6 +81,9 @@ class HTTPyServer:
         :param writer: asyncio.StreamWriter
         """
 
+        request = await self.receive_request(reader)
+        print(request)
+
     def _handle_get(self, request: Request) -> Response:
         """
         Handles GET requests
@@ -116,6 +119,22 @@ class HTTPyServer:
             return Response(
                 data=error.encode("utf-8"),
                 status=STATUS_CODE_NOT_FOUND)
+
+    @staticmethod
+    async def receive_request(reader: asyncio.StreamReader) -> Request:
+        """
+        Receives clients request
+        :param reader: connection reader
+        :return: request
+        """
+
+        buffer = bytearray()
+        while data := await reader.read(Config.SOCKET_RECV_SIZE):
+            buffer += data
+            if buffer[-4:] == b'\r\n\r\n':
+                return Request(buffer)
+            if len(buffer) > Config.HTTP_MAX_RECV_SIZE or len(data) == 0:
+                break
 
 
 def parse_args():
