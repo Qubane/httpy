@@ -8,29 +8,26 @@ from typing import Any
 
 class Config:
     # sockets
-    SOCKET_RECV_SIZE: int
-    SOCKET_SEND_SIZE: int
-    SOCKET_BIND_ADDRESS: str
+    SOCKET_RECV_SIZE: int           # buffer size for recv
+    SOCKET_SEND_SIZE: int           # data split size
+    SOCKET_BIND_ADDRESS: str        # binding address
 
     # logging
-    LOGGING_PATH: str
-    LOGGING_MAX_SIZE: int
+    LOGGING_PATH: str               # path to logs folder
+    LOGGING_MAX_SIZE: int           # WIP; maximum logs folder size
 
     # http
-    HTTP_MAX_PATH_LENGTH: int
-    HTTP_MAX_ARG_NUMBER: int
-    HTTP_MAX_HEADER_NUMBER: int
-    HTTP_MAX_RECV_SIZE: int
-
-    # threading
-    THREADING_MAX_NUMBER: int
-    THREADING_TIMEOUT: int
+    HTTP_MAX_PATH_LENGTH: int       # maximum request path length
+    HTTP_MAX_ARG_NUMBER: int        # maximum number of path arguments
+    HTTP_MAX_HEADER_NUMBER: int     # maximum amount of headers
+    HTTP_MAX_RECV_SIZE: int         # maximum request size (bytes). Affects top variables
+    HTTP_TIMEOUT: float             # client timeout
 
     # api
-    API_VERSIONS: list[str]
+    API_VERSIONS: list[str]         # supported api versions
 
     # file manager (fileman)
-    FILEMAN_COMPRESS_PATH: str
+    FILEMAN_COMPRESS_PATH: str      # path to compressed file tree 'www'
 
     @classmethod
     def initialize(cls) -> None:

@@ -12,10 +12,10 @@
     "http_max_path_length": 512,
     "http_max_arg_number": 16,
     "http_max_header_number": 256,
-    "http_max_recv_size": 536870912
+    "http_max_recv_size": 536870912,
+    "http_timeout": 30000.00
   },
   "threading": {
-    "threading_max_number": 32768,
     "threading_timeout": 30000
   },
   "api": {
