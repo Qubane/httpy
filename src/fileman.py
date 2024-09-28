@@ -9,21 +9,6 @@ from collections.abc import Generator
 from src.config import Config
 
 
-def list_directory(dirpath: str) -> list[str]:
-    """
-    Lists all file in given directory. Returns single file if dirpath is path to a file
-    :param dirpath: path to directory
-    :return: list of paths to files
-    """
-
-    if os.path.isfile(dirpath):  # if dirpath is a file -> return
-        return [dirpath]
-    paths = []
-    for file in os.listdir(dirpath):
-        paths += list_directory(os.path.join(dirpath, file))
-    return paths
-
-
 class File:
     """
     File
@@ -206,33 +191,65 @@ class FileManager:
 
         if self._logger:
             self._logger.info("Updating paths...")
-        for key, val in paths.items():
-            if key[-1] == "*":  # '*' path
-                web_dirpath = key[:-1]
-                real_dirpath = val["path"][:-1]
-                if not os.path.exists(real_dirpath) and self._logger:  # file not found
+        for webpath, arguments in paths.items():
+            if webpath[-1] == "*":  # star path
+                web_dirpath = webpath[:-1]
+                real_dirpath = arguments["path"][:-1]
+                if not os.path.exists(real_dirpath) and self._logger:  # dir not found
                     self._logger.warning(f"Unable to find directory at '{real_dirpath}'")
                     continue
-                for filepath in list_directory(real_dirpath):
-                    web_filepath = f"{web_dirpath}{filepath[len(real_dirpath):]}"
-                    if self._logger:  # log processed path
-                        self._logger.info(f"Processed '{web_filepath}' -> '{filepath}'")
-                    self._path_map[web_filepath] = FileContainer(
-                        filepath=filepath,
-                        compress=val.get("compress", True) if self._allow_compression else False,
-                        cache=val.get("cache", False) if not self._cache_everything else True)
+                for entry in os.scandir(real_dirpath):
+                    if not entry.is_file():
+                        continue
+                    web_filepath = f"{web_dirpath}{entry.path[len(real_dirpath):]}"
+                    self.update_container(
+                        webpath=web_filepath,
+                        filepath=entry.path,
+                        allow_compression=arguments.get("compress") if self._allow_compression else False,
+                        cache=arguments.get("cache") if not self._cache_everything else True,
+                        verbose=True)
             else:  # direct path
-                if not os.path.exists(val["path"]) and self._logger:  # file not found
-                    self._logger.warning(f"Unable to find file at '{val['path']}'")
-                    continue
-                if self._logger:  # log processed path
-                    self._logger.info(f"Processed '{key}' -> '{val['path']}'")
-                self._path_map[key] = FileContainer(
-                    filepath=val["path"],
-                    compress=val.get("compress", True) if self._allow_compression else False,
-                    cache=val.get("cache", False) if not self._cache_everything else True)
+                self.update_container(
+                    webpath=webpath,
+                    filepath=arguments["path"],
+                    allow_compression=arguments.get("compress") if self._allow_compression else False,
+                    cache=arguments.get("cache") if not self._cache_everything else True,
+                    verbose=True)
         if self._logger:
             self._logger.info("Paths updated.")
+
+    def update_container(
+            self,
+            webpath: str,
+            filepath: str,
+            allow_compression: bool | None,
+            cache: bool | None,
+            verbose: bool = False):
+        """
+        Updates file container at a given web path.
+        :param webpath: web path relative to /
+        :param filepath: path to uncompressed file
+        :param allow_compression: allow compression for the file container. (Default True)
+        :param cache: cache the file container. (Default False)
+        :param verbose: log processed file
+        """
+
+        if not os.path.exists(filepath) and self._logger:
+            self._logger.warning(f"Unable to find file at '{filepath}'")
+            return
+
+        if allow_compression is None:
+            allow_compression = True
+        if cache is None:
+            cache = False
+
+        self._path_map[webpath] = FileContainer(
+            filepath=filepath,
+            compress=allow_compression,
+            cache=cache)
+
+        if verbose and self._logger:
+            self._logger.info(f"Processed '{webpath}' -> '{filepath}'")
 
     def exists(self, webpath) -> bool:
         """
