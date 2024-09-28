@@ -74,15 +74,34 @@ class HTTPyServer:
             raise Exception("Cannot stop not started server")
         self.server.close()
 
-    async def client_handle(self, reader, writer):
+    async def client_handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         """
         Handles client connection
         :param reader: asyncio.StreamReader
         :param writer: asyncio.StreamWriter
         """
 
+        # fetch request
         request = await self.receive_request(reader)
-        print(request)
+        if request is None:
+            return
+
+        # process request
+        if request.type == "GET":
+            response = self._handle_get(request)
+        else:
+            response = Response(data=b'Not implemented :<', status=STATUS_CODE_NOT_IMPLEMENTED)
+
+        # modify response
+        response.headers["Connection"] = "close"
+
+        # send response
+        for chunk in response.get_data_stream():
+            writer.write(chunk)
+            await writer.drain()
+
+        # close writer
+        writer.close()
 
     def _handle_get(self, request: Request) -> Response:
         """
