@@ -205,15 +205,15 @@ class FileManager:
                     self.update_container(
                         webpath=web_filepath,
                         filepath=entry.path,
-                        allow_compression=arguments.get("compress") if self._allow_compression else False,
-                        cache=arguments.get("cache") if not self._cache_everything else True,
+                        compressed=arguments.get("compressed"),
+                        cached=arguments.get("cached"),
                         verbose=True)
             else:  # direct path
                 self.update_container(
                     webpath=webpath,
                     filepath=arguments["path"],
-                    allow_compression=arguments.get("compress") if self._allow_compression else False,
-                    cache=arguments.get("cache") if not self._cache_everything else True,
+                    compressed=arguments.get("compressed"),
+                    cached=arguments.get("cached"),
                     verbose=True)
         if self._logger:
             self._logger.info("Paths updated.")
@@ -222,15 +222,15 @@ class FileManager:
             self,
             webpath: str,
             filepath: str,
-            allow_compression: bool | None,
-            cache: bool | None,
+            compressed: bool | None,
+            cached: bool | None,
             verbose: bool = False):
         """
         Updates file container at a given web path.
         :param webpath: web path relative to /
         :param filepath: path to uncompressed file
-        :param allow_compression: allow compression for the file container. (Default True)
-        :param cache: cache the file container. (Default False)
+        :param compressed: allows compression for the file container. (Default True)
+        :param cached: cache the file container. (Default False)
         :param verbose: log processed file
         """
 
@@ -238,15 +238,15 @@ class FileManager:
             self._logger.warning(f"Unable to find file at '{filepath}'")
             return
 
-        if allow_compression is None:
-            allow_compression = True
-        if cache is None:
-            cache = False
+        if compressed is None:
+            compressed = True if self._allow_compression else False
+        if cached is None:
+            cached = True if self._cache_everything else False
 
         self._path_map[webpath] = FileContainer(
             filepath=filepath,
-            compress=allow_compression,
-            cache=cache)
+            compress=compressed,
+            cache=cached)
 
         if verbose and self._logger:
             self._logger.info(f"Processed '{webpath}' -> '{filepath}'")
