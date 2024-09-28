@@ -3,14 +3,9 @@ HTTPy server basic structures
 """
 
 
-from ssl import SSLSocket
-from socket import socket
 from collections.abc import Iterable, Generator
 from src.config import Config
 from src.status import StatusCode, STATUS_CODE_NOT_FOUND, STATUS_CODE_OK
-
-
-unified_socket = SSLSocket | socket
 
 
 class Request:
