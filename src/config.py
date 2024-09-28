@@ -10,6 +10,7 @@ class Config:
     # sockets
     SOCKET_RECV_SIZE: int
     SOCKET_SEND_SIZE: int
+    SOCKET_BIND_ADDRESS: int
 
     # logging
     LOGGING_PATH: str
