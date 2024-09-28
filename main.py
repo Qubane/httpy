@@ -1,12 +1,10 @@
 import ssl
-import socket
-import threading
+import asyncio
 import logging.config
-from time import sleep
 from src.logger import *
 from src.status import *
 from src.fileman import FileManager
-from src.structures import unified_socket, Request, Response
+from src.structures import Request, Response
 
 
 class HTTPyServer:
@@ -30,8 +28,8 @@ class HTTPyServer:
         self.fileman.update_paths()
 
         # sockets
+        self.server: asyncio.Server | None = None
         self.port: int = port
-        self.sock: unified_socket | None = None
         self.ctx: ssl.SSLContext | None = None
         if enable_ssl:
             self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
@@ -39,107 +37,49 @@ class HTTPyServer:
 
         # signaling
         from signal import signal, SIGINT
-        self._is_running: threading.Event = threading.Event()
         signal(SIGINT, self.stop)
-
-    def _make_socket(self) -> None:
-        """
-        Creates / recreates the socket
-        """
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setblocking(False)
-        sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
-        if self.ctx is None:  # context doesn't exist -> ssl is disabled
-            self.sock = sock
-        else:  # ssl is enabled
-            self.sock = self.ctx.wrap_socket(sock, server_side=True)
-
-    def _bind_listen(self) -> None:
-        """
-        Binds and listens to socket
-        """
-
-        self.sock.bind(("0.0.0.0", self.port))
-        self.sock.listen()
 
     def start(self) -> None:
         """
-        Starts the HTTPy Server
+        Starts the HTTPy server
         """
 
-        # log
-        logging.info("Starting the server...")
+        asyncio.run(self._start())
 
-        # make and bind server socket
-        self._make_socket()
-        self._bind_listen()
-        self._is_running.set()
+    async def _start(self) -> None:
+        """
+        HTTPy server starting coro
+        """
 
-        # start server handle thread
-        # maybe that will help with server dying?
-        threading.Thread(target=self._server_handle).start()
+        self.server = await asyncio.start_server(
+            client_connected_cb=self.client_handle,
+            host=Config.SOCKET_BIND_ADDRESS,
+            port=self.port,
+            ssl=self.ctx)
 
-        # log
-        logging.info(f"Server now running on '{': '.join(map(str, self.sock.getsockname()))}'")
-
-        # keep main thread alive
-        while self._is_running.is_set():
-            sleep(0.1)
+        logging.info(f"Server running on '{Config.SOCKET_BIND_ADDRESS}:{self.port}'")
+        async with self.server:
+            try:
+                await self.server.serve_forever()
+            except asyncio.exceptions.CancelledError:
+                pass
+        logging.info("Server stopped.")
 
     def stop(self, *args) -> None:
         """
-        Stops the HTTPy server
+        HTTPy server stopping coro
         """
 
-        # log
-        logging.info("Shutting the server down...")
+        if self.server is None:
+            raise Exception("Cannot stop not started server")
+        self.server.close()
 
-        self._is_running.clear()
-        for thread in threading.enumerate():
-            # skip main and daemon threads
-            if thread is threading.main_thread() or thread.daemon:
-                continue
-            thread.join()
-
-        # log
-        logging.info("Server shutdown.")
-
-    def _server_handle(self):
+    async def client_handle(self, reader, writer):
         """
-        Main server handle. Handles client connections reception
+        Handles client connection
+        :param reader: asyncio.StreamReader
+        :param writer: asyncio.StreamWriter
         """
-
-        while self._is_running.is_set():
-            client = self._accept()
-            sleep(Config.SOCKET_ACK_INTERVAL)
-            if client is not None:
-                threading.Thread(target=self._client_handle, args=(client,)).start()
-
-    def _client_handle(self, client: unified_socket):
-        """
-        Main client handle. Handles client connection request processing
-        """
-
-        # try to fetch request
-        request = self._recv(client)
-        if request is None:
-            return
-
-        # get response
-        if request.type == "GET":
-            response = self._handle_get(request)
-        else:
-            response = Response(data=b'Not implemented :<', status=STATUS_CODE_NOT_IMPLEMENTED)
-
-        # modify header to close
-        response.headers["Connection"] = "close"
-
-        # send response
-        self._send(client, response)
-
-        # close connection
-        client.close()
 
     def _handle_get(self, request: Request) -> Response:
         """
@@ -176,67 +116,6 @@ class HTTPyServer:
             return Response(
                 data=error.encode("utf-8"),
                 status=STATUS_CODE_NOT_FOUND)
-
-    def _send(self, client: unified_socket, response: Response) -> None:
-        """
-        Send response to client.
-        :param client: client connection
-        :param response: response
-        """
-
-        for data in response.get_data_stream():
-            sent = 0
-            while sent < len(data):
-                try:
-                    sent += client.send(data[sent:])
-                except (ssl.SSLWantWriteError, BlockingIOError):
-                    sleep(Config.SOCKET_ACK_INTERVAL)
-                except (ssl.SSLError, OSError):
-                    return
-
-    def _recv(self, client: unified_socket) -> Request:
-        """
-        Recv request from client
-        :param client: client connection
-        :return: request
-        """
-
-        buffer = bytearray()
-        while self._is_running.is_set():
-            size = len(buffer)
-            try:
-                buffer += client.recv(Config.SOCKET_RECV_SIZE)
-            except (ssl.SSLWantReadError, BlockingIOError):
-                sleep(Config.SOCKET_ACK_INTERVAL)
-            except (ssl.SSLError, OSError):
-                break
-            if buffer[-4:] == b'\r\n\r\n':
-                return Request(buffer)
-            if size == len(buffer) or size > Config.HTTP_MAX_RECV_SIZE:
-                break
-
-    def _accept(self) -> unified_socket | None:
-        """
-        Accepts new connections
-        """
-
-        while self._is_running.is_set():
-            if len(threading.enumerate()) > Config.THREADING_MAX_NUMBER:
-                continue
-            try:
-                return self.sock.accept()[0]
-            except BlockingIOError:
-                sleep(Config.SOCKET_ACK_INTERVAL)
-            except ssl.SSLError as e:
-                if e.reason not in [
-                    "HTTP_REQUEST",
-                    "UNSUPPORTED_PROTOCOL",
-                    "SSLV3_ALERT_CERTIFICATE_UNKNOWN",
-                    "VERSION_TOO_LOW",
-                    "WRONG_VERSION_NUMBER",
-                    "UNEXPECTED_EOF_WHILE_READING",
-                ]:
-                    raise
 
 
 def parse_args():
