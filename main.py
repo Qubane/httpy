@@ -1,8 +1,9 @@
+import os
 import ssl
 import asyncio
-import logging.config
-from src.logger import *
+import logging
 from src.status import *
+from src.config import Config
 from src.fileman import FileManager
 from src.structures import Request, Response
 
@@ -161,6 +162,25 @@ class HTTPyServer:
                 break
 
 
+def initialize_logger():
+    if not os.path.exists(f"{Config.LOGGING_PATH}"):
+        os.makedirs(f"{Config.LOGGING_PATH}")
+    if os.path.isfile(f"{Config.LOGGING_PATH}/latest.log") and os.path.getsize(f"{Config.LOGGING_PATH}/latest.log") > 0:
+        import gzip
+        from datetime import datetime
+        with open(f"{Config.LOGGING_PATH}/latest.log", "rb") as file:
+            with gzip.open(f"{Config.LOGGING_PATH}/{datetime.now().strftime('%d-%m-%y %H-%M-%S')}.log.gz",
+                           "wb") as comp:
+                comp.writelines(file)
+        os.remove(f"{Config.LOGGING_PATH}/latest.log")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        handlers=[
+            logging.FileHandler(f"{Config.LOGGING_PATH}/latest.log"),
+            logging.StreamHandler()])
+
+
 def parse_args():
     """
     Parses terminal arguments
@@ -170,52 +190,53 @@ def parse_args():
     from argparse import ArgumentParser
 
     # parser
-    _parser = ArgumentParser(
+    parser = ArgumentParser(
         prog="httpy",
         description="https web server")
 
     # add arguments
-    _parser.add_argument("-p", "--port",
+    parser.add_argument("-p", "--port",
                          help="binding port",
                          type=int,
                          required=True)
-    _parser.add_argument("-c", "--certificate",
+    parser.add_argument("-c", "--certificate",
                          help="SSL certificate (or fullchain.pem)")
-    _parser.add_argument("-k", "--private-key",
+    parser.add_argument("-k", "--private-key",
                          help="SSL private key")
-    _parser.add_argument("--enable-ssl",
+    parser.add_argument("--enable-ssl",
                          help="SSL for HTTPs encrypted connection (default False)",
                          default=False,
                          action="store_true")
-    _parser.add_argument("--allow-compression",
+    parser.add_argument("--allow-compression",
                          help="allows to compress configured files (default False)",
                          default=False,
                          action="store_true")
-    _parser.add_argument("--cache-everything",
+    parser.add_argument("--cache-everything",
                          help="stores ALL files inside cache (including compressed ones) (default False)",
                          default=False,
                          action="store_true")
     # TODO: implement verbosity check
-    # _parser.add_argument("-v", "--verbose",
+    # parser.add_argument("-v", "--verbose",
     #                      help="verbose (default False)",
     #                      default=False,
     #                      action="store_true")
     # TODO: implement live update
-    # _parser.add_argument("-lu", "--live-update",
+    # parser.add_argument("-lu", "--live-update",
     #                      help="updates files in real time (default False)",
     #                      default=False,
     #                      action="store_true")
 
     # parse arguments
-    args = _parser.parse_args()
+    args = parser.parse_args()
     if args.enable_ssl and (args.certificate is None or args.private_key is None):  # check SSL keys
-        _parser.error("enabled SSL requires CERTIFICATE and PRIVATE_KEY arguments")
+        parser.error("enabled SSL requires CERTIFICATE and PRIVATE_KEY arguments")
 
     # return args
     return args
 
 
 def main():
+    initialize_logger()
     args = parse_args()
     httpy = HTTPyServer(
         port=args.port,
