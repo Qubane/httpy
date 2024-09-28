@@ -86,6 +86,11 @@ class HTTPyServer:
         if request is None:
             return
 
+        logging.info(f"'{writer.get_extra_info('peername')}' made "
+                     f"'{request.type}' request to "
+                     f"'{request.path}' with args "
+                     f"'{request.args}'")
+
         # process request
         if request.type == "GET":
             response = self._handle_get(request)
