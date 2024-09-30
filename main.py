@@ -83,8 +83,9 @@ class HTTPyServer:
         """
 
         # fetch request
-        request = await self.receive_request(reader)
-        if request is None:
+        try:
+            request = await self.receive_request(reader)
+        except (ConnectionResetError, BufferError):
             return
 
         logging.info(f"'{writer.get_extra_info('peername')}' made "
@@ -159,7 +160,7 @@ class HTTPyServer:
             if buffer[-4:] == b'\r\n\r\n':
                 return Request(buffer)
             if len(buffer) > Config.HTTP_MAX_RECV_SIZE or len(data) == 0:
-                break
+                raise BufferError("Buffer size exceeded")
 
 
 def initialize_logger():
