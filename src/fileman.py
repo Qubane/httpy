@@ -4,7 +4,7 @@ File Manager for controlling access to files
 
 
 import os
-from logging import Logger
+import logging
 from collections.abc import Generator
 from src.config import Config
 
@@ -174,8 +174,7 @@ class FileManager:
     def __init__(
             self,
             allow_compression: bool = False,
-            cache_everything: bool = False,
-            logger: Logger | None = None):
+            cache_everything: bool = False):
         """
         File manager class
         :param allow_compression: allows file compression
@@ -187,7 +186,6 @@ class FileManager:
 
         self._allow_compression: bool = allow_compression
         self._cache_everything: bool = cache_everything
-        self._logger: Logger | None = logger
 
     def update_paths(self):
         """
@@ -200,14 +198,13 @@ class FileManager:
         with open("cfg/paths.json", "r", encoding="utf-8") as file:
             paths: dict[str, dict[str, str | bool]] = json.loads(file.read())
 
-        if self._logger:
-            self._logger.info("Updating paths...")
+        logging.info("Updating paths...")
         for webpath, arguments in paths.items():
             if webpath[-1] == "*":  # star path
                 web_dirpath = webpath[:-1]
                 real_dirpath = arguments["path"][:-1]
-                if not os.path.exists(real_dirpath) and self._logger:  # dir not found
-                    self._logger.warning(f"Unable to find directory at '{real_dirpath}'")
+                if not os.path.exists(real_dirpath):  # dir not found
+                    logging.warning(f"Unable to find directory at '{real_dirpath}'")
                     continue
                 for entry in os.scandir(real_dirpath):
                     if not entry.is_file():
@@ -217,36 +214,31 @@ class FileManager:
                         webpath=web_filepath,
                         filepath=entry.path,
                         compressed=arguments.get("compressed"),
-                        cached=arguments.get("cached"),
-                        verbose=True)
+                        cached=arguments.get("cached"))
             else:  # direct path
                 self.update_container(
                     webpath=webpath,
                     filepath=arguments["path"],
                     compressed=arguments.get("compressed"),
-                    cached=arguments.get("cached"),
-                    verbose=True)
-        if self._logger:
-            self._logger.info("Paths updated.")
+                    cached=arguments.get("cached"))
+        logging.info("Paths updated.")
 
     def update_container(
             self,
             webpath: str,
             filepath: str,
             compressed: bool | None,
-            cached: bool | None,
-            verbose: bool = False) -> None:
+            cached: bool | None) -> None:
         """
         Updates file container at a given web path.
         :param webpath: web path relative to /
         :param filepath: path to uncompressed file
         :param compressed: allows compression for the file container. (Default True)
         :param cached: cache the file container. (Default False)
-        :param verbose: log processed file
         """
 
-        if not os.path.exists(filepath) and self._logger:
-            self._logger.warning(f"Unable to find file at '{filepath}'")
+        if not os.path.exists(filepath):
+            logging.warning(f"Unable to find file at '{filepath}'")
             return
 
         if compressed is None:
@@ -260,8 +252,7 @@ class FileManager:
             self._path_map[webpath] = FileContainer(
                 filepath=filepath, compressed=compressed, cached=cached)
 
-        if verbose and self._logger:
-            self._logger.info(f"Processed '{webpath}' -> '{filepath}'")
+        logging.info(f"Processed '{webpath}' -> '{filepath}'")
 
     def exists(self, webpath) -> bool:
         """

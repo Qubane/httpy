@@ -24,8 +24,7 @@ class HTTPyServer:
         # file manager (fileman)
         self.fileman: FileManager = FileManager(
             allow_compression=allow_compression,
-            cache_everything=cache_everything,
-            logger=logging.getLogger())
+            cache_everything=cache_everything)
         self.fileman.update_paths()
 
         # sockets
