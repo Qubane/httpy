@@ -3,7 +3,6 @@
 - Server supports HTTPS if you have the keys, which you could get from `Let's Encrypt`
 
 # Running HTTPy Server
-- Server requires `python3.12` and up
 - `git clone https://github.com/UltraQbik/httpy`
 - `cd httpy`
 - `python3.12 main.py -p 80` to run basic HTTP server on port `80`
@@ -15,6 +14,14 @@
 - `--enable-ssl` - enables SSL, which allows to connect using https, requires certificate and private key to be present
 - `--allow-compression` - allows to compress files in `www` directory
 - `--cache-everything` - caches ALL files in `www` directory (even compressed ones), obviously uses a lot of ram
+
+# System requirements
+## Without docker
+- At least python 3.12 and higher
+- 128 MiB of RAM (without `--cache-everything`)
+- 1 GiB of disk space
+## With docker
+- idk lol
 
 [//]: # (- `-v / --verbose` - prints a lot of information)
 [//]: # (- `-lu / --live-update` - live updates files, even when using compression)
