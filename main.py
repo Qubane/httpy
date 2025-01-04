@@ -20,6 +20,8 @@ class HTTPyServer:
         :param ssl_keys: (certfile, keyfile) pair
         """
 
+        self.logger: logging.Logger = logging.getLogger(__name__)
+
         self.server: asyncio.Server | None = None
         self.bind_address: tuple[str, int] = bind_address
 
@@ -27,6 +29,37 @@ class HTTPyServer:
         if ssl_keys:
             self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
             self.ctx.load_cert_chain(certfile=ssl_keys[0], keyfile=ssl_keys[1])
+
+    def run(self):
+        """
+        Starts the HTTPy server
+        """
+
+        async def coro():
+            self.server = await asyncio.start_server(
+                client_connected_cb=...,
+                host=self.bind_address[0],
+                port=self.bind_address[1],
+                ssl=self.ctx)
+
+            self.logger.info(f"Server running on '{self.bind_address[0]}:{self.bind_address[1]}'")
+
+            async with self.server:
+                try:
+                    await self.server.serve_forever()
+                except asyncio.exceptions.CancelledError:
+                    pass
+
+            self.logger.info("Server stopped")
+
+        asyncio.run(coro())
+
+    def stop(self):
+        """
+        Stops the HTTPy server
+        """
+
+        self.server.close()
 
 
 def parse_args():
@@ -72,8 +105,10 @@ def parse_args():
 
 
 def main():
-    args = parse_args()
-    httpy = HTTPyServer()
+    # args = parse_args()
+    httpy = HTTPyServer(
+        bind_address=("0.0.0.0", 13700))
+    httpy.run()
 
 
 if __name__ == '__main__':
