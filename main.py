@@ -3,6 +3,7 @@ import ssl
 import signal
 import asyncio
 import logging
+from source.clients import client_callback
 
 
 class HTTPyServer:
@@ -37,7 +38,7 @@ class HTTPyServer:
 
         async def coro():
             self.server = await asyncio.start_server(
-                client_connected_cb=...,
+                client_connected_cb=client_callback,
                 host=self.bind_address[0],
                 port=self.bind_address[1],
                 ssl=self.ctx)
