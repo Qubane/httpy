@@ -7,13 +7,13 @@ class ClientHandler:
         self.reader: asyncio.StreamReader = reader
         self.writer: asyncio.StreamWriter = writer
 
-    async def handle_client(self):
+    async def handle_client(self) -> None:
         """
         Handles the client's request
         """
 
 
-async def accept_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> ClientHandler:
+async def client_callback(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
     """
     Accepts the client connection
     :param reader: asyncio server callback
@@ -21,4 +21,5 @@ async def accept_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     :return: Client handle
     """
 
-    return ClientHandler(reader, writer)
+    client = ClientHandler(reader, writer)
+    await client.handle_client()
