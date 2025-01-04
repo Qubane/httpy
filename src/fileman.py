@@ -4,24 +4,9 @@ File Manager for controlling access to files
 
 
 import os
-from logging import Logger
+import logging
 from collections.abc import Generator
 from src.config import Config
-
-
-def list_directory(dirpath: str) -> list[str]:
-    """
-    Lists all file in given directory. Returns single file if dirpath is path to a file
-    :param dirpath: path to directory
-    :return: list of paths to files
-    """
-
-    if os.path.isfile(dirpath):  # if dirpath is a file -> return
-        return [dirpath]
-    paths = []
-    for file in os.listdir(dirpath):
-        paths += list_directory(os.path.join(dirpath, file))
-    return paths
 
 
 class File:
@@ -122,11 +107,11 @@ class FileContainer:
     Contains multiple files inside
     """
 
-    def __init__(self, filepath: str, compress: bool = True, cache: bool = False):
-        self.uncompressed: File = File(filepath, cached=cache)
-        self.compressed: bool = compress
+    def __init__(self, filepath: str, compressed: bool = True, cached: bool = False):
+        self.uncompressed: File = File(filepath, cached=cached)
+        self.compressed: bool = compressed
 
-        if compress:  # if compression is enabled
+        if compressed:  # if compression is enabled
             # gzip compression
             c_filepath = os.path.join(Config.FILEMAN_COMPRESS_PATH, "gzip", filepath)
             if not os.path.exists(c_filepath):  # ensure existence
@@ -134,7 +119,7 @@ class FileContainer:
                     os.makedirs(os.path.dirname(c_filepath))
                 with open(c_filepath, "wb") as f:
                     f.write(b'file')
-            self.gzip_compressed: File = File(c_filepath, cached=cache)
+            self.gzip_compressed: File = File(c_filepath, cached=cached)
 
             # brotli compression
             c_filepath = os.path.join(Config.FILEMAN_COMPRESS_PATH, "brotli", filepath)
@@ -143,7 +128,7 @@ class FileContainer:
                     os.makedirs(os.path.dirname(c_filepath))
                 with open(c_filepath, "wb") as f:
                     f.write(b'file')
-            self.brotli_compressed: File = File(c_filepath, cached=cache)
+            self.brotli_compressed: File = File(c_filepath, cached=cached)
 
             # actually compress files
             self.compress_files()
@@ -169,6 +154,17 @@ class FileContainer:
                     br.process(data)
                     compressed.write(br.flush())
 
+    def update(self) -> None:
+        """
+        Updates files inside
+        """
+
+        self.uncompressed.update_file()
+        if self.compressed:
+            self.compress_files()
+            self.gzip_compressed.update_file()
+            self.brotli_compressed.update_file()
+
 
 class FileManager:
     """
@@ -178,8 +174,7 @@ class FileManager:
     def __init__(
             self,
             allow_compression: bool = False,
-            cache_everything: bool = False,
-            logger: Logger | None = None):
+            cache_everything: bool = False):
         """
         File manager class
         :param allow_compression: allows file compression
@@ -191,7 +186,6 @@ class FileManager:
 
         self._allow_compression: bool = allow_compression
         self._cache_everything: bool = cache_everything
-        self._logger: Logger | None = logger
 
     def update_paths(self):
         """
@@ -204,35 +198,61 @@ class FileManager:
         with open("cfg/paths.json", "r", encoding="utf-8") as file:
             paths: dict[str, dict[str, str | bool]] = json.loads(file.read())
 
-        if self._logger:
-            self._logger.info("Updating paths...")
-        for key, val in paths.items():
-            if key[-1] == "*":  # '*' path
-                web_dirpath = key[:-1]
-                real_dirpath = val["path"][:-1]
-                if not os.path.exists(real_dirpath) and self._logger:  # file not found
-                    self._logger.warning(f"Unable to find directory at '{real_dirpath}'")
+        logging.info("Updating paths...")
+        for webpath, arguments in paths.items():
+            if webpath[-1] == "*":  # star path
+                web_dirpath = webpath[:-1]
+                real_dirpath = arguments["path"][:-1]
+                if not os.path.exists(real_dirpath):  # dir not found
+                    logging.warning(f"Unable to find directory at '{real_dirpath}'")
                     continue
-                for filepath in list_directory(real_dirpath):
-                    web_filepath = f"{web_dirpath}{filepath[len(real_dirpath):]}"
-                    if self._logger:  # log processed path
-                        self._logger.info(f"Processed '{web_filepath}' -> '{filepath}'")
-                    self._path_map[web_filepath] = FileContainer(
-                        filepath=filepath,
-                        compress=val.get("compress", True) if self._allow_compression else False,
-                        cache=val.get("cache", False) if not self._cache_everything else True)
+                for entry in os.scandir(real_dirpath):
+                    if not entry.is_file():
+                        continue
+                    web_filepath = f"{web_dirpath}{entry.path[len(real_dirpath):]}"
+                    self.update_container(
+                        webpath=web_filepath,
+                        filepath=entry.path,
+                        compressed=arguments.get("compressed"),
+                        cached=arguments.get("cached"))
             else:  # direct path
-                if not os.path.exists(val["path"]) and self._logger:  # file not found
-                    self._logger.warning(f"Unable to find file at '{val['path']}'")
-                    continue
-                if self._logger:  # log processed path
-                    self._logger.info(f"Processed '{key}' -> '{val['path']}'")
-                self._path_map[key] = FileContainer(
-                    filepath=val["path"],
-                    compress=val.get("compress", True) if self._allow_compression else False,
-                    cache=val.get("cache", False) if not self._cache_everything else True)
-        if self._logger:
-            self._logger.info("Paths updated.")
+                self.update_container(
+                    webpath=webpath,
+                    filepath=arguments["path"],
+                    compressed=arguments.get("compressed"),
+                    cached=arguments.get("cached"))
+        logging.info("Paths updated.")
+
+    def update_container(
+            self,
+            webpath: str,
+            filepath: str,
+            compressed: bool | None,
+            cached: bool | None) -> None:
+        """
+        Updates file container at a given web path.
+        :param webpath: web path relative to /
+        :param filepath: path to uncompressed file
+        :param compressed: allows compression for the file container. (Default True)
+        :param cached: cache the file container. (Default False)
+        """
+
+        if not os.path.exists(filepath):
+            logging.warning(f"Unable to find file at '{filepath}'")
+            return
+
+        if compressed is None:
+            compressed = True if self._allow_compression else False
+        if cached is None:
+            cached = True if self._cache_everything else False
+
+        if webpath in self._path_map:
+            self._path_map[webpath].update()
+        else:
+            self._path_map[webpath] = FileContainer(
+                filepath=filepath, compressed=compressed, cached=cached)
+
+        logging.info(f"Processed '{webpath}' -> '{filepath}'")
 
     def exists(self, webpath) -> bool:
         """

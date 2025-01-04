@@ -1,15 +1,15 @@
 {
-  "/":                  {"path": "www/index.html",        "compress": true, "cache": true  },
-  "/about":             {"path": "www/about.html",        "compress": true                 },
-  "/testing":           {"path": "www/testing.html",      "compress": true                 },
-  "/projects":          {"path": "www/projects.html",     "compress": true                 },
-  "/images/*":          {"path": "www/images/*",          "compress": false                },
-  "/scripts/*":         {"path": "www/scripts/*",         "compress": true                 },
-  "/robots.txt":        {"path": "www/robots.txt",        "compress": false                },
-  "/favicon.ico":       {"path": "www/favicon.ico",       "compress": true                 },
-  "/err/response":      {"path": "www/err/response.html", "compress": true                 },
-  "/css/styles.css":    {"path": "www/css/styles.css",    "compress": true, "cache": true  },
-  "/study":             {"path": "www/study.html",        "compress": true                 },
-  "/study/books/*":     {"path": "www/pdf/*",             "compress": false                },
-  "/testing/pyscript":  {"path": "www/pyscript.html",     "compress": true                 }
+  "/":                  {"path": "www/index.html",        "compressed": true,   "cached": true  },
+  "/about":             {"path": "www/about.html",        "compressed": true,   "cached": false },
+  "/testing":           {"path": "www/testing.html",      "compressed": true,   "cached": false },
+  "/projects":          {"path": "www/projects.html",     "compressed": true,   "cached": false },
+  "/images/*":          {"path": "www/images/*",          "compressed": false,  "cached": false },
+  "/scripts/*":         {"path": "www/scripts/*",         "compressed": true,   "cached": false },
+  "/robots.txt":        {"path": "www/robots.txt",        "compressed": false,  "cached": false },
+  "/favicon.ico":       {"path": "www/favicon.ico",       "compressed": true,   "cached": false },
+  "/err/response":      {"path": "www/err/response.html", "compressed": true,   "cached": false },
+  "/css/styles.css":    {"path": "www/css/styles.css",    "compressed": true,   "cached": true  },
+  "/study":             {"path": "www/study.html",        "compressed": true,   "cached": false },
+  "/study/books/*":     {"path": "www/pdf/*",             "compressed": false,  "cached": false },
+  "/testing/pyscript":  {"path": "www/pyscript.html",     "compressed": true,   "cached": false }
 }
