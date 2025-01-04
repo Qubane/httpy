@@ -12,6 +12,13 @@ class ClientHandler:
         Handles the client's request
         """
 
+    def close(self) -> None:
+        """
+        Closes client connection
+        """
+
+        self.writer.close()
+
 
 async def client_callback(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
     """
@@ -22,4 +29,10 @@ async def client_callback(reader: asyncio.StreamReader, writer: asyncio.StreamWr
     """
 
     client = ClientHandler(reader, writer)
-    await client.handle_client()
+
+    try:
+        await client.handle_client()
+    except Exception as e:
+        logging.warning(f"Error occurred when handling client request:", exc_info=e)
+
+    client.close()
