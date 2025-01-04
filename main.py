@@ -2,6 +2,7 @@ import ssl
 import signal
 import asyncio
 import logging
+import source.settings
 from source.clients import client_callback
 
 
@@ -114,4 +115,5 @@ def main():
 
 
 if __name__ == '__main__':
+    source.settings.init()
     main()
