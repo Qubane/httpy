@@ -1,5 +1,6 @@
 import os
 import ssl
+import signal
 import asyncio
 import logging
 
@@ -11,8 +12,21 @@ class HTTPyServer:
 
     def __init__(
             self,
+            bind_address: tuple[str, int],
+            ssl_keys: tuple[str, str] | None = None
     ):
-        pass
+        """
+        :param bind_address: binding (address, port)
+        :param ssl_keys: (certfile, keyfile) pair
+        """
+
+        self.server: asyncio.Server | None = None
+        self.bind_address: tuple[str, int] = bind_address
+
+        self.ctx: ssl.SSLContext | None = None
+        if ssl_keys:
+            self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
+            self.ctx.load_cert_chain(certfile=ssl_keys[0], keyfile=ssl_keys[1])
 
 
 def parse_args():
@@ -37,10 +51,6 @@ def parse_args():
                         help="SSL certificate (or fullchain.pem)")
     parser.add_argument("-k", "--private-key",
                         help="SSL private key")
-    parser.add_argument("--enable-ssl",
-                        help="SSL for HTTPs encrypted connection (default False)",
-                        default=False,
-                        action="store_true")
     # TODO: implement verbosity check
     # parser.add_argument("-v", "--verbose",
     #                     help="verbose (default False)",
