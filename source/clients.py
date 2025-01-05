@@ -1,5 +1,6 @@
 import logging
 import asyncio
+from source.classes import Request
 
 
 class ClientHandler:
@@ -11,6 +12,8 @@ class ClientHandler:
         """
         Handles the client's request
         """
+
+        request = await Request.get(self.reader)
 
     def close(self) -> None:
         """
