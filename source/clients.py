@@ -14,6 +14,7 @@ class ClientHandler:
         """
 
         request = await Request.get(self.reader)
+        print(request)
 
     def close(self) -> None:
         """

@@ -1,3 +1,4 @@
+import re
 import asyncio
 from dataclasses import dataclass
 from collections.abc import Generator
@@ -27,6 +28,7 @@ class Request:
     type: str
     path: str
     query_args: dict[str, str]
+    headers: dict[str, str]
     data_stream: Generator[bytes, None, None] | None = None
 
     @staticmethod
@@ -54,10 +56,23 @@ class Request:
         rpath = path_split[0]
 
         # query args
-        query_args = dict()
+        rquery_args = dict()
         raw_query_args = path_split[1] if len(path_split) == 2 else b''
         for raw_arg in raw_query_args.split(b'&', MAX_QUERY_ARGS):
             if len(raw_arg := raw_arg.split(b'=', 1)) == 2:
-                query_args[raw_arg[0].decode("ascii")] = raw_arg[1].decode("utf-8")
+                rquery_args[raw_arg[0].decode("ascii")] = raw_arg[1].decode("utf-8")
 
-        print(rtype, rpath, query_args)
+        # headers
+        rheaders = dict()
+        for raw_header in re.findall(r"\r\n(.*:.*)\r\n", data.decode("ascii")):
+            raw_header = raw_header.split(": ")
+            rheaders[raw_header[0]] = raw_header[1]
+
+        # data
+        # TODO: make data streams
+
+        return Request(
+            type=rtype.decode("ascii"),
+            path=rpath.decode("utf-8"),
+            query_args=rquery_args,
+            headers=rheaders)
