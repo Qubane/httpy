@@ -3,6 +3,8 @@ import logging
 import logging.handlers
 
 
+READ_BUFFER_SIZE = 2 ** 15
+
 VARS_DIRECTORY = "var"
 LOGS_DIRECTORY = "logs"
 
