@@ -4,6 +4,7 @@ import logging.handlers
 
 
 READ_BUFFER_SIZE = 2 ** 15
+WRITE_BUFFER_SIZE = 2 ** 24
 
 MAX_QUERY_ARGS = 16
 
