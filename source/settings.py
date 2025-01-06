@@ -9,6 +9,7 @@ MAX_QUERY_ARGS = 16
 
 VARS_DIRECTORY = "var"
 LOGS_DIRECTORY = "logs"
+WEB_DIRECTORY = "www"
 
 
 def init():
