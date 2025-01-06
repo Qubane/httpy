@@ -1,8 +1,9 @@
 import re
 import asyncio
-from dataclasses import dataclass
 from collections.abc import Generator
+from dataclasses import dataclass, field
 from source.settings import READ_BUFFER_SIZE, MAX_QUERY_ARGS
+from source.status import StatusCode, STATUS_CODE_INTERNAL_SERVER_ERROR
 
 
 class RequestTypes:
@@ -76,3 +77,14 @@ class Request:
             path=rpath.decode("utf-8"),
             query_args=rquery_args,
             headers=rheaders)
+
+
+@dataclass(frozen=True)
+class Response:
+    """
+    Server HTTP response
+    """
+
+    data: bytes | Generator[bytes, None, None] | None
+    status: StatusCode
+    headers: dict[str, str]
