@@ -1,5 +1,6 @@
 import logging
 import asyncio
+from source.status import *
 from source.classes import Request, Response
 
 
@@ -14,7 +15,9 @@ class ClientHandler:
         """
 
         request = await Request.read(self.reader)
-        print(request)
+
+        response = Response(b'hello :)', STATUS_CODE_OK)
+        await response.write(self.writer)
 
     def close(self) -> None:
         """
