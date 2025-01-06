@@ -1,9 +1,9 @@
 import re
 import asyncio
-from dataclasses import dataclass
 from collections.abc import Generator
+from dataclasses import dataclass, field
 from source.status import StatusCode
-from source.settings import READ_BUFFER_SIZE, MAX_QUERY_ARGS
+from source.settings import READ_BUFFER_SIZE, WRITE_BUFFER_SIZE, MAX_QUERY_ARGS
 
 
 class RequestTypes:
@@ -87,10 +87,26 @@ class Response:
 
     data: bytes | Generator[bytes, None, None] | None
     status: StatusCode
-    headers: dict[str, str]
+    headers: dict[str, str] = field(default_factory=lambda: dict())
 
     async def write(self, writer: asyncio.StreamWriter):
         """
         Writes response to client stream
         :param writer: client stream
         """
+
+        writer.write(b'HTTP/1.1 ' + self.status.__bytes__() + b'\r\n')
+        for key, value in self.headers.items():
+            writer.write(f"{key}: {value}\r\n".encode("utf-8"))
+        writer.write(b'\r\n')
+
+        if isinstance(self.data, bytes):
+            writer.write(self.data)
+        elif isinstance(self.data, Generator):
+            for data in self.data:
+                writer.write(data)
+                if writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
+                    await writer.drain()
+
+        if writer.transport.get_write_buffer_size() > 0:
+            await writer.drain()
