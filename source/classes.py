@@ -35,7 +35,7 @@ class Request:
     @staticmethod
     async def read(reader: asyncio.StreamReader):
         """
-        Gets request from reader
+        Reads request from client's stream
         :param reader: client connection
         :return: request class
         """
@@ -88,3 +88,9 @@ class Response:
     data: bytes | Generator[bytes, None, None] | None
     status: StatusCode
     headers: dict[str, str]
+
+    async def write(self, writer: asyncio.StreamWriter):
+        """
+        Writes response to client stream
+        :param writer: client stream
+        """
