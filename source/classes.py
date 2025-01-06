@@ -1,9 +1,9 @@
 import re
 import asyncio
+from dataclasses import dataclass
 from collections.abc import Generator
-from dataclasses import dataclass, field
+from source.status import StatusCode
 from source.settings import READ_BUFFER_SIZE, MAX_QUERY_ARGS
-from source.status import StatusCode, STATUS_CODE_INTERNAL_SERVER_ERROR
 
 
 class RequestTypes:
@@ -33,7 +33,7 @@ class Request:
     data_stream: Generator[bytes, None, None] | None = None
 
     @staticmethod
-    async def get(reader: asyncio.StreamReader):
+    async def read(reader: asyncio.StreamReader):
         """
         Gets request from reader
         :param reader: client connection
