@@ -1,7 +1,6 @@
 {
   "web_path": "/",
   "web_path_aliases": ["/index.html"],
-  "content": [
-
-  ]
+  "locales": ["en", "ru"],
+  "filepath": "pages/index.{prefix}.html"
 }
