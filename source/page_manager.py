@@ -21,6 +21,14 @@ class PageManager:
         Initializes path manager
         """
 
+        # Very Important Path
+        page_info = {
+            "filepath": f"{WEB_DIRECTORY}/favicon.ico",
+            "locales": ["en"]}
+        cls.path_tree["/favicon.ico"] = page_info
+        LOGGER.info(f"Added '/favicon.ico' as '{WEB_DIRECTORY}/favicon.ico';")
+
+        # Append other paths
         for page_directory in os.listdir(f"{WEB_DIRECTORY}/pages"):
             dir_path = f"{WEB_DIRECTORY}/pages/{page_directory}"
             if not os.path.isfile(f"{dir_path}/index.json"):
