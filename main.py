@@ -7,6 +7,9 @@ import source.page_manager
 from source.clients import client_callback
 
 
+LOGGER: logging.Logger = logging.getLogger()
+
+
 class HTTPyServer:
     """
     Tiny HTTPy server
@@ -21,8 +24,6 @@ class HTTPyServer:
         :param bind_address: binding (address, port)
         :param ssl_keys: (certfile, keyfile) pair
         """
-
-        self.logger: logging.Logger = logging.getLogger()
 
         self.server: asyncio.Server | None = None
         self.bind_address: tuple[str, int] = bind_address
@@ -46,7 +47,7 @@ class HTTPyServer:
                 port=self.bind_address[1],
                 ssl=self.ctx)
 
-            self.logger.info(f"Server running on '{self.bind_address[0]}:{self.bind_address[1]}'")
+            LOGGER.info(f"Server running on '{self.bind_address[0]}:{self.bind_address[1]}'")
 
             async with self.server:
                 try:
@@ -54,7 +55,7 @@ class HTTPyServer:
                 except asyncio.exceptions.CancelledError:
                     pass
 
-            self.logger.info("Server stopped")
+            LOGGER.info("Server stopped")
 
         asyncio.run(coro())
 
