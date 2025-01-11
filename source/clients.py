@@ -1,7 +1,12 @@
-import logging
 import asyncio
+import logging
+import aiofiles
 from source.status import *
+from source.page_manager import PageManager
 from source.classes import Request, Response
+
+
+LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
 class ClientHandler:
@@ -16,8 +21,18 @@ class ClientHandler:
 
         request = await Request.read(self.reader)
 
-        response = Response(b'hello :)', STATUS_CODE_OK)
-        await response.write(self.writer)
+        if request.path in PageManager.path_tree:
+            filepath = PageManager.get(request.path)["filepath"]
+            filepath = filepath.format(prefix="en")  # temporary
+
+            file = await aiofiles.open(filepath, "rb")
+            try:
+                await Response(
+                    data=file.read,
+                    status=STATUS_CODE_OK).write(self.writer)
+            except Exception as e:
+                LOGGER.warning("Error making response to request;", exc_info=e)
+            await file.close()
 
     def close(self) -> None:
         """
@@ -40,6 +55,6 @@ async def client_callback(reader: asyncio.StreamReader, writer: asyncio.StreamWr
     try:
         await client.handle_client()
     except Exception as e:
-        logging.warning(f"Error occurred when handling client request:", exc_info=e)
+        LOGGER.warning(f"Error occurred when handling client request:", exc_info=e)
 
     client.close()
