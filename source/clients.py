@@ -33,6 +33,8 @@ class ClientHandler:
             except Exception as e:
                 LOGGER.warning("Error making response to request;", exc_info=e)
             await file.close()
+        else:
+            await Response(status=STATUS_CODE_NOT_FOUND).write(self.writer)
 
     def close(self) -> None:
         """
