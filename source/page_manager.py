@@ -1,8 +1,32 @@
+import os
+import json
+import logging
+from source.settings import WEB_DIRECTORY
+
+
 class PageManager:
     """
     Controls access to pages and page indexing
     """
 
-    # 'web_path': {"en": "path", "ru": "path"}
-    path_tree: dict[str, dict]
+    # 'web_path': {'filepath': ..., 'locales': ['en', 'ru']}
+    path_tree: dict[str, dict[str, str | list]] = dict()
 
+    def __init__(self):
+        self.logger: logging.Logger = logging.getLogger(__name__)
+
+        for page_directory in f"{WEB_DIRECTORY}/pages":
+            dir_path = f"{WEB_DIRECTORY}/pages/{page_directory}"
+            if not os.path.isfile(f"{dir_path}/index.json"):
+                self.logger.warning(f"missing 'index.json' file at '{dir_path}';")
+                continue
+            with open(f"{dir_path}/index.json") as file:
+                data = json.load(file)
+
+            page_info = {
+                "filepath": data["filepath"],
+                "locales": data["locales"]}
+            PageManager.path_tree[data["web_path"]] = page_info
+            for alias in data["web_path_aliases"]:
+                # reference same dict
+                PageManager.path_tree[alias] = page_info
