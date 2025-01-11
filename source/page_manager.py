@@ -29,7 +29,7 @@ class PageManager:
                 data = json.load(file)
 
             page_info = {
-                "filepath": data["filepath"],
+                "filepath": f"{WEB_DIRECTORY}/pages/{page_directory}/{data['filepath']}",
                 "locales": data["locales"]}
             cls.path_tree[data["web_path"]] = page_info
             cls.logger.info(f"Added '{data['web_path']}' as '{page_info['filepath']}';")
