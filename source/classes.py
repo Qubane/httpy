@@ -1,7 +1,7 @@
 import re
 import asyncio
-from collections.abc import Generator
 from dataclasses import dataclass, field
+from collections.abc import Generator, Callable
 from source.status import StatusCode
 from source.settings import READ_BUFFER_SIZE, WRITE_BUFFER_SIZE, MAX_QUERY_ARGS
 
@@ -85,7 +85,7 @@ class Response:
     Server HTTP response
     """
 
-    data: bytes | Generator[bytes, None, None] | None
+    data: bytes | Generator[bytes, None, None] | Callable | None
     status: StatusCode
     headers: dict[str, str] = field(default_factory=lambda: dict())
 
@@ -104,6 +104,11 @@ class Response:
             writer.write(self.data)
         elif isinstance(self.data, Generator):
             for data in self.data:
+                writer.write(data)
+                if writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
+                    await writer.drain()
+        elif isinstance(self.data, Callable):
+            while data := await self.data(WRITE_BUFFER_SIZE):
                 writer.write(data)
                 if writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
                     await writer.drain()
