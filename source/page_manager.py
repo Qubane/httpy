@@ -39,7 +39,7 @@ class PageManager:
                 cls.logger.info(f"Added '{alias}' as '{page_info['filepath']}';")
 
     @classmethod
-    def get(cls, web_path: str) -> str | None:
+    def get(cls, web_path: str) -> dict[str, str | list] | None:
         """
         Returns reference to page info dictionary
         :param web_path: web request path
