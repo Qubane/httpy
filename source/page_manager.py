@@ -16,6 +16,10 @@ class PageManager:
 
     @classmethod
     def init(cls):
+        """
+        Initializes path manager
+        """
+
         for page_directory in os.listdir(f"{WEB_DIRECTORY}/pages"):
             dir_path = f"{WEB_DIRECTORY}/pages/{page_directory}"
             if not os.path.isfile(f"{dir_path}/index.json"):
@@ -33,3 +37,13 @@ class PageManager:
                 # reference same dict
                 cls.path_tree[alias] = page_info
                 cls.logger.info(f"Added '{alias}' as '{page_info['filepath']}';")
+
+    @classmethod
+    def get(cls, web_path: str) -> str | None:
+        """
+        Returns reference to page info dictionary
+        :param web_path: web request path
+        :return: filepath with unformatted prefix
+        """
+
+        return cls.path_tree.get(web_path)
