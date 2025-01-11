@@ -85,8 +85,8 @@ class Response:
     Server HTTP response
     """
 
-    data: bytes | Generator[bytes, None, None] | Callable | None
     status: StatusCode
+    data: bytes | Generator[bytes, None, None] | Callable | None = None
     headers: dict[str, str] = field(default_factory=lambda: dict())
 
     async def write(self, writer: asyncio.StreamWriter):
