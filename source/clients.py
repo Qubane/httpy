@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import aiofiles
 from source.status import *
 from source.page_manager import PageManager
 from source.classes import Request, Response
@@ -25,14 +24,10 @@ class ClientHandler:
             filepath = PageManager.get(request.path)["filepath"]
             filepath = filepath.format(prefix="en")  # temporary
 
-            file = await aiofiles.open(filepath, "rb")
-            try:
+            with open(filepath, "rb") as file:
                 await Response(
-                    data=file.read,
+                    data=file,
                     status=STATUS_CODE_OK).write(self.writer)
-            except Exception as e:
-                LOGGER.warning("Error making response to request;", exc_info=e)
-            await file.close()
         else:
             await Response(status=STATUS_CODE_NOT_FOUND).write(self.writer)
 

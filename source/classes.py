@@ -1,7 +1,8 @@
 import re
 import asyncio
+from io import BytesIO
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from collections.abc import Generator, Callable
 from source.status import StatusCode
 from source.settings import READ_BUFFER_SIZE, WRITE_BUFFER_SIZE, MAX_QUERY_ARGS
 
@@ -30,7 +31,7 @@ class Request:
     path: str
     query_args: dict[str, str]
     headers: dict[str, str]
-    data_stream: Generator[bytes, None, None] | None = None
+    data_stream: Iterable | None = None
 
     @staticmethod
     async def read(reader: asyncio.StreamReader):
@@ -86,7 +87,7 @@ class Response:
     """
 
     status: StatusCode
-    data: bytes | Generator[bytes, None, None] | Callable | None = None
+    data: bytes | Iterable | BytesIO | None = None
     headers: dict[str, str] = field(default_factory=lambda: dict())
 
     async def write(self, writer: asyncio.StreamWriter):
@@ -102,16 +103,14 @@ class Response:
 
         if isinstance(self.data, bytes):
             writer.write(self.data)
-        elif isinstance(self.data, Generator):
+        elif isinstance(self.data, Iterable):
             for data in self.data:
                 writer.write(data)
                 if writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
                     await writer.drain()
-        elif isinstance(self.data, Callable):
-            while data := await self.data(WRITE_BUFFER_SIZE):
+        elif isinstance(self.data, BytesIO):
+            while data := self.data.read(WRITE_BUFFER_SIZE):
                 writer.write(data)
-                if writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
-                    await writer.drain()
 
         if writer.transport.get_write_buffer_size() > 0:
             await writer.drain()
