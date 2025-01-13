@@ -1,7 +1,10 @@
 :root {
-  --body-background: 0;
+  --body-background: #000;
   --content-background: #1a1a1a;
   --secondary-background: #202020;
+
+  --text-color: #fff;
+  --url-color: #7fffd4;
 }
 
 * {
@@ -11,7 +14,7 @@
 }
 
 a {
-  color: #7FFFD4
+  color: var(--url-color)
 }
 
 p, li {
@@ -24,7 +27,7 @@ ul {
 
 body {
   font-family: Arial, Helvetica, sans-serif;
-  color: white;
+  color: var(--text-color);
   background: var(--body-background);
   display: flex;
   flex-direction: column;
@@ -35,18 +38,35 @@ img {
   padding: 8px;
 }
 
-#header-div {
-  background: var(--secondary-background);
-  padding: 15px;
-  height: 3vh;
-  font-size: 30px;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-evenly;
+.header-button {
+  color: var(--text-color);
+  font-size: 20px;
+  border: none;
+  padding: 0;
 }
 
-#section-div {
+.header-button:hover {
+  color: var(--url-color);
+}
+
+#header-tab-div {
+  width: 100%;
+  height: 5vh;
+  background: var(--secondary-background);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#header-tab-container-div {
+  width: 50%;
+  background: transparent;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.section-div {
   align-self: center;
   width: 70vw;
   min-height: 100vh;
@@ -60,8 +80,12 @@ section {
 
 footer {
   background: var(--secondary-background);
-  padding: 25px;
   text-align: center;
+  vertical-align: center;
   font-size: 10px;
-  margin-top: auto;
+  height: 5vh;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }
