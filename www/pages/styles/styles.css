@@ -13,6 +13,8 @@
   margin: 0;
   padding: 0;
   background: transparent;
+
+  font-family: 'Consolas', 'monospace';
 }
 
 a {
@@ -51,6 +53,7 @@ img {
 
 .header-button:hover {
   color: var(--url-color);
+  background-color: #1a1a1a;
 }
 
 #header-tab-div {
