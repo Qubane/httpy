@@ -112,7 +112,7 @@ def parse_args():
 def main():
     # args = parse_args()
     httpy = HTTPyServer(
-        bind_address=("0.0.0.0", 80))
+        bind_address=("0.0.0.0", 8080))
     httpy.run()
 
 
