@@ -95,7 +95,9 @@ class Request:
             try:
                 rheaders["Accept-Language"] = parse_accept_language(rheaders["Accept-Language"])
             except Exception:
-                rheaders["Accept-Language"] = [("en", 1)]
+                rheaders["Accept-Language"] = []
+        else:
+            rheaders["Accept-Language"] = []
 
         # data
         # TODO: make data streams
