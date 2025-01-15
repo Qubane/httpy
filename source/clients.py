@@ -1,8 +1,8 @@
 import asyncio
 import logging
 from source.status import *
+from source.classes import *
 from source.page_manager import PageManager
-from source.classes import Request, Response
 
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -20,16 +20,23 @@ class ClientHandler:
 
         request = await Request.read(self.reader)
 
-        if request.path in PageManager.path_tree:
-            filepath = PageManager.get(request.path)["filepath"]
-            filepath = filepath.format(prefix="en")  # temporary
+        file = None
+        response = Response(status=STATUS_CODE_NOT_FOUND)
+        if request.type == RequestTypes.GET:
+            if request.path in PageManager.path_tree:
+                filepath = PageManager.get(request.path)["filepath"]
+                filepath = filepath.format(prefix="en")  # temporary
 
-            with open(filepath, "rb") as file:
-                await Response(
+                file = open(filepath, "rb")
+                response = Response(
                     data=file,
-                    status=STATUS_CODE_OK).write(self.writer)
-        else:
-            await Response(status=STATUS_CODE_NOT_FOUND).write(self.writer)
+                    status=STATUS_CODE_OK)
+        try:
+            await response.write(self.writer)
+        except Exception as e:
+            if file:
+                file.close()
+            raise e
 
     def close(self) -> None:
         """
