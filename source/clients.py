@@ -20,6 +20,8 @@ class ClientHandler:
 
         request = await Request.read(self.reader)
 
+        LOGGER.debug(request)
+
         file = None
         response = Response(status=STATUS_CODE_NOT_FOUND)
         if request.type == RequestTypes.GET:
