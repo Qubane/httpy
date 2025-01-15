@@ -45,14 +45,53 @@ img {
 .button {
   color: var(--text-color);
   background-color: transparent;
-  /*font-size: 20px;*/
-  /*flex-grow: 1;*/
   border: none;
   padding: 0;
 }
 
 .button:hover {
   color: var(--url-color);
+  background-color: var(--content-background);
+}
+
+.header-button {
+  font-size: 20px;
+  flex-grow: 1;
+}
+
+.dropdown {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  position: relative;
+}
+
+.dropdown-content {
+  display: none;
+  flex-direction: column;
+  min-width: 100%;
+  overflow: auto;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  background-color: var(--content-background);
+  position: absolute;
+}
+
+.dropdown-content .button {
+  text-align: left;
+  padding-left: 10px
+}
+
+.dropdown-content:hover *:hover {
+  background-color: var(--content-background);
+  color: var(--url-color);
+}
+
+.dropdown:hover .dropdown-content {
+  display: flex;
+}
+
+.dropdown:hover .button {
   background-color: var(--content-background);
 }
 

@@ -9,16 +9,15 @@
     <div id="header-tab-div">
         <div id="header-tab-container-div">
             <h1 style="font-size: 30px; width: 30%; text-align: center"> Qubane's page </h1>
-            <input class="button" style="font-size: 20px; flex-grow: 1" type="button" onclick="location.href='/';" value="main" />
-            <input class="button" style="font-size: 20px; flex-grow: 1" type="button" onclick="location.href='/news';" value="news" />
-<!--            <div class="dropdown">-->
-<!--                <button class="dropdown-button">dropdown</button>-->
-<!--                <div class="dropdown-content">-->
-<!--                    <p> test1 </p>-->
-<!--                    <p> test2 </p>-->
-<!--                    <p> test3 </p>-->
-<!--                </div>-->
-<!--            </div>-->
+            <input class="button header-button" type="button" onclick="location.href='/';" value="main" />
+            <div class="dropdown">
+                <button class="button header-button">news</button>
+                <div class="dropdown-content">
+                    <input class="button header-button" type="button" onclick="location.href='/news/general';" value="general" />
+                    <input class="button header-button" type="button" onclick="location.href='/news/youtube';" value="youtube" />
+                    <input class="button header-button" type="button" onclick="location.href='/news/scrap-mechanic';" value="scrap mechanic" />
+                </div>
+            </div>
         </div>
     </div>
     <div class="section-div">
