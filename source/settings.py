@@ -30,7 +30,7 @@ def init():
         format="[{asctime}] [{levelname:<8}] {name}: {message}",
         handlers=[
             logging.handlers.RotatingFileHandler(
-                filename=f"{LOGS_DIRECTORY}/discord.log",
+                filename=f"{LOGS_DIRECTORY}/server.log",
                 encoding="utf-8",
                 maxBytes=2**20 * 32,  # 32 MiB
                 backupCount=5),
