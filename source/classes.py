@@ -7,6 +7,26 @@ from source.status import StatusCode
 from source.settings import READ_BUFFER_SIZE, WRITE_BUFFER_SIZE, MAX_QUERY_ARGS
 
 
+def parse_accept_language(header_val: str) -> list[tuple[str, float]]:
+    """
+    Parses 'Accept-Language' header in request
+    :param header_val: header value
+    :return: list of tuples of accepted languages
+    """
+
+    langs = header_val.split(",")
+    locale_q_pairs = []
+
+    for lang in langs:
+        if (lang_pair := lang.split(";")[0]) == lang:
+            locale_q_pairs.append((lang.strip(), 1))
+        else:
+            locale = lang_pair[0].strip()
+            q = float(lang_pair[1].split("=")[1])
+            locale_q_pairs.append((locale, q))
+    return locale_q_pairs
+
+
 class RequestTypes:
     GET = 'GET'
     HEAD = 'HEAD'
@@ -70,6 +90,12 @@ class Request:
         for raw_header in re.findall(r"\r\n(.*:.*)\r\n", data.decode("ascii")):
             raw_header = raw_header.split(": ")
             rheaders[raw_header[0]] = raw_header[1]
+
+        if "Accept-Language" in rheaders:
+            try:
+                rheaders["Accept-Language"] = parse_accept_language(rheaders["Accept-Language"])
+            except Exception:
+                rheaders["Accept-Language"] = [("en", 1)]
 
         # data
         # TODO: make data streams
