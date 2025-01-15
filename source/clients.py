@@ -24,9 +24,19 @@ class ClientHandler:
         response = Response(status=STATUS_CODE_NOT_FOUND)
         if request.type == RequestTypes.GET:
             if request.path in PageManager.path_tree:
-                filepath = PageManager.get(request.path)["filepath"]
-                filepath = filepath.format(prefix="en")  # temporary
+                # pick locale
+                for lang_pair in request.headers["Accept-Language"]:
+                    if lang_pair[0] in PageManager.path_tree[request.path]["locales"]:
+                        locale = lang_pair[0]
+                        break
+                else:  # force English
+                    locale = "en"
 
+                # find and format file path accordingly
+                filepath = PageManager.get(request.path)["filepath"]
+                filepath = filepath.format(prefix=locale)
+
+                # open and make response
                 file = open(filepath, "rb")
                 response = Response(
                     data=file,
@@ -34,6 +44,7 @@ class ClientHandler:
         try:
             await response.write(self.writer)
         except Exception as e:
+            # if file was open, close it
             if file:
                 file.close()
             raise e
