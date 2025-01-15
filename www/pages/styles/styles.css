@@ -42,18 +42,18 @@ img {
   padding: 8px;
 }
 
-.header-button {
+.button {
   color: var(--text-color);
   background-color: transparent;
-  font-size: 20px;
-  flex-grow: 1;
+  /*font-size: 20px;*/
+  /*flex-grow: 1;*/
   border: none;
   padding: 0;
 }
 
-.header-button:hover {
+.button:hover {
   color: var(--url-color);
-  background-color: #1a1a1a;
+  background-color: var(--content-background);
 }
 
 #header-tab-div {
