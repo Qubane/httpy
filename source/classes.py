@@ -8,17 +8,18 @@ from source.settings import READ_BUFFER_SIZE, WRITE_BUFFER_SIZE, MAX_QUERY_ARGS
 
 
 class RequestTypes:
-    GET = b'GET'
-    HEAD = b'HEAD'
-    POST = b'POST'
-    PUT = b'PUT'
-    DELETE = b'DELETE'
-    CONNECT = b'CONNECT'
-    OPTIONS = b'OPTIONS'
-    TRACE = b'TRACE'
-    PATCH = b'PATCH'
+    GET = 'GET'
+    HEAD = 'HEAD'
+    POST = 'POST'
+    PUT = 'PUT'
+    DELETE = 'DELETE'
+    CONNECT = 'CONNECT'
+    OPTIONS = 'OPTIONS'
+    TRACE = 'TRACE'
+    PATCH = 'PATCH'
 
     ALL = [GET, HEAD, POST, PUT, DELETE, CONNECT, OPTIONS, TRACE, PATCH]
+    RAW_ALL = [x.encode("ascii") for x in ALL]
 
 
 @dataclass(frozen=True)
@@ -44,7 +45,7 @@ class Request:
         data = await reader.read(READ_BUFFER_SIZE)
 
         # request type
-        for rtype in RequestTypes.ALL:
+        for rtype in RequestTypes.RAW_ALL:
             if data[:len(rtype)] == rtype:
                 break
         else:
