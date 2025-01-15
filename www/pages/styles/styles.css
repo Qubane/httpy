@@ -1,10 +1,10 @@
 :root {
   --body-background: #000;
-  --content-background: #1a1a1a;
-  --secondary-background: #202020;
+  --shade-1: #1a1a1a;
+  --shade-2: #202020;
 
   --text-color: #fff;
-  --url-color: #7fffd4;
+  --hover-color: #7fffd4;
 
   --secondary-height: 6vh;
 }
@@ -18,7 +18,7 @@
 }
 
 a {
-  color: var(--url-color)
+  color: var(--hover-color)
 }
 
 p, li {
@@ -50,8 +50,8 @@ img {
 }
 
 .button:hover {
-  color: var(--url-color);
-  background-color: var(--content-background);
+  color: var(--hover-color);
+  background-color: var(--shade-1);
 }
 
 .header-button {
@@ -67,38 +67,25 @@ img {
 }
 
 .dropdown-content {
+  background-color: var(--shade-1);
+  position: absolute;
   display: none;
   flex-direction: column;
   min-width: 100%;
-  overflow: auto;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  background-color: var(--content-background);
-  position: absolute;
 }
 
-.dropdown-content .button {
-  text-align: left;
-  padding-left: 10px
-}
-
-.dropdown-content:hover *:hover {
-  background-color: var(--content-background);
-  color: var(--url-color);
+.dropdown-content *:hover {
+  color: var(--hover-color);
 }
 
 .dropdown:hover .dropdown-content {
   display: flex;
 }
 
-.dropdown:hover .button {
-  background-color: var(--content-background);
-}
-
 #header-tab-div {
   width: 100%;
   height: var(--secondary-height);
-  background: var(--secondary-background);
+  background: var(--shade-2);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -116,7 +103,7 @@ img {
   align-self: center;
   width: 70vw;
   min-height: 100vh;
-  background: var(--content-background);
+  background: var(--shade-1);
 }
 
 .info-section {
@@ -125,7 +112,7 @@ img {
 }
 
 footer {
-  background: var(--secondary-background);
+  background: var(--shade-2);
   text-align: center;
   vertical-align: center;
   font-size: 10px;
