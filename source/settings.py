@@ -32,6 +32,6 @@ def init():
             logging.handlers.RotatingFileHandler(
                 filename=f"{LOGS_DIRECTORY}/server.log",
                 encoding="utf-8",
-                maxBytes=2**20 * 32,  # 32 MiB
+                maxBytes=2**20 * 2,  # 2 MiB
                 backupCount=5),
             logging.StreamHandler()])
