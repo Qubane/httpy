@@ -65,6 +65,8 @@ class HTTPyServer:
         """
 
         self.server.close()
+        for sock in self.server.sockets:
+            sock.close()
 
 
 def parse_args():
