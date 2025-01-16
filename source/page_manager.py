@@ -16,6 +16,12 @@ class PathTree:
     tree: dict = {}
 
     @classmethod
+    def __contains__(cls, item) -> bool:
+        if isinstance(item, str):
+            return cls.get(item) is not None
+        return False
+
+    @classmethod
     def add(cls, path: str, data: dict):
         """
         Adds new path to the tree
