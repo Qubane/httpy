@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from typing import Any
+from collections.abc import Generator
 from source.status import *
 from source.classes import *
 from source.page_manager import PageManager, PathTree
@@ -48,7 +50,13 @@ class ClientHandler:
                         data=file,
                         status=STATUS_CODE_OK)
                 else:  # request
-                    pass
+                    page: Generator[bytes, Any, None] = page_info["script"].make_page(
+                        locale=locale,
+                        query_args=request.query_args)
+
+                    response = Response(
+                        data=page,
+                        status=STATUS_CODE_NOT_IMPLEMENTED)
         try:
             await response.write(self.writer)
         except Exception as e:
