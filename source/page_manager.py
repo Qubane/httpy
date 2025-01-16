@@ -8,6 +8,46 @@ from source.settings import WEB_DIRECTORY
 LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
+class PathTree:
+    """
+    Tree of paths
+    """
+
+    tree: dict = {}
+
+    @classmethod
+    def add(cls, path: str, data: dict):
+        """
+        Adds new path to the tree
+        :param path: string path
+        :param data: data to add
+        """
+
+        node = cls.tree
+        split_path = path.split("/")
+        for split in split_path[:-1]:
+            if split not in node:
+                node[split] = dict()
+            node = node[split]
+
+        node[split_path[-1]] = data
+
+    @classmethod
+    def get(cls, path: str) -> dict | None:
+        """
+        Returns node at given path
+        :param path: string path
+        """
+
+        node = cls.tree
+        split_path = path.split("/")
+        for split in split_path[:-1]:
+            if split not in node:
+                return None
+            node = node[split]
+        return node[split_path[-1]]
+
+
 class PageManager:
     """
     Controls access to pages and page indexing
