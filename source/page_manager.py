@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+from typing import Any
 from source.settings import WEB_DIRECTORY
 
 
@@ -13,7 +14,7 @@ class PageManager:
     """
 
     # 'web_path': {'filepath': ..., 'locales': ['en', 'ru']}
-    path_tree: dict[str, dict[str, str | list]] = dict()
+    path_tree: dict[str, dict[str, Any]] = dict()
 
     @classmethod
     def init(cls):
@@ -37,11 +38,16 @@ class PageManager:
             with open(f"{dir_path}/index.json") as file:
                 data = json.load(file)
 
-            page_info = {
-                "filepath": f"{WEB_DIRECTORY}/pages/{page_directory}/{data['filepath']}",
-                "locales": data["locales"]}
+            page_info: dict[str, Any] = {"locales": data["locales"]}
+            if data["filepath"]:  # normal file
+                page_info["filepath"] = f"{WEB_DIRECTORY}/pages/{page_directory}/{data['filepath']}"
+                LOGGER.info(f"Added '{data['web_path']}' as '{page_info['filepath']}';")
+            else:  # scripted file
+                page_info["filepath"] = None
+                page_info["script_path"] = f"{WEB_DIRECTORY}/pages/{page_directory}/{data['script_path']}"
+                LOGGER.info(f"Added script '{data['web_path']}' using '{page_info['script_path']}';")
+
             cls.path_tree[data["web_path"]] = page_info
-            LOGGER.info(f"Added '{data['web_path']}' as '{page_info['filepath']}';")
             for alias in data["web_path_aliases"]:
                 # reference same dict
                 cls.path_tree[alias] = page_info
