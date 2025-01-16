@@ -49,9 +49,13 @@ class PathTree:
         node = cls.tree
         split_path = path.split("/")
         for split in split_path[:-1]:
+            if "*" in node:
+                return node["*"]
             if split not in node:
                 return None
             node = node[split]
+        if "*" in node:
+            return node["*"]
         return node[split_path[-1]]
 
 
