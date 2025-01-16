@@ -52,7 +52,7 @@ class ClientHandler:
                 else:  # request
                     page: Generator[bytes, Any, None] = page_info["script"].make_page(
                         locale=locale,
-                        query_args=request.query_args)
+                        request=request)
 
                     response = Response(
                         data=page,
