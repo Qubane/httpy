@@ -1,0 +1,6 @@
+{
+  "web_path": "/news/*",
+  "web_path_aliases": [],
+  "locales": ["en", "ru"],
+  "script_path": "page_make.py"
+}
