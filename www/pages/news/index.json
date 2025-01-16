@@ -3,5 +3,5 @@
   "web_path_aliases": [],
   "locales": ["en", "ru"],
   "filepath": null,
-  "script_path": "page_make.py"
+  "script_path": "page_maker.py"
 }
