@@ -53,9 +53,6 @@ class PageManager:
     Controls access to pages and page indexing
     """
 
-    # 'web_path': {'filepath': ..., 'locales': ['en', 'ru']}
-    path_tree: dict[str, dict[str, Any]] = dict()
-
     @classmethod
     def init(cls):
         """
@@ -66,7 +63,7 @@ class PageManager:
         page_info = {
             "filepath": f"{WEB_DIRECTORY}/favicon.ico",
             "locales": ["en"]}
-        cls.path_tree["/favicon.ico"] = page_info
+        PathTree.add("/favicon.ico", page_info)
         LOGGER.info(f"Added '/favicon.ico' as '{WEB_DIRECTORY}/favicon.ico';")
 
         # Append other paths
@@ -87,18 +84,8 @@ class PageManager:
                 page_info["script_path"] = f"{WEB_DIRECTORY}/pages/{page_directory}/{data['script_path']}"
                 LOGGER.info(f"Added script '{data['web_path']}' using '{page_info['script_path']}';")
 
-            cls.path_tree[data["web_path"]] = page_info
+            PathTree.add(data["web_path"], page_info)
             for alias in data["web_path_aliases"]:
                 # reference same dict
-                cls.path_tree[alias] = page_info
+                PathTree.add(alias, page_info)
                 LOGGER.info(f"Added '{alias}' as '{page_info['filepath']}';")
-
-    @classmethod
-    def get(cls, web_path: str) -> dict[str, str | list] | None:
-        """
-        Returns reference to page info dictionary
-        :param web_path: web request path
-        :return: filepath with unformatted prefix
-        """
-
-        return cls.path_tree.get(web_path)

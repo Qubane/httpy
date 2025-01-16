@@ -2,7 +2,7 @@ import asyncio
 import logging
 from source.status import *
 from source.classes import *
-from source.page_manager import PageManager
+from source.page_manager import PageManager, PathTree
 
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -25,17 +25,17 @@ class ClientHandler:
         file = None
         response = Response(status=STATUS_CODE_NOT_FOUND)
         if request.type == RequestTypes.GET:
-            if request.path in PageManager.path_tree:
+            if request.path in PathTree:
                 # pick locale
                 for lang_pair in request.headers["Accept-Language"]:
-                    if lang_pair[0] in PageManager.path_tree[request.path]["locales"]:
+                    if lang_pair[0] in PathTree.get(request.path)["locales"]:
                         locale = lang_pair[0]
                         break
                 else:  # force English
                     locale = "en"
 
                 # find and format file path accordingly
-                filepath = PageManager.get(request.path)["filepath"]
+                filepath = PathTree.get(request.path)["filepath"]
                 filepath = filepath.format(prefix=locale)
 
                 # open and make response
