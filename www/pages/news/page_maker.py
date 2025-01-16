@@ -23,12 +23,12 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
     for post in os.listdir(dir_path):
         filepath = dir_path + post
         configs = {}
-        with open(filepath, "rb") as file:
+        with open(filepath, "r", encoding="utf-8") as file:
             while True:
-                config = file.readline().decode("ascii").split(":")
+                config = file.readline().split(":")
                 if len(config) == 1:
                     break
                 configs[config[0].strip("-")] = config[1].replace("\r", "").replace("\n", "")
-        print(configs)
+            page_content = file.read()
 
     yield b'Sorry, not implemented yet :<'
