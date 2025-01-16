@@ -25,7 +25,7 @@ class ClientHandler:
         file = None
         response = Response(status=STATUS_CODE_NOT_FOUND)
         if request.type == RequestTypes.GET:
-            if request.path in PathTree:
+            if request.path in PathTree():
                 # pick locale
                 for lang_pair in request.headers["Accept-Language"]:
                     if lang_pair[0] in PathTree.get(request.path)["locales"]:
