@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import importlib
 from typing import Any
 from source.settings import WEB_DIRECTORY
 
@@ -87,8 +88,11 @@ class PageManager:
                 LOGGER.info(f"Added '{data['web_path']}' as '{page_info['filepath']}';")
             else:  # scripted file
                 page_info["filepath"] = None
-                page_info["script_path"] = f"{WEB_DIRECTORY}/pages/{page_directory}/{data['script_path']}"
-                LOGGER.info(f"Added script '{data['web_path']}' using '{page_info['script_path']}';")
+                lib_path = f"{WEB_DIRECTORY}/pages/{page_directory}/{data['script_path']}"
+                import_path, package_name = (os.path.dirname(lib_path).replace("/", "."),
+                                             "." + os.path.splitext(os.path.basename(lib_path))[0])
+                page_info["script"] = importlib.import_module(package_name, import_path)
+                LOGGER.info(f"Added request '{data['web_path']}' using '{lib_path}';")
 
             PathTree.add(data["web_path"], page_info)
             for alias in data["web_path_aliases"]:
