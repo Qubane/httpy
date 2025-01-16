@@ -26,23 +26,29 @@ class ClientHandler:
         response = Response(status=STATUS_CODE_NOT_FOUND)
         if request.type == RequestTypes.GET:
             if request.path in PathTree():
+                # fetch page info
+                page_info = PathTree.get(request.path)
+
                 # pick locale
                 for lang_pair in request.headers["Accept-Language"]:
-                    if lang_pair[0] in PathTree.get(request.path)["locales"]:
+                    if lang_pair[0] in page_info["locales"]:
                         locale = lang_pair[0]
                         break
                 else:  # force English
                     locale = "en"
 
-                # find and format file path accordingly
-                filepath = PathTree.get(request.path)["filepath"]
-                filepath = filepath.format(prefix=locale)
+                if page_info["filepath"] is not None:  # normal file
+                    # find and format file path accordingly
+                    filepath = page_info["filepath"]
+                    filepath = filepath.format(prefix=locale)
 
-                # open and make response
-                file = open(filepath, "rb")
-                response = Response(
-                    data=file,
-                    status=STATUS_CODE_OK)
+                    # open and make response
+                    file = open(filepath, "rb")
+                    response = Response(
+                        data=file,
+                        status=STATUS_CODE_OK)
+                else:  # request
+                    pass
         try:
             await response.write(self.writer)
         except Exception as e:
