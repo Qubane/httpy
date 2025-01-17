@@ -12,6 +12,8 @@ VARS_DIRECTORY: str = "var"
 LOGS_DIRECTORY: str = "logs"
 WEB_DIRECTORY: str = "www"
 
+PAGE_NEWS_TAGS: set[str] = {"general", "youtube", "scrap-mechanic"}
+
 
 def init():
     # create 'var' directory
