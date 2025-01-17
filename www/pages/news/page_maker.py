@@ -34,14 +34,12 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
     yield b'yes'
 
 
-def parse_md2html(text: str) -> str:
+def parse_md2html(text: list[str]) -> list[str]:
     """
     Parses md to html
     :param text: md formatted string
     :return: html formatted string
     """
-
-    text = text.replace("\r", "").split("\n")
 
     # make formatting
     is_bold = False
@@ -86,4 +84,4 @@ def parse_md2html(text: str) -> str:
             continue
         text.append(f"<p>{line.strip()}</p>")
 
-    return "".join(text)
+    return text
