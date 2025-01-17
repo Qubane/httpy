@@ -31,3 +31,13 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
                 configs[config[0].strip("-")] = config[1].replace("\r", "").replace("\n", "")
 
     yield b'yes'
+
+
+def make_news_list_page(page_number: int) -> str:
+    """
+    Creates a list page of news
+    :param page_number: page number
+    :return: generated html page
+    """
+
+
