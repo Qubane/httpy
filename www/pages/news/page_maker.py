@@ -5,8 +5,9 @@ from source.classes import Request
 from source.settings import WEB_DIRECTORY
 
 
+POSTS_PATH: str = f"{WEB_DIRECTORY}/pages/news/posts/"
 with open(f"{WEB_DIRECTORY}/templates/news.template.html", "r", encoding="utf-8") as _file:
-    PAGE_TEMPLATE = _file.read()
+    PAGE_TEMPLATE: str = _file.read()
 
 
 def make_page(**kwargs) -> Generator[bytes, Any, None]:
@@ -19,9 +20,8 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
     if request is None:
         raise Exception("Request is None")
 
-    dir_path = f"{WEB_DIRECTORY}/pages/news/posts/"
-    for post in os.listdir(dir_path):
-        filepath = dir_path + post
+    for post in os.listdir(POSTS_PATH):
+        filepath = POSTS_PATH + post
         configs = {}
         with open(filepath, "r", encoding="utf-8") as file:
             while True:
