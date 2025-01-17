@@ -3,14 +3,14 @@ import logging
 import logging.handlers
 
 
-READ_BUFFER_SIZE = 2 ** 15
-WRITE_BUFFER_SIZE = 2 ** 24
+READ_BUFFER_SIZE: int = 2 ** 15
+WRITE_BUFFER_SIZE: int = 2 ** 24
 
-MAX_QUERY_ARGS = 16
+MAX_QUERY_ARGS: int = 16
 
-VARS_DIRECTORY = "var"
-LOGS_DIRECTORY = "logs"
-WEB_DIRECTORY = "www"
+VARS_DIRECTORY: str = "var"
+LOGS_DIRECTORY: str = "logs"
+WEB_DIRECTORY: str = "www"
 
 
 def init():
