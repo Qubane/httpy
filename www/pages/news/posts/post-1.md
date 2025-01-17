@@ -1,4 +1,6 @@
 --tags:general
+--title:The Very First News Post
+--description: this is indeed the very first post to be made in news section
 
 # First post
 This is the very first post to be made for news channel  
