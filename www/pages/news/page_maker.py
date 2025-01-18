@@ -4,6 +4,7 @@ from datetime import datetime
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from source.classes import Request
+from source.exceptions import NotFound
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
 
 
@@ -20,7 +21,16 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
     locale: str = kwargs.get("locale", "en")
     request: Request = kwargs.get("request")
 
-    yield PageMaker.make_news_list_page("general", 0).encode("utf-8")
+    tags = request.query_args.get("tags", "all")
+    if tags not in PostList.tagged_posts:
+        raise NotFound("Tag Not Found")
+    page = request.query_args.get("page", "0")
+    try:
+        page = int(page)
+    except ValueError:
+        page = 0
+
+    yield PageMaker.make_news_list_page(tags, page).encode("utf-8")
 
 
 @dataclass(frozen=True)
