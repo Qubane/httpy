@@ -1,5 +1,6 @@
 import os
-from typing import Any, TextIO
+from typing import Any
+from dataclasses import dataclass, field
 from collections.abc import Generator
 from source.classes import Request
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
@@ -12,49 +13,93 @@ with open(f"{WEB_DIRECTORY}/templates/news.template.html", "r", encoding="utf-8"
 
 def make_page(**kwargs) -> Generator[bytes, Any, None]:
     """
-    Makes page
+    Gets called from ClientHandler. Yields a page or part of it
     """
 
     locale: str = kwargs.get("locale", "en")
     request: Request = kwargs.get("request")
-    if request is None:
-        raise Exception("Request is None")
-
-    yield make_news_list_page(0).encode("utf-8")
 
 
-def get_post(filename: str) -> tuple[TextIO, dict[str, Any]]:
+@dataclass(frozen=True)
+class Post:
     """
-    Returns TextIO and information about the news post
-    :param filename: name of the post
-    :return: file and configs
+    Post container
     """
 
-    configs = {}
-    file = open(filename, "r", encoding="utf-8")
-    while True:
-        config = file.readline().split(":")
-        if len(config) == 1:
-            break
-        configs[config[0].strip("-")] = config[1].replace("\r", "").replace("\n", "")
-    return file, configs
+    filepath: str
+    title: str = "untitled"
+    description: str = "no description"
+    tags: list[str] = field(default_factory=lambda: list())
 
 
-def make_news_list_page(page_number: int) -> str:
+class PostList:
     """
-    Creates a list page of news
-    :param page_number: page number
-    :return: generated html page
+    List of posts with references to their tags, titles, descriptions and other generic data
     """
 
-    sections = []
-    file_list = sorted(os.listdir(POSTS_PATH))
-    for post in file_list[page_number * PAGE_NEWS_LIST_SIZE:(page_number+1) * PAGE_NEWS_LIST_SIZE]:
-        file, configs = get_post(f"{POSTS_PATH}/{post}")
-        file.close()
-        sections.append(
-            f"<section class='info-section'>"
-            f"<h1>{configs.get('title', 'Untitled')}</h1>"
-            f"<p>{configs.get('description', '')}</p>"
-            f"</section>")
-    return PAGE_TEMPLATE.format(sections=f"<div class='section-div'>{'<hr>'.join(sections)}</div>")
+    # 'post': Post(...)
+    post_list: dict[str, Post] = dict()
+
+    # 'tag': [Post(...), Post(...), Post(...), ...]
+    tagged_posts: dict[str, list[Post]] = dict()
+
+    @classmethod
+    def update_post(cls, post: str):
+        """
+        Updates configs for a single post.
+        :param post: post name
+        """
+
+        filepath = f"{POSTS_PATH}/{post}"
+
+        configs = {"filepath": filepath}
+        with (open(filepath, "r", encoding="utf-8") as file):
+            while True:
+                config = file.readline().split(":")
+                if len(config) == 1:
+                    break
+                configs[config[0].strip("-")] = (config[1]
+                                                 .replace("\r", "")
+                                                 .replace("\n", ""))
+        cls.post_list[post] = Post(filepath=filepath, **configs)
+
+    @classmethod
+    def update(cls):
+        """
+        Updates list of posts
+        """
+
+        for file in os.listdir(POSTS_PATH):
+            cls.update_post(file)
+
+        cls.tagged_posts.clear()
+        for _, post in cls.post_list.items():
+            for tag in post.tags:
+                if tag not in cls.tagged_posts:
+                    cls.tagged_posts[tag] = list()
+                cls.tagged_posts[tag].append(post)
+
+
+class PageMaker:
+    """
+    Page making namespace
+    """
+
+    # def make_news_list_page(page_number: int) -> str:
+    #     """
+    #     Creates a list page of news
+    #     :param page_number: page number
+    #     :return: generated html page
+    #     """
+    #
+    #     sections = []
+    #     file_list = sorted(os.listdir(POSTS_PATH))
+    #     for post in file_list[page_number * PAGE_NEWS_LIST_SIZE:(page_number+1) * PAGE_NEWS_LIST_SIZE]:
+    #         file, configs = get_post(f"{POSTS_PATH}/{post}")
+    #         file.close()
+    #         sections.append(
+    #             f"<section class='info-section'>"
+    #             f"<h1>{configs.get('title', 'Untitled')}</h1>"
+    #             f"<p>{configs.get('description', '')}</p>"
+    #             f"</section>")
+    #     return PAGE_TEMPLATE.format(sections=f"<div class='section-div'>{'<hr>'.join(sections)}</div>")
