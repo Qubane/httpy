@@ -20,7 +20,7 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
     locale: str = kwargs.get("locale", "en")
     request: Request = kwargs.get("request")
 
-    yield PageMaker.make_news_list_page("all", 0).encode("utf-8")
+    yield PageMaker.make_news_list_page("general", 0).encode("utf-8")
 
 
 @dataclass(frozen=True)
@@ -65,6 +65,7 @@ class PostList:
                 configs[config[0]] = (config[1]
                                       .replace("\r", "")
                                       .replace("\n", ""))
+            configs["tags"] = configs["tags"].split(",")
         cls.post_list[post] = Post(
             filepath=filepath,
             publish_date=datetime.fromtimestamp(os.path.getmtime(filepath)),
@@ -109,8 +110,11 @@ class PageMaker:
         for post in post_list[page_number * PAGE_NEWS_LIST_SIZE:(page_number+1) * PAGE_NEWS_LIST_SIZE]:
             sections.append(
                 f"<section class='info-section'>"
+                f"<div style='display: flex; flex-direction: column'>"
                 f"<h1>{post.title}</h1>"
-                f"<p>{post.description}</p>"
+                f"<p style='color: grey; font-size: 70%'>creation date: {post.publish_date.__str__()}</p>"
+                f"</div>"
+                f"<p style='padding-top: 10px'>{post.description}</p>"
                 f"</section>")
         return PAGE_TEMPLATE.format(sections=f"<div class='section-div'>{'<hr>'.join(sections)}</div>")
 
