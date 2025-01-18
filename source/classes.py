@@ -69,7 +69,7 @@ class Request:
             if data[:len(rtype)] == rtype:
                 break
         else:
-            raise Exception
+            raise Exception(data[:100].decode("utf-8"))
 
         # raw request path
         raw_rpath = data[len(rtype)+1:data.find(b' ', len(rtype)+1, 255)]
