@@ -20,6 +20,8 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
     locale: str = kwargs.get("locale", "en")
     request: Request = kwargs.get("request")
 
+    yield PageMaker.make_news_list_page("all", 0).encode("utf-8")
+
 
 @dataclass(frozen=True)
 class Post:
@@ -54,7 +56,7 @@ class PostList:
 
         filepath = f"{POSTS_PATH}/{post}"
 
-        configs = {"filepath": filepath}
+        configs = {}
         with (open(filepath, "r", encoding="utf-8") as file):
             while True:
                 config = file.readline().split(":")
@@ -90,21 +92,27 @@ class PageMaker:
     Page making namespace
     """
 
-    # def make_news_list_page(page_number: int) -> str:
-    #     """
-    #     Creates a list page of news
-    #     :param page_number: page number
-    #     :return: generated html page
-    #     """
-    #
-    #     sections = []
-    #     file_list = sorted(os.listdir(POSTS_PATH))
-    #     for post in file_list[page_number * PAGE_NEWS_LIST_SIZE:(page_number+1) * PAGE_NEWS_LIST_SIZE]:
-    #         file, configs = get_post(f"{POSTS_PATH}/{post}")
-    #         file.close()
-    #         sections.append(
-    #             f"<section class='info-section'>"
-    #             f"<h1>{configs.get('title', 'Untitled')}</h1>"
-    #             f"<p>{configs.get('description', '')}</p>"
-    #             f"</section>")
-    #     return PAGE_TEMPLATE.format(sections=f"<div class='section-div'>{'<hr>'.join(sections)}</div>")
+    @staticmethod
+    def make_news_list_page(tag: str, page_number: int) -> str:
+        """
+        Creates a list page of news
+        :param tag: search tag
+        :param page_number: page number
+        :return: generated html page
+        """
+
+        sections = []
+        if tag == "all":
+            post_list = sorted(PostList.post_list.values(), key=lambda x: x.publish_date)
+        else:
+            post_list = sorted(PostList.tagged_posts[tag], key=lambda x: x.publish_date)
+        for post in post_list[page_number * PAGE_NEWS_LIST_SIZE:(page_number+1) * PAGE_NEWS_LIST_SIZE]:
+            sections.append(
+                f"<section class='info-section'>"
+                f"<h1>{post.title}</h1>"
+                f"<p>{post.description}</p>"
+                f"</section>")
+        return PAGE_TEMPLATE.format(sections=f"<div class='section-div'>{'<hr>'.join(sections)}</div>")
+
+
+PostList.update()
