@@ -30,6 +30,8 @@ class ClientHandler:
             if request.path in PathTree():
                 # fetch page info
                 page_info = PathTree.get(request.path)
+                if "*" in page_info:  # star path
+                    page_info = page_info["*"]
 
                 # pick locale
                 for lang_pair in request.headers["Accept-Language"]:
