@@ -1,7 +1,8 @@
 import os
 from typing import Any
-from dataclasses import dataclass, field
+from datetime import datetime
 from collections.abc import Generator
+from dataclasses import dataclass, field
 from source.classes import Request
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
 
@@ -27,6 +28,7 @@ class Post:
     """
 
     filepath: str
+    publish_date: datetime  # last modification date
     title: str = "untitled"
     description: str = "no description"
     tags: list[str] = field(default_factory=lambda: list())
@@ -58,10 +60,13 @@ class PostList:
                 config = file.readline().split(":")
                 if len(config) == 1:
                     break
-                configs[config[0].strip("-")] = (config[1]
-                                                 .replace("\r", "")
-                                                 .replace("\n", ""))
-        cls.post_list[post] = Post(filepath=filepath, **configs)
+                configs[config[0]] = (config[1]
+                                      .replace("\r", "")
+                                      .replace("\n", ""))
+        cls.post_list[post] = Post(
+            filepath=filepath,
+            publish_date=datetime.fromtimestamp(os.path.getmtime(filepath)),
+            **configs)
 
     @classmethod
     def update(cls):
