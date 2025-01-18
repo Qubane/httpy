@@ -56,7 +56,7 @@ class PathTree:
             node = node[split]
         if "*" in node:
             return node["*"]
-        return node[split_path[-1]]
+        return node.get(split_path[-1])
 
 
 class PageManager:
