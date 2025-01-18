@@ -87,5 +87,9 @@ async def client_callback(reader: asyncio.StreamReader, writer: asyncio.StreamWr
         await client.handle_client()
     except Exception as e:
         LOGGER.warning(f"Error occurred when handling client request:", exc_info=e)
+        try:
+            await Response(status=STATUS_CODE_INTERNAL_SERVER_ERROR).write(writer)
+        except Exception:  # I don't know what it could raise
+            pass
 
     client.close()
