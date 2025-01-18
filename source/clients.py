@@ -59,7 +59,7 @@ class ClientHandler:
 
                     response = Response(
                         data=page,
-                        status=STATUS_CODE_NOT_IMPLEMENTED)
+                        status=STATUS_CODE_OK)
         try:
             await response.write(self.writer)
         except Exception as e:
