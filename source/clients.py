@@ -4,6 +4,7 @@ from typing import Any
 from collections.abc import Generator
 from source.status import *
 from source.classes import *
+from source.exceptions import *
 from source.page_manager import PageManager, PathTree
 
 
@@ -85,13 +86,22 @@ async def client_callback(reader: asyncio.StreamReader, writer: asyncio.StreamWr
 
     client = ClientHandler(reader, writer)
 
+    response = None
     try:
         await client.handle_client()
+    except ClientSideErrors as e:
+        LOGGER.debug(f"User error exception")
+        if isinstance(e, NotFound):
+            response = Response(status=STATUS_CODE_NOT_FOUND)
     except Exception as e:
         LOGGER.warning(f"Error occurred when handling client request:", exc_info=e)
+        response = Response(status=STATUS_CODE_INTERNAL_SERVER_ERROR)
+
+    # if there's an exception response
+    if response:
         try:
-            await Response(status=STATUS_CODE_INTERNAL_SERVER_ERROR).write(writer)
-        except Exception:  # I don't know what it could raise
+            await response.write(writer)
+        except Exception:  # I don't know what it raises
             pass
 
     client.close()
