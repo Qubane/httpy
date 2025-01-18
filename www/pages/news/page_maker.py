@@ -22,7 +22,7 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
     request: Request = kwargs.get("request")
 
     tags = request.query_args.get("tags", "all")
-    if tags not in PostList.tagged_posts:
+    if tags not in PostList.tagged_posts and tags != "all":
         raise NotFound("Tag Not Found")
     page = request.query_args.get("page", "0")
     try:
