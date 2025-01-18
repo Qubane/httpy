@@ -23,6 +23,11 @@ class ClientHandler:
 
         request = await Request.read(self.reader)
 
+        # a bit restrictive, maybe will get removed later
+        if request.headers.get("Host"):
+            if request.headers["Host"] != "qubane.ru" and request.headers["Host"][:-5] != "127.0.0.1":
+                raise ForbiddenError
+
         LOGGER.debug(request)
 
         file = None
@@ -91,8 +96,10 @@ async def client_callback(reader: asyncio.StreamReader, writer: asyncio.StreamWr
         await client.handle_client()
     except ClientSideErrors as e:
         LOGGER.debug(f"User error exception")
-        if isinstance(e, NotFound):
+        if isinstance(e, NotFoundError):
             response = Response(status=STATUS_CODE_NOT_FOUND)
+        elif isinstance(e, ForbiddenError):
+            response = Response(data=b'Connecting through unknown host', status=STATUS_CODE_FORBIDDEN)
     except Exception as e:
         LOGGER.warning(f"Error occurred when handling client request:", exc_info=e)
         response = Response(status=STATUS_CODE_INTERNAL_SERVER_ERROR)

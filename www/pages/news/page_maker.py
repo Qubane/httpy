@@ -4,7 +4,7 @@ from datetime import datetime
 from collections.abc import Generator
 from dataclasses import dataclass, field
 from source.classes import Request
-from source.exceptions import NotFound
+from source.exceptions import NotFoundError
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
 
 
@@ -23,7 +23,7 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
 
     tags = request.query_args.get("tags", "all")
     if tags not in PostList.tagged_posts and tags != "all":
-        raise NotFound("Tag Not Found")
+        raise NotFoundError("Tag Not Found")
     page = request.query_args.get("page", "0")
     try:
         page = int(page)
