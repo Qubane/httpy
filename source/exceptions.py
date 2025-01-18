@@ -7,6 +7,11 @@ class ClientSideErrors(Exception):
         super().__init__(*args)
 
 
-class NotFound(ClientSideErrors):
+class NotFoundError(ClientSideErrors):
+    def __init__(self, *args):
+        super().__init__(*args)
+
+
+class ForbiddenError(ClientSideErrors):
     def __init__(self, *args):
         super().__init__(*args)
