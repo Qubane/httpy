@@ -23,11 +23,6 @@ class ClientHandler:
 
         request = await Request.read(self.reader)
 
-        # a bit restrictive, maybe will get removed later
-        if request.headers.get("Host"):
-            if request.headers["Host"] != "qubane.ru" and request.headers["Host"][:-5] != "127.0.0.1":
-                raise ForbiddenError
-
         LOGGER.debug(request)
 
         file = None
