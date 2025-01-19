@@ -114,9 +114,9 @@ class PageMaker:
 
         sections = []
         if tag == "all":
-            post_list = sorted(PostList.post_list.values(), key=lambda x: x.publish_date)
+            post_list = sorted(PostList.post_list.values(), key=lambda x: x.publish_date, reverse=True)
         else:
-            post_list = sorted(PostList.tagged_posts[tag], key=lambda x: x.publish_date)
+            post_list = sorted(PostList.tagged_posts[tag], key=lambda x: x.publish_date, reverse=True)
         for post in post_list[page_number * PAGE_NEWS_LIST_SIZE:(page_number+1) * PAGE_NEWS_LIST_SIZE]:
             sections.append(
                 f"<section class='info-section'>"
