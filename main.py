@@ -1,3 +1,4 @@
+import os
 import ssl
 import signal
 import asyncio
@@ -29,7 +30,7 @@ class HTTPyServer:
         self.bind_address: tuple[str, int] = bind_address
 
         self.ctx: ssl.SSLContext | None = None
-        if ssl_keys:
+        if ssl_keys and ssl_keys[0] and ssl_keys[1]:
             self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
             self.ctx.load_cert_chain(certfile=ssl_keys[0], keyfile=ssl_keys[1])
 
@@ -79,42 +80,37 @@ def parse_args():
 
     # parser
     parser = ArgumentParser(
-        prog="httpy",
-        description="https web server")
+        prog="HTTPy",
+        description="HTTP python web server")
 
     # add arguments
-    parser.add_argument("-p", "--port",
-                        help="binding port",
-                        type=int,
+    parser.add_argument("-a", "--address",
+                        help="binding address:port",
                         required=True)
     parser.add_argument("-c", "--certificate",
                         help="SSL certificate (or fullchain.pem)")
     parser.add_argument("-k", "--private-key",
                         help="SSL private key")
-    # TODO: implement verbosity check
-    # parser.add_argument("-v", "--verbose",
-    #                     help="verbose (default False)",
-    #                     default=False,
-    #                     action="store_true")
-    # TODO: implement live update
-    # parser.add_argument("-lu", "--live-update",
-    #                     help="updates files in real time (default False)",
-    #                     default=False,
-    #                     action="store_true")
 
     # parse arguments
     args = parser.parse_args()
-    if args.enable_ssl and (args.certificate is None or args.private_key is None):  # check SSL keys
-        parser.error("enabled SSL requires CERTIFICATE and PRIVATE_KEY arguments")
+
+    address = args.address.split(":")
+    if len(address) == 1:  # only address
+        args.port = 8080  # 80 requires special permissions, so use 8080 instead
+    else:  # address:port
+        args.address = address[0]
+        args.port = address[1]
 
     # return args
     return args
 
 
 def main():
-    # args = parse_args()
+    args = parse_args()
     httpy = HTTPyServer(
-        bind_address=("0.0.0.0", 8080))
+        bind_address=(args.address, args.port),
+        ssl_keys=(args.certificate, args.private_key))
     httpy.run()
 
 
