@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from source.classes import Request
 from source.exceptions import NotFoundError
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
+from source.functions import parse_md2html
 
 
 POSTS_PATH: str = f"{WEB_DIRECTORY}/pages/news/posts/"
@@ -30,7 +31,8 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
     except ValueError:
         page = 0
 
-    yield PageMaker.make_news_list_page(tags, page).encode("utf-8")
+    yield PageMaker.make_news_page("post-1.md").encode("utf-8")
+    # yield PageMaker.make_news_list_page(tags, page).encode("utf-8")
 
 
 @dataclass(frozen=True)
@@ -135,6 +137,14 @@ class PageMaker:
         :param post_name: name for a news post
         :return: generated html page
         """
+
+        post = PostList.post_list[post_name]
+        with open(post.filepath, "r", encoding="utf-8") as file:
+            while len(file.readline()) > 2:  # skip configs section
+                pass
+            parsed = parse_md2html(file.read().replace("\r", "").split("\n"))
+        return PAGE_TEMPLATE.format(
+            sections=f"<div class='section-div'><section class='info-section'>{''.join(parsed)}</section></div>")
 
 
 PostList.update()
