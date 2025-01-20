@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import Any
 from datetime import datetime
 from collections.abc import Generator
@@ -7,6 +8,9 @@ from source.classes import Request
 from source.exceptions import NotFoundError
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
 from source.functions import parse_md2html
+
+
+LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
 POSTS_PATH: str = f"{WEB_DIRECTORY}/pages/news/posts/"
@@ -93,6 +97,8 @@ class PostList:
             filepath=filepath,
             publish_date=datetime.fromtimestamp(os.path.getmtime(filepath)),
             **configs)
+
+        LOGGER.info(f"Updated post: '{cls.post_list[post_name]}'")
 
     @classmethod
     def update(cls):
