@@ -128,5 +128,13 @@ class PageMaker:
                 f"</section>")
         return PAGE_TEMPLATE.format(sections=f"<div class='section-div'>{'<hr>'.join(sections)}</div>")
 
+    @staticmethod
+    def make_news_page(post_name: str) -> str:
+        """
+        Serves a news page
+        :param post_name: name for a news post
+        :return: generated html page
+        """
+
 
 PostList.update()
