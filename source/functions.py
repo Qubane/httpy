@@ -44,7 +44,7 @@ def parse_md2html(text: list[str]) -> list[str]:
                 header = 2
             if len(line) > 3 and line[2] == "#":
                 header = 3
-            text.append(f"<p><h{header}>{line[header:].strip()}</h{header}></p>")
+            text.append(f"<h{header}>{line[header:].strip()}</h{header}>")
             continue
         text.append(f"<p>{line.strip()}</p>")
 
