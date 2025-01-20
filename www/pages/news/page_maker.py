@@ -22,17 +22,25 @@ def make_page(**kwargs) -> Generator[bytes, Any, None]:
     locale: str = kwargs.get("locale", "en")
     request: Request = kwargs.get("request")
 
-    tags = request.query_args.get("tags", "all")
-    if tags not in PostList.tagged_posts and tags != "all":
-        raise NotFoundError("Tag Not Found")
-    page = request.query_args.get("page", "0")
-    try:
-        page = int(page)
-    except ValueError:
-        page = 0
+    if request.path.split("/")[-1] != "news":  # if not news
+        raise NotFoundError("Page Not Found")
 
-    yield PageMaker.make_news_page("post-1.md").encode("utf-8")
-    # yield PageMaker.make_news_list_page(tags, page).encode("utf-8")
+    post = request.query_args.get("post")
+    if post:  # if user opens post
+        if post not in PostList.post_list:
+            raise NotFoundError("Post Not Found")
+        yield PageMaker.make_news_page(post).encode("utf-8")
+    else:  # if user searches all posts
+        tags = request.query_args.get("tags", "all")
+        if tags not in PostList.tagged_posts and tags != "all":
+            raise NotFoundError("Tag Not Found")
+        page = request.query_args.get("page", "0")
+        try:
+            page = int(page)
+        except ValueError:
+            page = 0
+
+        yield PageMaker.make_news_list_page(tags, page).encode("utf-8")
 
 
 @dataclass(frozen=True)
@@ -41,6 +49,7 @@ class Post:
     Post container
     """
 
+    name: str
     filepath: str
     publish_date: datetime  # last modification date
     title: str = "untitled"
@@ -67,6 +76,7 @@ class PostList:
         """
 
         filepath = f"{POSTS_PATH}/{post}"
+        post_name = os.path.splitext(post)[0]
 
         configs = {}
         with (open(filepath, "r", encoding="utf-8") as file):
@@ -78,7 +88,8 @@ class PostList:
                                       .replace("\r", "")
                                       .replace("\n", ""))
             configs["tags"] = configs["tags"].split(",")
-        cls.post_list[post] = Post(
+        cls.post_list[post_name] = Post(
+            name=post_name,
             filepath=filepath,
             publish_date=datetime.fromtimestamp(os.path.getmtime(filepath)),
             **configs)
@@ -123,7 +134,7 @@ class PageMaker:
             sections.append(
                 f"<section class='info-section'>"
                 f"<div style='display: flex; flex-direction: column'>"
-                f"<h1>{post.title}</h1>"
+                f"<a href='/news?post={post.name}'><h1>{post.title}</h1></a>"
                 f"<p style='color: grey; font-size: 70%'>creation date: {post.publish_date.__str__()}</p>"
                 f"</div>"
                 f"<p style='padding-top: 10px'>{post.description}</p>"
