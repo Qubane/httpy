@@ -79,7 +79,7 @@ class PostList:
         :param post: post name
         """
 
-        filepath = f"{POSTS_PATH}/{post}"
+        filepath = f"{POSTS_PATH}{post}"
         post_name = os.path.splitext(post)[0]
 
         configs = {}
