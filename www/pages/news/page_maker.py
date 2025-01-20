@@ -142,19 +142,9 @@ class PageMaker:
         with open(post.filepath, "r", encoding="utf-8") as file:
             while len(file.readline()) > 2:  # skip configs section
                 pass
-            parsed = parse_md2html(file.read().replace("\r", "").split("\n"))
-
-            sections = []
-            while len(parsed) > 0:
-                line = parsed.pop(0)
-                if line[:4] == "<h1>":  # start of section
-                    section = f"<section class='info-section'>{line}"
-                    while len(parsed) > 0 and (line := parsed.pop(0))[:4] != "<h1>":
-                        section += line
-                    section += "</section>"
-                    sections.append(section)
+            parsed = parse_md2html(file.read())
         return PAGE_TEMPLATE.format(
-            sections=f"<div class='section-div'>{''.join(sections)}</div>")
+            sections=f"<div class='section-div'><section class='info-section'>{''.join(parsed)}</section></div>")
 
 
 PostList.update()
