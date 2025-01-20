@@ -1,51 +1,75 @@
-def parse_md2html(text: list[str]) -> list[str]:
+class _CharIter:
+    def __init__(self, string: str):
+        self.string: str = string
+        self._count: int = -1
+
+    def next(self) -> str | None:
+        self._count += 1
+        return self.string[self._count] if self._count < len(self.string) else None
+
+    def prev(self) -> str | None:
+        self._count -= 1
+        return self.string[self._count] if self._count > -1 else None
+
+    def is_done(self):
+        if self._count+1 >= len(self.string):
+            return True
+        return False
+
+    @property
+    def count(self) -> int:
+        return self._count
+
+
+def parse_md2html(text: str) -> str:
     """
     Parses md to html
     :param text: md formatted string
-    :return: html formatted string
+    :return: html formatted string list
     """
 
-    # make formatting
+    out = ""
+    text = text.replace("\r", "").replace("  \n", "\n")
+
     is_bold = False
     is_italics = False
-    for _ in range(len(text)):
-        line = text.pop(0)
-        new_line = ""
-        format_buffer = ""
-        for char in line:
-            if char == "*":
-                format_buffer += char
-                continue
-            if format_buffer == "*" and char != "*":
-                format_buffer = ""
+
+    header = 0
+
+    iterator = _CharIter(text)
+    while not iterator.is_done():
+        char = iterator.next()
+        if char == "*":  # bold / italics
+            if iterator.next() == "*":  # bold
+                is_bold = not is_bold
+                if is_bold:
+                    out += "<b>"
+                else:
+                    out += "</b>"
+            else:  # italics
                 is_italics = not is_italics
                 if is_italics:
-                    new_line += "<i>"
+                    out += "<i>"
                 else:
-                    new_line += "</i>"
-            if format_buffer == "**" and char != "*":
-                format_buffer = ""
-                is_bold = not is_bold
-                if is_italics:
-                    new_line += "<b>"
-                else:
-                    new_line += "</b>"
-            new_line += char
-        text.append(new_line)
-
-    # make headers
-    for _ in range(len(text)):
-        line = text.pop(0)
-        if len(line) == 0:
+                    out += "</i>"
             continue
-        if line[0] == "#":
+        if char == "\n":
+            if header > 0:
+                out += f"</h{header}>"
+                header = 0
+            else:
+                out += "<br>"
+            continue
+        if char == "#":
             header = 1
-            if len(line) > 2 and line[1] == "#":
-                header = 2
-            if len(line) > 3 and line[2] == "#":
-                header = 3
-            text.append(f"<h{header}>{line[header:].strip()}</h{header}>")
+            while (char := iterator.next()) == "#":
+                header += 1
+            if char != " ":  # not '# Text', but `#Text` thing
+                iterator.prev()
+            out += f"<h{header}>"
+            is_header = True
             continue
-        text.append(f"<p>{line.strip()}</p>")
 
-    return text
+        out += char
+
+    return out
