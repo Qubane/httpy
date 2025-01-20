@@ -47,6 +47,7 @@ def parse_md2html(text: str) -> str:
                 else:
                     out += "</b>"
             else:  # italics
+                iterator.prev()
                 is_italics = not is_italics
                 if is_italics:
                     out += "<i>"
