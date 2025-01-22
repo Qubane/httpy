@@ -83,7 +83,7 @@ class Page:
         """
 
         if self.is_scripted:  # requested pages
-            result = self._import.make_page(**kwargs)
+            result, _ = self._import.make_page(**kwargs)
             if isinstance(result, bytes):
                 yield result
             elif isinstance(result, Iterable):

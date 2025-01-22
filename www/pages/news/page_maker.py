@@ -18,7 +18,7 @@ with open(f"{WEB_DIRECTORY}/templates/news.template.html", "r", encoding="utf-8"
     PAGE_TEMPLATE: str = _file.read()
 
 
-def make_page(**kwargs) -> bytes:
+def make_page(**kwargs) -> tuple[bytes, str]:
     """
     Gets called from ClientHandler. Yields a page or part of it
     """
@@ -32,7 +32,7 @@ def make_page(**kwargs) -> bytes:
     if post:  # if user opens post
         if post not in PostList.post_list:
             raise NotFoundError("Post Not Found")
-        return PageMaker.make_news_page(post).encode("utf-8")
+        return PageMaker.make_news_page(post).encode("utf-8"), "text/html"
     else:  # if user searches all posts
         # get tags
         tags = kwargs.get("tags", "all")
@@ -45,7 +45,7 @@ def make_page(**kwargs) -> bytes:
         except ValueError:
             page = 0
 
-        return PageMaker.make_news_list_page(tags, page).encode("utf-8")
+        return PageMaker.make_news_list_page(tags, page).encode("utf-8"), "text/html"
 
 
 @dataclass(frozen=True)
