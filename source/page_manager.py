@@ -3,10 +3,22 @@ import json
 import logging
 import importlib
 from typing import Any
+from dataclasses import dataclass
 from source.settings import WEB_DIRECTORY
 
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Page:
+    """
+    Page class
+    """
+
+    filepath: str
+    locales: list[str]
+    is_scripted: bool = False
 
 
 class PathTree:
