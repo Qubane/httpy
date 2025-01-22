@@ -26,7 +26,7 @@ class PathTree:
     Tree of paths
     """
 
-    tree: dict = {}
+    tree: dict[str, dict | Page] = {}
 
     @classmethod
     def __contains__(cls, item) -> bool:
@@ -35,11 +35,11 @@ class PathTree:
         return False
 
     @classmethod
-    def add(cls, path: str, data: dict):
+    def add(cls, path: str, page: Page):
         """
         Adds new path to the tree
         :param path: string path
-        :param data: data to add
+        :param page: page to add
         """
 
         node = cls.tree
@@ -48,11 +48,10 @@ class PathTree:
             if split not in node:
                 node[split] = dict()
             node = node[split]
-
-        node[split_path[-1]] = data
+        node[split_path[-1]] = page
 
     @classmethod
-    def get(cls, path: str) -> dict | None:
+    def get(cls, path: str) -> Page | None:
         """
         Returns node at given path
         :param path: string path
