@@ -26,62 +26,18 @@ class ClientHandler:
 
         LOGGER.debug(request)
 
-        file = None
-        headers = {}
         response = Response(status=STATUS_CODE_NOT_FOUND)
         if request.type == RequestTypes.GET:
             if request.path in PathTree():
                 # fetch page info
-                page_info = PathTree.get(request.path)
-                if "*" in page_info:  # star path
-                    page_info = page_info["*"]
-
-                # pick locale
-                for lang_pair in request.headers["Accept-Language"]:
-                    if lang_pair[0] in page_info["locales"]:
-                        locale = lang_pair[0]
-                        break
-                else:  # force English
-                    locale = "en"
-
-                if page_info["filepath"] is not None:  # normal file
-                    # find and format file path accordingly
-                    filepath = page_info["filepath"]
-                    filepath = filepath.format(prefix=locale)
-
-                    # temp code, it's very bad
-                    headers["Content-Length"] = os.path.getsize(filepath)
-                    file_type = os.path.splitext(filepath)[1]
-                    if file_type == ".html":
-                        headers["Content-Type"] = "text/html"
-                    elif file_type == ".css":
-                        headers["Content-Type"] = "text/css"
-                    elif file_type == ".ico":
-                        headers["Content-Type"] = "image/x-icon"
-
-                    # open and make response
-                    file = open(filepath, "rb")
-                    response = Response(
-                        data=file,
-                        status=STATUS_CODE_OK,
-                        headers=headers)
-                else:  # request
-                    headers["Content-Type"] = "text/html"
-                    page: Generator[bytes, Any, None] = page_info["script"].make_page(
-                        locale=locale,
-                        request=request)
-
-                    response = Response(
-                        data=page,
-                        status=STATUS_CODE_OK,
-                        headers=headers)
-        try:
-            await response.write(self.writer)
-        except Exception as e:
-            # if file was open, close it
-            if file:
-                file.close()
-            raise e
+                page_class = PathTree.get(request.path)
+                page_data = page_class.get_data(
+                    locale=request.headers.get("Accept-Language"),
+                    **request.query_args)
+                response = Response(
+                    data=page_class,
+                    status=STATUS_CODE_OK)
+        await response.write(self.writer)
 
     def close(self) -> None:
         """
@@ -104,12 +60,6 @@ async def client_callback(reader: asyncio.StreamReader, writer: asyncio.StreamWr
     response = None
     try:
         await client.handle_client()
-    except ClientSideErrors as e:
-        LOGGER.debug(f"User error exception")
-        if isinstance(e, NotFoundError):
-            response = Response(status=STATUS_CODE_NOT_FOUND)
-        elif isinstance(e, ForbiddenError):
-            response = Response(data=b'Connecting through unknown host', status=STATUS_CODE_FORBIDDEN)
     except Exception as e:
         LOGGER.warning(f"Error occurred when handling client request:", exc_info=e)
         response = Response(status=STATUS_CODE_INTERNAL_SERVER_ERROR)
