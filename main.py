@@ -107,7 +107,7 @@ def parse_args():
         args.port = 8080  # 80 requires special permissions, so use 8080 instead
     else:  # address:port
         args.address = address[0]
-        args.port = address[1]
+        args.port = int(address[1])
 
     # make domain
     if args.domain[:8] != "https://":
