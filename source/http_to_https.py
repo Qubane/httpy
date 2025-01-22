@@ -23,26 +23,30 @@ class TinyServer:
 
     def run(self):
         """
-        Starts the HTTPy server
+        Starts the TinyServer server
         """
 
-        async def coro():
-            self.server = await asyncio.start_server(
-                client_connected_cb=self.client_handle,
-                host=self.bind_address[0],
-                port=self.bind_address[1])
+        asyncio.run(self.run_coro())
 
-            LOGGER.info(f"Redirect server running on '{self.bind_address[0]}:{self.bind_address[1]}'")
+    async def run_coro(self):
+        """
+        Starts the TinyServer server. Coroutine
+        """
 
-            async with self.server:
-                try:
-                    await self.server.serve_forever()
-                except asyncio.exceptions.CancelledError:
-                    pass
+        self.server = await asyncio.start_server(
+            client_connected_cb=self.client_handle,
+            host=self.bind_address[0],
+            port=self.bind_address[1])
 
-            LOGGER.info("Redirect server stopped")
+        LOGGER.info(f"Redirect server running on '{self.bind_address[0]}:{self.bind_address[1]}'")
 
-        asyncio.run(coro())
+        async with self.server:
+            try:
+                await self.server.serve_forever()
+            except asyncio.exceptions.CancelledError:
+                pass
+
+        LOGGER.info("Redirect server stopped")
 
     def stop(self, *args):
         """
