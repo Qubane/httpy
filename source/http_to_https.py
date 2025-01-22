@@ -19,8 +19,6 @@ class TinyServer:
 
         self.redirect: str = redirect
 
-        signal.signal(signal.SIGINT, self.stop)
-
     def run(self):
         """
         Starts the TinyServer server
@@ -67,6 +65,9 @@ class TinyServer:
 
         # respond with 301
         response = Response(
-            data=self.redirect.encode("ascii"),
-            status=STATUS_CODE_MOVED_PERMANENTLY)
+            data=f"Moved Permanently. Redirecting to {self.redirect}".encode("ascii"),
+            status=STATUS_CODE_MOVED_PERMANENTLY,
+            headers={"Location": self.redirect})
         await response.write(writer)
+
+        writer.close()

@@ -35,8 +35,6 @@ class HTTPyServer:
             self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER, check_hostname=False)
             self.ctx.load_cert_chain(certfile=ssl_keys[0], keyfile=ssl_keys[1])
 
-        signal.signal(signal.SIGINT, self.stop)
-
     def run(self):
         """
         Starts the HTTPy server
@@ -121,12 +119,18 @@ def parse_args():
 
 def main():
     args = parse_args()
+
     httpy = HTTPyServer(
         bind_address=(args.address, args.port),
         ssl_keys=(args.certificate, args.private_key))
     redirect = TinyServer(
         bind_address=(args.address, args.port+1),
         redirect=args.domain)
+
+    def stop(*args):
+        httpy.stop()
+        redirect.stop()
+    signal.signal(signal.SIGINT, stop)
 
     async def coro():
         await asyncio.gather(
