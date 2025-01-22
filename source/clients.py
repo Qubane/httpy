@@ -31,9 +31,11 @@ class ClientHandler:
                     path=request.path,
                     locale=request.headers.get("Accept-Language"),
                     **request.query_args)
+                headers = {"Content-Type": page_class.type}
                 response = Response(
                     data=page_data,
-                    status=STATUS_CODE_OK)
+                    status=STATUS_CODE_OK,
+                    headers=headers)
         await response.write(self.writer)
 
     def close(self) -> None:
