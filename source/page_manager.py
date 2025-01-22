@@ -19,7 +19,7 @@ class Page:
     def __init__(self, filepath: str, locales: list[str] | None = None):
         self.filepath: str = filepath
         self.locales: list[str] | None = locales
-        self.is_scripted: bool = True if self.filepath[:-2] == "py" else False
+        self.is_scripted: bool = True if self.filepath[-3:] == ".py" else False
 
         self._import: ModuleType | None = None
 
@@ -88,6 +88,11 @@ class PathTree:
             node = node[split]
         node[split_path[-1]] = page
 
+        if page.is_scripted:
+            LOGGER.info(f"Added new request to path '{path}'")
+        else:
+            LOGGER.info(f"Added new page to path '{path}'")
+
     @classmethod
     def get(cls, path: str) -> Page | None:
         """
@@ -120,11 +125,8 @@ class PageManager:
         """
 
         # Very Important Path
-        page_info = {
-            "filepath": f"{WEB_DIRECTORY}/favicon.ico",
-            "locales": ["en"]}
-        PathTree.add("/favicon.ico", page_info)
-        LOGGER.info(f"Added '/favicon.ico' as '{WEB_DIRECTORY}/favicon.ico';")
+        page = Page(f"{WEB_DIRECTORY}/favicon.ico")
+        PathTree.add("/favicon.ico", page)
 
         # Append other paths
         for page_directory in os.listdir(f"{WEB_DIRECTORY}/pages"):
@@ -135,20 +137,9 @@ class PageManager:
             with open(f"{dir_path}/index.json") as file:
                 data = json.load(file)
 
-            page_info: dict[str, Any] = {"locales": data["locales"]}
-            if data["filepath"]:  # normal file
-                page_info["filepath"] = f"{WEB_DIRECTORY}/pages/{page_directory}/{data['filepath']}"
-                LOGGER.info(f"Added '{data['web_path']}' as '{page_info['filepath']}';")
-            else:  # scripted file
-                page_info["filepath"] = None
-                lib_path = f"{WEB_DIRECTORY}/pages/{page_directory}/{data['script_path']}"
-                import_path, package_name = (os.path.dirname(lib_path).replace("/", "."),
-                                             "." + os.path.splitext(os.path.basename(lib_path))[0])
-                page_info["script"] = importlib.import_module(package_name, import_path)
-                LOGGER.info(f"Added request '{data['web_path']}' using '{lib_path}';")
-
-            PathTree.add(data["web_path"], page_info)
+            filepath = f"{WEB_DIRECTORY}/pages/{page_directory}/{data['filepath']}"
+            page = Page(filepath, locales=data["locales"])
+            PathTree.add(data["web_path"], page)
             for alias in data["web_path_aliases"]:
                 # reference same dict
-                PathTree.add(alias, page_info)
-                LOGGER.info(f"Added '{alias}' as '{page_info['filepath']}';")
+                PathTree.add(alias, page)
