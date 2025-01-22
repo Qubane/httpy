@@ -1,3 +1,4 @@
+import os
 import asyncio
 import logging
 from typing import Any
@@ -26,6 +27,7 @@ class ClientHandler:
         LOGGER.debug(request)
 
         file = None
+        headers = {}
         response = Response(status=STATUS_CODE_NOT_FOUND)
         if request.type == RequestTypes.GET:
             if request.path in PathTree():
@@ -47,19 +49,32 @@ class ClientHandler:
                     filepath = page_info["filepath"]
                     filepath = filepath.format(prefix=locale)
 
+                    # temp code, it's very bad
+                    headers["Content-Length"] = os.path.getsize(filepath)
+                    file_type = os.path.splitext(filepath)[1]
+                    if file_type == ".html":
+                        headers["Content-Type"] = "text/html"
+                    elif file_type == ".css":
+                        headers["Content-Type"] = "text/css"
+                    elif file_type == ".ico":
+                        headers["Content-Type"] = "image/x-icon"
+
                     # open and make response
                     file = open(filepath, "rb")
                     response = Response(
                         data=file,
-                        status=STATUS_CODE_OK)
+                        status=STATUS_CODE_OK,
+                        headers=headers)
                 else:  # request
+                    headers["Content-Type"] = "text/html"
                     page: Generator[bytes, Any, None] = page_info["script"].make_page(
                         locale=locale,
                         request=request)
 
                     response = Response(
                         data=page,
-                        status=STATUS_CODE_OK)
+                        status=STATUS_CODE_OK,
+                        headers=headers)
         try:
             await response.write(self.writer)
         except Exception as e:
