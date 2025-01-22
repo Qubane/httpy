@@ -22,8 +22,10 @@ class Page:
         self.is_scripted: bool = True if self.filepath[-3:] == ".py" else False
 
         self._import: ModuleType | None = None
+        if self.is_scripted:
+            self._import_func()
 
-    def _import(self):
+    def _import_func(self) -> None:
         """
         Imports the script to generate the page
         """
@@ -73,7 +75,7 @@ class PathTree:
         return False
 
     @classmethod
-    def add(cls, path: str, page: Page):
+    def add(cls, path: str, page: Page) -> None:
         """
         Adds new path to the tree
         :param path: string path
@@ -119,7 +121,7 @@ class PageManager:
     """
 
     @classmethod
-    def init(cls):
+    def init(cls) -> None:
         """
         Initializes path manager
         """
