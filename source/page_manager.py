@@ -20,10 +20,13 @@ class Page:
         self.filepath: str = filepath
         self.locales: list[str] | None = locales
         self.is_scripted: bool = True if self.filepath[-3:] == ".py" else False
+        self.type: str = "application/octet-stream"
 
         self._import: ModuleType | None = None
         if self.is_scripted:
             self._import_func()
+
+        self._define_own_type()
 
     def _import_func(self) -> None:
         """
@@ -34,6 +37,43 @@ class Page:
         package_path = os.path.dirname(self.filepath).replace("/", ".")
 
         self._import = importlib.import_module(name, package_path)
+
+    def _define_own_type(self) -> None:
+        """
+        Defines own type using MIME types thing
+        """
+
+        extension = os.path.splitext(self.filepath)[1]
+
+        # text types
+        match extension:
+            case ".htm" | ".html":
+                self.type = "text/html"
+            case ".css":
+                self.type = "text/css"
+            case ".txt" | ".md":
+                self.type = "text/plain"
+            case ".json":
+                self.type = "application/json"
+            case ".js":  # ono :<
+                self.type = "text/javascript"
+
+        # byte types
+        match extension:
+            case ".png" | ".bmp" | ".jpg" | ".jpeg" | ".webp":
+                self.type = f"image/{extension[1:]}"
+            case ".svg":
+                self.type = "image/svg+xml"
+            case ".mp3":
+                self.type = "audio/mpeg"
+            case ".aac" | ".mid" | ".midi" | ".wav":
+                self.type = f"audio/{extension[1:]}"
+            case ".mp4" | ".mpeg" | ".webm":
+                self.type = f"video/{extension[1:]}"
+            case ".ts":
+                self.type = "video/mp2t"
+            case ".avi":
+                self.type = "video/x-msvideo"
 
     def get_data(self, **kwargs) -> Generator[bytes, None, None]:
         """
