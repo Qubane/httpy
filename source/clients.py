@@ -28,6 +28,7 @@ class ClientHandler:
                 # fetch page info
                 page_class = PathTree.get(request.path)
                 page_data = page_class.get_data(
+                    path=request.path,
                     locale=request.headers.get("Accept-Language"),
                     **request.query_args)
                 response = Response(
