@@ -104,15 +104,15 @@ class PathTree:
 
         node = cls.tree
         split_path = path.split("/")
-        for split in split_path[:-1]:
+        for split in split_path:
             if "*" in node:
                 return node["*"]
             if split not in node:
                 return None
             node = node[split]
-        if "*" in node:
+        if isinstance(node, dict) and "*" in node:
             return node["*"]
-        return node.get(split_path[-1])
+        return node
 
 
 class PageManager:
