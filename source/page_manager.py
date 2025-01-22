@@ -2,23 +2,61 @@ import os
 import json
 import logging
 import importlib
-from typing import Any
-from dataclasses import dataclass
-from source.settings import WEB_DIRECTORY
+from types import ModuleType
+from typing import Any, Generator, Iterable
+from source.settings import WEB_DIRECTORY, WRITE_BUFFER_SIZE
+from source.exceptions import InternalServerError
 
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
-@dataclass
 class Page:
     """
-    Page class
+    Base class for page
     """
 
-    filepath: str
-    locales: list[str]
-    is_scripted: bool = False
+    def __init__(self, filepath: str, locales: list[str] | None = None):
+        self.filepath: str = filepath
+        self.locales: list[str] | None = locales
+        self.is_scripted: bool = True if self.filepath[:-2] == "py" else False
+
+        self._import: ModuleType | None = None
+
+    def _import(self):
+        """
+        Imports the script to generate the page
+        """
+
+        name = "." + os.path.splitext(os.path.basename(self.filepath))[0]
+        package_path = os.path.dirname(self.filepath).replace("/", ".")
+
+        self._import = importlib.import_module(name, package_path)
+
+    def get_data(self, **kwargs) -> Generator[bytes, None, None]:
+        """
+        Yields raw byte data
+        """
+
+        if self.is_scripted:  # requested pages
+            result = self._import.make_page(**kwargs)
+            if isinstance(result, bytes):
+                yield result
+            elif isinstance(result, Iterable):
+                for data in result:
+                    yield data
+            else:
+                raise InternalServerError("Scripted request error")
+        else:
+            filepath = self.filepath
+            if self.locales is not None:
+                locale = kwargs.get("locale", "en")  # fetch locale
+                if locale not in self.locales:  # if locale not present -> default to english
+                    locale = "en"
+                filepath = self.filepath.format(prefix=locale)  # add prefix
+            with open(filepath, "rb") as file:
+                while data := file.read(WRITE_BUFFER_SIZE):
+                    yield data
 
 
 class PathTree:
