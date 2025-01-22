@@ -6,6 +6,7 @@ import logging
 import source.settings
 import source.page_manager
 from source.clients import client_callback
+from source.http_to_https import TinyServer
 
 
 LOGGER: logging.Logger = logging.getLogger()
@@ -41,24 +42,28 @@ class HTTPyServer:
         Starts the HTTPy server
         """
 
-        async def coro():
-            self.server = await asyncio.start_server(
-                client_connected_cb=client_callback,
-                host=self.bind_address[0],
-                port=self.bind_address[1],
-                ssl=self.ctx)
+        asyncio.run(self.run_coro())
 
-            LOGGER.info(f"Server running on '{self.bind_address[0]}:{self.bind_address[1]}'")
+    async def run_coro(self):
+        """
+        Starts the HTTPy server. Coroutine
+        """
 
-            async with self.server:
-                try:
-                    await self.server.serve_forever()
-                except asyncio.exceptions.CancelledError:
-                    pass
+        self.server = await asyncio.start_server(
+            client_connected_cb=client_callback,
+            host=self.bind_address[0],
+            port=self.bind_address[1],
+            ssl=self.ctx)
 
-            LOGGER.info("Server stopped")
+        LOGGER.info(f"Server running on '{self.bind_address[0]}:{self.bind_address[1]}'")
 
-        asyncio.run(coro())
+        async with self.server:
+            try:
+                await self.server.serve_forever()
+            except asyncio.exceptions.CancelledError:
+                pass
+
+        LOGGER.info("Server stopped")
 
     def stop(self, *args):
         """
@@ -87,6 +92,9 @@ def parse_args():
     parser.add_argument("-a", "--address",
                         help="binding address:port",
                         required=True)
+    parser.add_argument("-d", "--domain",
+                        help="domain name",
+                        required=True)
     parser.add_argument("-c", "--certificate",
                         help="SSL certificate (or fullchain.pem)")
     parser.add_argument("-k", "--private-key",
@@ -95,12 +103,17 @@ def parse_args():
     # parse arguments
     args = parser.parse_args()
 
+    # make address
     address = args.address.split(":")
     if len(address) == 1:  # only address
         args.port = 8080  # 80 requires special permissions, so use 8080 instead
     else:  # address:port
         args.address = address[0]
         args.port = address[1]
+
+    # make domain
+    if args.domain[:8] != "https://":
+        args.domain = f"https://{args.domain}"
 
     # return args
     return args
@@ -111,7 +124,15 @@ def main():
     httpy = HTTPyServer(
         bind_address=(args.address, args.port),
         ssl_keys=(args.certificate, args.private_key))
-    httpy.run()
+    redirect = TinyServer(
+        bind_address=(args.address, args.port+1),
+        redirect=args.domain)
+
+    async def coro():
+        await asyncio.gather(
+            httpy.run_coro(),
+            redirect.run_coro())
+    asyncio.run(coro())
 
 
 if __name__ == '__main__':
