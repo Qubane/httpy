@@ -18,33 +18,34 @@ with open(f"{WEB_DIRECTORY}/templates/news.template.html", "r", encoding="utf-8"
     PAGE_TEMPLATE: str = _file.read()
 
 
-def make_page(**kwargs) -> Generator[bytes, Any, None]:
+def make_page(**kwargs) -> bytes:
     """
     Gets called from ClientHandler. Yields a page or part of it
     """
 
     locale: str = kwargs.get("locale", "en")
-    request: Request = kwargs.get("request")
 
-    if request.path.split("/")[-1] != "news":  # if not news
+    if kwargs["path"].split("/")[-1] != "news":  # if not news
         raise NotFoundError("Page Not Found")
 
-    post = request.query_args.get("post")
+    post = kwargs.get("post")
     if post:  # if user opens post
         if post not in PostList.post_list:
             raise NotFoundError("Post Not Found")
-        yield PageMaker.make_news_page(post).encode("utf-8")
+        return PageMaker.make_news_page(post).encode("utf-8")
     else:  # if user searches all posts
-        tags = request.query_args.get("tags", "all")
+        # get tags
+        tags = kwargs.get("tags", "all")
         if tags not in PostList.tagged_posts and tags != "all":
             raise NotFoundError("Tag Not Found")
-        page = request.query_args.get("page", "0")
+
+        # make page number
         try:
-            page = int(page)
+            page = int(kwargs.get("page", 0))
         except ValueError:
             page = 0
 
-        yield PageMaker.make_news_list_page(tags, page).encode("utf-8")
+        return PageMaker.make_news_list_page(tags, page).encode("utf-8")
 
 
 @dataclass(frozen=True)
