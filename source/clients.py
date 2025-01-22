@@ -35,7 +35,7 @@ class ClientHandler:
                     locale=request.headers.get("Accept-Language"),
                     **request.query_args)
                 response = Response(
-                    data=page_class,
+                    data=page_data,
                     status=STATUS_CODE_OK)
         await response.write(self.writer)
 
