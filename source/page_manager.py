@@ -45,6 +45,11 @@ class Page:
 
         extension = os.path.splitext(self.filepath)[1]
 
+        # temp
+        if self.is_scripted:
+            self.type = "text/html"
+            return
+
         # text types
         match extension:
             case ".htm" | ".html":
