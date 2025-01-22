@@ -2,6 +2,5 @@
   "web_path": "/news/*",
   "web_path_aliases": [],
   "locales": ["en", "ru"],
-  "filepath": null,
-  "script_path": "page_maker.py"
+  "filepath": "page_maker.py"
 }
