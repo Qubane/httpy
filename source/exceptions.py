@@ -1,15 +1,20 @@
+from source.status import *
+
+
 class ClientSideErrors(Exception):
     """
     It's all users fault :)
     """
 
+    status = STATUS_CODE_BAD_REQUEST
+
 
 class NotFoundError(ClientSideErrors):
-    pass
+    status = STATUS_CODE_NOT_FOUND
 
 
 class ForbiddenError(ClientSideErrors):
-    pass
+    status = STATUS_CODE_FORBIDDEN
 
 
 class ServerSideErrors(Exception):
@@ -17,6 +22,8 @@ class ServerSideErrors(Exception):
     O no :<
     """
 
+    status = STATUS_CODE_INTERNAL_SERVER_ERROR
+
 
 class InternalServerError(ServerSideErrors):
-    pass
+    status = STATUS_CODE_INTERNAL_SERVER_ERROR
