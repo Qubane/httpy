@@ -62,6 +62,8 @@ class Page:
         match extension:
             case ".png" | ".bmp" | ".jpg" | ".jpeg" | ".webp":
                 self.type = f"image/{extension[1:]}"
+            case ".ico":
+                self.type = "image/x-icon"
             case ".svg":
                 self.type = "image/svg+xml"
             case ".mp3":
