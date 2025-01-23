@@ -108,6 +108,25 @@ class Page:
             return self._return_localized(kwargs.get("locale", "en"))
 
 
+class TemplatePage(Page):
+    """
+    Page that uses template in which it inserts data.
+    Is strictly of HTML type
+    """
+
+    def __init__(self, template: str, *args, **kwargs):
+        """
+        :param template: path to template file
+        """
+
+        super().__init__(*args, **kwargs)
+
+        self.type = "text/html"
+
+        with open(template, "r", encoding="utf-8") as file:
+            self.template: str = file.read()
+
+
 class PathTree:
     """
     Tree of paths
