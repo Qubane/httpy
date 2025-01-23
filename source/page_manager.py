@@ -113,6 +113,27 @@ class Page:
             return self._return_localized(kwargs.get("locale", "en"))
 
 
+class DummyPage:
+    """
+    Dummy page container, stores actual byte data instead of file path / script request
+    """
+
+    def __init__(self, data: bytes | str, type_: str | None = None):
+        self.filepath: None = None
+        self.locales: None = None
+        self.is_scripted: bool = True
+        self.type: str = type_ if type_ else "application/octet-stream"
+
+        self._data = data if isinstance(data, bytes) else data.encode("utf-8")
+
+    def get_data(self, **kwargs) -> bytes:
+        """
+        Returns raw bytes of page
+        """
+
+        return self._data
+
+
 class TemplatePage(Page):
     """
     Page that uses template in which it inserts data.
