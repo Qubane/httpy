@@ -93,17 +93,22 @@ class Page:
             locale = "en"
         return open(filepath.format(prefix=locale), "rb")
 
+    def _return_scripted(self, **kwargs):
+        """
+        Internal method for returning scripted pages
+        """
+
+        if isinstance((result := self._import.make_page(**kwargs)), bytes):
+            return result
+        raise InternalServerError("Scripted request error")
+
     def get_data(self, **kwargs) -> bytes | BinaryIO:
         """
         Returns BinaryIO file or raw bytes
         """
 
         if self.is_scripted:  # requested pages
-            result = self._import.make_page(**kwargs)
-            if isinstance(result, bytes):
-                return result
-            else:
-                raise InternalServerError("Scripted request error")
+            return self._return_scripted(**kwargs)
         else:
             return self._return_localized(kwargs.get("locale", "en"))
 
