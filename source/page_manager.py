@@ -140,7 +140,7 @@ class TemplatePage(Page):
     Is strictly of HTML type
     """
 
-    def __init__(self, template: str, *args, **kwargs):
+    def __init__(self, template: str | None = None, *args, **kwargs):
         """
         :param template: path to template file
         """
@@ -150,8 +150,11 @@ class TemplatePage(Page):
         self.type = "text/html"
         self.is_scripted = True
 
-        with open(template, "r", encoding="utf-8") as file:
-            self.template: str = file.read()
+        if template:
+            with open(template, "r", encoding="utf-8") as file:
+                self.template: str = file.read()
+        else:
+            self.template: str = "{sections}"
 
     def _return_scripted(self, **kwargs):
         """
