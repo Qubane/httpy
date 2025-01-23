@@ -19,6 +19,8 @@ class ClientHandler:
         """
 
         request = await Request.read(self.reader)
+        if request is None:
+            return
 
         LOGGER.debug(request)
 
