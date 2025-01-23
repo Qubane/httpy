@@ -1,10 +1,9 @@
 import os
 import logging
 from datetime import datetime
-from typing import Any, Generator, BinaryIO
 from source.functions import parse_md2html
 from source.exceptions import NotFoundError
-from source.page_manager import TemplatePage, DummyPage
+from source.page_classes import TemplatePage, DummyPage
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
 
 
