@@ -1,13 +1,11 @@
 import os
 import logging
-from typing import Any
+from typing import Any, Generator
 from datetime import datetime
-from collections.abc import Generator
-from dataclasses import dataclass, field
-from source.classes import Request
+from source.page_manager import Page
+from source.functions import parse_md2html
 from source.exceptions import NotFoundError
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
-from source.functions import parse_md2html
 
 
 LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -16,6 +14,20 @@ LOGGER: logging.Logger = logging.getLogger(__name__)
 POSTS_PATH: str = f"{WEB_DIRECTORY}/pages/news/posts/"
 with open(f"{WEB_DIRECTORY}/templates/news.template.html", "r", encoding="utf-8") as _file:
     PAGE_TEMPLATE: str = _file.read()
+
+
+class NewsPage(Page):
+    """
+    News page
+    """
+
+    def __init__(self, title: str, description: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.title: str = title
+        self.description: str = description
+        self.publish_date: datetime = datetime.fromtimestamp(
+            os.path.getmtime(self.filepath), datetime.now().tzinfo)
 
 
 def make_page(**kwargs) -> tuple[bytes, str]:
@@ -46,20 +58,6 @@ def make_page(**kwargs) -> tuple[bytes, str]:
             page = 0
 
         return PageMaker.make_news_list_page(tags, page).encode("utf-8"), "text/html"
-
-
-@dataclass(frozen=True)
-class Post:
-    """
-    Post container
-    """
-
-    name: str
-    filepath: str
-    publish_date: datetime  # last modification date
-    title: str = "untitled"
-    description: str = "no description"
-    tags: list[str] = field(default_factory=lambda: list())
 
 
 class PostList:
