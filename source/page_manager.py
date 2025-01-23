@@ -137,6 +137,19 @@ class TemplatePage(Page):
         Parses .md formatted file and inserts into template
         """
 
+        with open(self.filepath, "r", encoding="utf-8") as file:
+            while True:  # read starting configs
+                config = file.readline().split(":")
+                if len(config) == 1:
+                    break
+                setattr(self, config[0], (config[1].replace("\r", "").replace("\n", "")))
+            parsed = parse_md2html(file.read())
+        sections = []
+        for header in parsed.split("<h1>"):
+            sections.append(f"<section class='info-section'><h1>{header}</section>")
+        return self.template.format(
+            sections=f"<div class='section-div'>{'<br>'.join(sections)}</div>")
+
 
 class PathTree:
     """
