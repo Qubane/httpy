@@ -140,6 +140,9 @@ class Response:
         elif isinstance(self.data, BytesIO):
             while data := self.data.read(WRITE_BUFFER_SIZE):
                 writer.write(data)
+                if writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
+                    await writer.drain()
+            self.data.close()
 
         if writer.transport.get_write_buffer_size() > 0:
             await writer.drain()
