@@ -98,8 +98,9 @@ class Page:
         Internal method for returning scripted pages
         """
 
-        if isinstance((result := self._import.make_page(**kwargs)), bytes):
-            return result
+        result = self._import.make_page(**kwargs)
+        if isinstance(result, DummyPage):
+            return result.get_data()
         raise InternalServerError("Scripted request error")
 
     def get_data(self, **kwargs) -> bytes | BinaryIO:
@@ -156,9 +157,12 @@ class TemplatePage(Page):
         else:
             self.template: str = "{sections}"
 
-    def _return_scripted(self, **kwargs):
+        self._update_attributes()
+
+    def _update_attributes(self) -> int:
         """
-        Parses .md formatted file and inserts into template
+        Updates self attributes
+        :return: end of attribute section in file
         """
 
         with open(self.filepath, "r", encoding="utf-8") as file:
@@ -166,7 +170,18 @@ class TemplatePage(Page):
                 config = file.readline().split(":")
                 if len(config) == 1:
                     break
-                setattr(self, config[0], (config[1].replace("\r", "").replace("\n", "")))
+                name = config[0]
+                value = config[1].replace("\r", "").replace("\n", "")
+                setattr(self, name, value)
+            return file.tell()
+
+    def _return_scripted(self, **kwargs):
+        """
+        Parses .md formatted file and inserts into template
+        """
+
+        with open(self.filepath, "r", encoding="utf-8") as file:
+            file.seek(self._update_attributes())
             parsed = parse_md2html(file.read())
         sections = []
         for header in parsed.split("<h1>"):
