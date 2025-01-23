@@ -1,10 +1,10 @@
 import os
 import logging
-from typing import Any, Generator
 from datetime import datetime
-from source.page_manager import Page
+from typing import Any, Generator, BinaryIO
 from source.functions import parse_md2html
 from source.exceptions import NotFoundError
+from source.page_manager import TemplatePage
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
 
 
@@ -16,7 +16,7 @@ with open(f"{WEB_DIRECTORY}/templates/news.template.html", "r", encoding="utf-8"
     PAGE_TEMPLATE: str = _file.read()
 
 
-class NewsPage(Page):
+class NewsPage(TemplatePage):
     """
     News page
     """
