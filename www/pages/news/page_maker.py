@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Generator, BinaryIO
 from source.functions import parse_md2html
 from source.exceptions import NotFoundError
-from source.page_manager import TemplatePage
+from source.page_manager import TemplatePage, DummyPage
 from source.settings import WEB_DIRECTORY, PAGE_NEWS_LIST_SIZE
 
 
@@ -21,16 +21,37 @@ class NewsPage(TemplatePage):
     News page
     """
 
-    def __init__(self, title: str, description: str, *args, **kwargs):
+    template: str = PAGE_TEMPLATE
+
+    def __init__(self, name: str, *args, **kwargs):
+        """
+        :param name: internal reference name
+        :key filepath: path to .md text file
+        """
+
+        self.tags: list[str] = list()
+        self.name: str = name
+        self.title: str = "untitled"
+        self.description: str = "no description"
+
         super().__init__(*args, **kwargs)
 
-        self.title: str = title
-        self.description: str = description
         self.publish_date: datetime = datetime.fromtimestamp(
             os.path.getmtime(self.filepath), datetime.now().tzinfo)
 
+    def _update_attributes(self) -> int:
+        """
+        Updates self attributes
+        :return: end of attribute section in file
+        """
 
-def make_page(**kwargs) -> tuple[bytes, str]:
+        seek = super()._update_attributes()
+        if isinstance(self.tags, str):  # this is awful...
+            self.tags = self.tags.split(",")
+        return seek
+
+
+def make_page(**kwargs) -> DummyPage:
     """
     Gets called from ClientHandler. Yields a page or part of it
     """
@@ -40,11 +61,11 @@ def make_page(**kwargs) -> tuple[bytes, str]:
     if kwargs["path"].split("/")[-1] != "news":  # if not news
         raise NotFoundError("Page Not Found")
 
-    post = kwargs.get("post")
-    if post:  # if user opens post
-        if post not in PostList.post_list:
+    page_name = kwargs.get("post")
+    if page_name:  # if user opens post
+        if page_name not in PostList.post_list:
             raise NotFoundError("Post Not Found")
-        return PageMaker.make_news_page(post).encode("utf-8"), "text/html"
+        return DummyPage(PageMaker.make_news_page(page_name), "text/html")
     else:  # if user searches all posts
         # get tags
         tags = kwargs.get("tags", "all")
@@ -57,7 +78,7 @@ def make_page(**kwargs) -> tuple[bytes, str]:
         except ValueError:
             page = 0
 
-        return PageMaker.make_news_list_page(tags, page).encode("utf-8"), "text/html"
+        return DummyPage(PageMaker.make_news_list_page(tags, page), "text/html")
 
 
 class PostList:
@@ -66,10 +87,10 @@ class PostList:
     """
 
     # 'post': Post(...)
-    post_list: dict[str, Post] = dict()
+    post_list: dict[str, NewsPage] = dict()
 
     # 'tag': [Post(...), Post(...), Post(...), ...]
-    tagged_posts: dict[str, list[Post]] = dict()
+    tagged_posts: dict[str, list[NewsPage]] = dict()
 
     @classmethod
     def update_post(cls, post: str):
@@ -78,24 +99,10 @@ class PostList:
         :param post: post name
         """
 
-        filepath = f"{POSTS_PATH}{post}"
         post_name = os.path.splitext(post)[0]
-
-        configs = {}
-        with (open(filepath, "r", encoding="utf-8") as file):
-            while True:
-                config = file.readline().split(":")
-                if len(config) == 1:
-                    break
-                configs[config[0]] = (config[1]
-                                      .replace("\r", "")
-                                      .replace("\n", ""))
-            configs["tags"] = configs["tags"].split(",")
-        cls.post_list[post_name] = Post(
+        cls.post_list[post_name] = NewsPage(
             name=post_name,
-            filepath=filepath,
-            publish_date=datetime.fromtimestamp(os.path.getmtime(filepath)),
-            **configs)
+            filepath=f"{POSTS_PATH}{post}")
 
         LOGGER.info(f"Updated post: '{cls.post_list[post_name]}'")
 
@@ -109,11 +116,11 @@ class PostList:
             cls.update_post(file)
 
         cls.tagged_posts.clear()
-        for _, post in cls.post_list.items():
-            for tag in post.tags:
+        for _, page in cls.post_list.items():
+            for tag in page.tags:
                 if tag not in cls.tagged_posts:
                     cls.tagged_posts[tag] = list()
-                cls.tagged_posts[tag].append(post)
+                cls.tagged_posts[tag].append(page)
 
 
 class PageMaker:
@@ -144,7 +151,8 @@ class PageMaker:
                 f"</div>"
                 f"<p style='padding-top: 10px'>{post.description}</p>"
                 f"</section>")
-        return PAGE_TEMPLATE.format(sections=f"<div class='section-div'>{'<hr>'.join(sections)}</div>")
+        return NewsPage.template.format(
+            sections=f"<div class='section-div'>{'<hr>'.join(sections)}</div>")
 
     @staticmethod
     def make_news_page(post_name: str) -> str:
@@ -159,7 +167,7 @@ class PageMaker:
             while len(file.readline()) > 2:  # skip configs section
                 pass
             parsed = parse_md2html(file.read())
-        return PAGE_TEMPLATE.format(
+        return NewsPage.template.format(
             sections=f"<div class='section-div'><section class='info-section'>{''.join(parsed)}</section></div>")
 
 
