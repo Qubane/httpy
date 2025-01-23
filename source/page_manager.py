@@ -5,6 +5,7 @@ import importlib
 from typing import BinaryIO
 from types import ModuleType
 from source.settings import WEB_DIRECTORY
+from source.functions import parse_md2html
 from source.exceptions import InternalServerError
 
 
@@ -24,8 +25,7 @@ class Page:
 
         self._import: ModuleType | None = None
         if self.is_scripted:
-            # self._import_func()
-            pass
+            self._import_func()
 
         self._define_own_type()
 
@@ -83,6 +83,16 @@ class Page:
             case ".avi":
                 self.type = "video/x-msvideo"
 
+    def _return_localized(self, locale: str) -> BinaryIO:
+        """
+        Internal method for returning a localized BinaryIO file
+        """
+
+        filepath = self.filepath
+        if not self.locales or locale not in self.locales:
+            locale = "en"
+        return open(filepath.format(prefix=locale), "rb")
+
     def get_data(self, **kwargs) -> bytes | BinaryIO:
         """
         Returns BinaryIO file or raw bytes
@@ -95,13 +105,7 @@ class Page:
             else:
                 raise InternalServerError("Scripted request error")
         else:
-            filepath = self.filepath
-            if self.locales is not None:
-                locale = kwargs.get("locale", "en")  # fetch locale
-                if locale not in self.locales:  # if locale not present -> default to english
-                    locale = "en"
-                filepath = self.filepath.format(prefix=locale)  # add prefix
-            return open(filepath, "rb")
+            return self._return_localized(kwargs.get("locale", "en"))
 
 
 class PathTree:
