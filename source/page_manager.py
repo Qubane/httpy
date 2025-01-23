@@ -2,9 +2,9 @@ import os
 import json
 import logging
 import importlib
+from typing import BinaryIO
 from types import ModuleType
-from typing import Any, Generator, Iterable
-from source.settings import WEB_DIRECTORY, WRITE_BUFFER_SIZE
+from source.settings import WEB_DIRECTORY
 from source.exceptions import InternalServerError
 
 
@@ -24,7 +24,8 @@ class Page:
 
         self._import: ModuleType | None = None
         if self.is_scripted:
-            self._import_func()
+            # self._import_func()
+            pass
 
         self._define_own_type()
 
@@ -82,18 +83,15 @@ class Page:
             case ".avi":
                 self.type = "video/x-msvideo"
 
-    def get_data(self, **kwargs) -> Generator[bytes, None, None]:
+    def get_data(self, **kwargs) -> bytes | BinaryIO:
         """
-        Yields raw byte data
+        Returns BinaryIO file or raw bytes
         """
 
         if self.is_scripted:  # requested pages
-            result, _ = self._import.make_page(**kwargs)
+            result = self._import.make_page(**kwargs)
             if isinstance(result, bytes):
-                yield result
-            elif isinstance(result, Iterable):
-                for data in result:
-                    yield data
+                return result
             else:
                 raise InternalServerError("Scripted request error")
         else:
@@ -103,9 +101,7 @@ class Page:
                 if locale not in self.locales:  # if locale not present -> default to english
                     locale = "en"
                 filepath = self.filepath.format(prefix=locale)  # add prefix
-            with open(filepath, "rb") as file:
-                while data := file.read(WRITE_BUFFER_SIZE):
-                    yield data
+            return open(filepath, "rb")
 
 
 class PathTree:
