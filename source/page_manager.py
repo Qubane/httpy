@@ -127,9 +127,15 @@ class TemplatePage(Page):
         super().__init__(*args, **kwargs)
 
         self.type = "text/html"
+        self.is_scripted = True
 
         with open(template, "r", encoding="utf-8") as file:
             self.template: str = file.read()
+
+    def _return_scripted(self, **kwargs):
+        """
+        Parses .md formatted file and inserts into template
+        """
 
 
 class PathTree:
