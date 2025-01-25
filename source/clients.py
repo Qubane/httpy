@@ -31,9 +31,9 @@ class ClientHandler:
                 page_class = PathTree.get(request.path)
                 page_data = page_class.get_data(
                     path=request.path,
-                    locale=request.headers.get("Accept-Language"),
+                    locale=request.headers.get("accept-language"),
                     **request.query_args)
-                headers = {"Content-Type": page_class.type}
+                headers = {"content-type": page_class.type}
                 response = Response(
                     data=page_data,
                     status=STATUS_CODE_OK,

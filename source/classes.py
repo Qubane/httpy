@@ -89,15 +89,15 @@ class Request:
         rheaders = dict()
         for raw_header in re.findall(r"\r\n(.*:.*)\r\n", data.decode("ascii")):
             raw_header = raw_header.split(": ")
-            rheaders[raw_header[0]] = raw_header[1]
+            rheaders[raw_header[0].lower()] = raw_header[1]
 
-        if "Accept-Language" in rheaders:
+        if "accept-language" in rheaders:
             try:
-                rheaders["Accept-Language"] = parse_accept_language(rheaders["Accept-Language"])
+                rheaders["accept-language"] = parse_accept_language(rheaders["accept-language"])
             except Exception:
-                rheaders["Accept-Language"] = []
+                rheaders["accept-language"] = []
         else:
-            rheaders["Accept-Language"] = []
+            rheaders["accept-language"] = []
 
         # data
         # TODO: make data streams
