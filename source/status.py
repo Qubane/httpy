@@ -1,8 +1,3 @@
-"""
-HTTP status codes
-"""
-
-
 class StatusCode:
     """
     HTML status code
@@ -30,6 +25,9 @@ class StatusCode:
 # Status codes!
 # 2xx
 STATUS_CODE_OK = StatusCode(200, "OK")
+
+# 3xx
+STATUS_CODE_MOVED_PERMANENTLY = StatusCode(301, "Moved Permanently")
 
 # 4xx
 STATUS_CODE_BAD_REQUEST = StatusCode(400, "Bad Request")
