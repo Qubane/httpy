@@ -3,18 +3,20 @@ Classes definitions
 """
 
 
+import asyncio
 from io import BytesIO
 from typing import Iterable
 from dataclasses import dataclass, field
 
 
+@dataclass(frozen=True)
 class Connection:
     """
     Connection wrapper
     """
 
-    def __init__(self):
-        ...
+    reader: asyncio.StreamReader
+    writer: asyncio.StreamWriter
 
 
 @dataclass(frozen=True)
