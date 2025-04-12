@@ -7,6 +7,7 @@ import asyncio
 from io import BytesIO
 from typing import Iterable
 from dataclasses import dataclass, field
+from source.status_codes import *
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,6 @@ class Response:
     HTTP response to client
     """
 
-    status: int
+    status: StatusCode = STATUS_CODE_INTERNAL_SERVER_ERROR
     data: bytes | Iterable | BytesIO | None = None
     headers: dict[str, str] = field(default_factory=lambda: dict())
