@@ -3,8 +3,12 @@ Main entrance file
 """
 
 
+from source.application import App
+
+
 def main():
-    ...
+    app = App()
+    app.run()
 
 
 if __name__ == "__main__":
