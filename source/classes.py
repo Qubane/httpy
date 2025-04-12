@@ -3,6 +3,10 @@ Classes definitions
 """
 
 
+from typing import Iterable
+from dataclasses import dataclass
+
+
 class Connection:
     """
     Connection wrapper
@@ -12,10 +16,14 @@ class Connection:
         ...
 
 
+@dataclass(frozen=True)
 class Request:
     """
     Client's HTTP request
     """
 
-    def __init__(self):
-        ...
+    type: str
+    path: str
+    query_args: dict[str, str]
+    headers: dict[str, str]
+    data_stream: Iterable | None = None
