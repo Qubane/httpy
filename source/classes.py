@@ -3,8 +3,9 @@ Classes definitions
 """
 
 
+from io import BytesIO
 from typing import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 class Connection:
@@ -27,3 +28,14 @@ class Request:
     query_args: dict[str, str]
     headers: dict[str, str]
     data_stream: Iterable | None = None
+
+
+@dataclass(frozen=True)
+class Response:
+    """
+    HTTP response to client
+    """
+
+    status: int
+    data: bytes | Iterable | BytesIO | None = None
+    headers: dict[str, str] = field(default_factory=lambda: dict())
