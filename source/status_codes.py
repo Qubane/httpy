@@ -15,6 +15,9 @@ class StatusCode:
     code: int
     message: str
 
+    def __bytes__(self):
+        return f"{self.code} {self.message}".encode("utf-8")
+
 
 # 2xx
 STATUS_CODE_OK = StatusCode(200, "OK")
