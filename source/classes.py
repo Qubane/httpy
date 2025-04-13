@@ -5,7 +5,7 @@ Classes definitions
 
 import asyncio
 from io import BytesIO
-from typing import Iterable
+from typing import Iterable, Coroutine, Any
 from dataclasses import dataclass, field
 from source.status_codes import *
 
@@ -30,6 +30,15 @@ class Connection:
 
     reader: asyncio.StreamReader
     writer: asyncio.StreamWriter
+
+    def write(self, *args, **kwargs) -> None:
+        return self.writer.write(*args, **kwargs)
+
+    async def drain(self, *args, **kwargs) -> Coroutine[Any, Any, None]:
+        return self.writer.drain()
+
+    def read(self, *args, **kwargs) -> Coroutine[Any, Any, bytes]:
+        return self.reader.read(*args, **kwargs)
 
 
 @dataclass(frozen=True)
