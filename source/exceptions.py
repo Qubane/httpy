@@ -13,3 +13,9 @@ class HTTPRequestError(HTTPyException):
     """
     Any type of HTTP request related error
     """
+
+
+class HTTPRequestTypeError(HTTPRequestError):
+    """
+    HTTP request type error
+    """
