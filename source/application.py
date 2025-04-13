@@ -11,12 +11,12 @@ class App:
     def __init__(self):
         ...
 
-    def run(self):
+    def run(self) -> None:
         """
         Runs the application
         """
 
-    def quit(self):
+    def quit(self) -> None:
         """
         Quits the application
         """
