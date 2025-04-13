@@ -15,8 +15,8 @@ class ClientHandle:
     Client handling class
     """
 
-    def __init__(self, con: Connection):
-        self.con: Connection = con
+    def __init__(self, connection: Connection):
+        self.connection: Connection = connection
 
     async def handle(self) -> Response:
         """
@@ -24,14 +24,14 @@ class ClientHandle:
         :return: response to client
         """
 
-        request = await fetch_request(self.con)
+        request = await fetch_request(self.connection)
 
     def close(self) -> None:
         """
         Closes the handle
         """
 
-        self.con.writer.close()
+        self.connection.close()
 
 
 async def accept_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
