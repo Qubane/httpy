@@ -9,16 +9,16 @@ from source.options import *
 from source.exceptions import *
 
 
-async def fetch_request(con: Connection) -> Request:
+async def fetch_request(connection: Connection) -> Request:
     """
     Fetches request from a connection
-    :param con: client connection
+    :param connection: client connection
     :return: client request
     """
 
     # try reading the header data of request
     try:
-        initial_data = await con.reader.read(WRITE_BUFFER_SIZE)
+        initial_data = await connection.read(WRITE_BUFFER_SIZE)
     except (asyncio.IncompleteReadError, asyncio.LimitOverrunError) as e:
         raise HTTPRequestError(e)
 
@@ -31,37 +31,35 @@ async def fetch_request(con: Connection) -> Request:
     else:
         raise HTTPRequestTypeError("Failed to identify HTTP request type")
 
-    print(initial_data)
 
-
-async def send_response(con: Connection, response: Response) -> None:
+async def send_response(connection: Connection, response: Response) -> None:
     """
     Sends a response to a connection
-    :param con: connection
+    :param connection: connection
     :param response: response
     :return: none
     """
 
-    con.writer.write(b'HTTP/1.1 ' + response.status.__bytes__() + b'\r\n')
+    connection.write(b'HTTP/1.1 ' + response.status.__bytes__() + b'\r\n')
     for key, value in response.headers.items():
-        con.writer.write(f'{key}: {value}\r\n'.encode("utf-8"))
-    con.writer.write(b'\r\n')
+        connection.write(f'{key}: {value}\r\n'.encode("utf-8"))
+    connection.write(b'\r\n')
 
     if isinstance(response.data, bytes):
-        con.writer.write(response.data)
+        connection.write(response.data)
     elif isinstance(response.data, Iterable):
         for data in response.data:
-            con.writer.write(data)
-            if con.writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
-                await con.writer.drain()
+            connection.write(data)
+            if connection.writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
+                await connection.drain()
     elif isinstance(response.data, BytesIO):
         try:
             while data := response.data.read(WRITE_BUFFER_SIZE):
-                con.writer.write(data)
-                if con.writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
-                    await con.writer.drain()
+                connection.write(data)
+                if connection.writer.transport.get_write_buffer_size() >= WRITE_BUFFER_SIZE:
+                    await connection.drain()
         except Exception as e:
             response.data.close()
             raise e
-    if con.writer.transport.get_write_buffer_size() > 0:
-        await con.writer.drain()
+    if connection.writer.transport.get_write_buffer_size() > 0:
+        await connection.drain()
