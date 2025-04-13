@@ -11,22 +11,18 @@ class App:
     Main application class
     """
 
-    def __init__(self):
+    def __init__(self, address: tuple[str, int], ssl: tuple[str, str] | None = None):
         self.running_task: asyncio.Task | None = None
 
-        self.address: tuple[str, int] | None = None
-        self.ssl: tuple[str, str] | None = None
+        self.address: tuple[str, int] | None = address
+        self.ssl: tuple[str, str] | None = ssl
 
         self.server: asyncio.Server | None = None
 
-    def run(self, address: tuple[str, int], ssl: tuple[str, str] | None = None) -> None:
+    def run(self) -> None:
         """
         Runs the application
         """
-
-        # assign address and ssl keys
-        self.address = address
-        self.ssl = ssl
 
         # create new task
         try:
