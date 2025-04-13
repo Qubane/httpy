@@ -45,9 +45,6 @@ async def accept_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     connection: Connection = Connection(reader, writer)
     client_handle: ClientHandle = ClientHandle(connection)
 
-    # define response
-    response: Response | None = None
-
     # try generating a response
     try:
         response = await client_handle.handle()
