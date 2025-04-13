@@ -4,6 +4,7 @@ Main application file
 
 
 import ssl
+import signal
 import asyncio
 from source.server import *
 
@@ -14,7 +15,11 @@ class App:
     """
 
     def __init__(self, address: tuple[str, int], ssl_keys: tuple[str, str] | None = None):
-        self.server: asyncio.Server | None = None
+        # define running boolean
+        self.running: bool = False
+
+        # define server and running task
+        self._server: asyncio.Server | None = None
 
         # assign address and define ssl context
         self.address: tuple[str, int] | None = address
@@ -30,30 +35,37 @@ class App:
         Runs the application
         """
 
+        # set running flag to True
+        self.running = True
+
+        # create signaling
+        signal.signal(signal.SIGINT, self.quit)
+
+        # run the task
         asyncio.run(self._run_server())
 
-    def quit(self) -> None:
+    def quit(self, *args) -> None:
         """
         Quits the application
         """
 
-        self.server.close()
-        for sock in self.server.sockets:
-            sock.close()
+        self.running = False
 
     async def _run_server(self):
         """
         Run server coroutine
         """
 
-        self.server = await asyncio.start_server(
+        self._server = await asyncio.start_server(
             client_connected_cb=accept_client,
             host=self.address[0],
             port=self.address[1],
             ssl=self.ctx)
 
-        async with self.server:
-            try:
-                await self.server.serve_forever()
-            except asyncio.exceptions.CancelledError:
-                pass
+        # create running loop
+        while self.running:
+            await asyncio.sleep(0.01)
+            await self._server.start_serving()
+
+        # close server
+        self._server.close()
