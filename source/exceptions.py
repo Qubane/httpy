@@ -9,7 +9,19 @@ class HTTPyException(Exception):
     """
 
 
-class HTTPRequestError(HTTPyException):
+class InternalServerError(HTTPyException):
+    """
+    Any internal server errors
+    """
+
+
+class ExternalServerError(HTTPyException):
+    """
+    Any external (client-side / network side) errors
+    """
+
+
+class HTTPRequestError(InternalServerError):
     """
     Any type of HTTP request related error
     """
