@@ -1,0 +1,3 @@
+"""
+HTTPy server exceptions
+"""
