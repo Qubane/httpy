@@ -24,6 +24,13 @@ class App:
         Runs the application
         """
 
+        asyncio.run(self.run_coro())
+
+    async def run_coro(self):
+        """
+        Runs the application. Is a coroutine
+        """
+
         # create new task
         try:
             self.running_task = asyncio.create_task(self._run_server())
