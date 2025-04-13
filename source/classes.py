@@ -10,6 +10,18 @@ from dataclasses import dataclass, field
 from source.status_codes import *
 
 
+HTTP_REQUEST_TYPES: list[str] = [
+    "GET",
+    "HEAD",
+    "OPTIONS",
+    "TRACE",
+    "PUT",
+    "DELETE",
+    "POST",
+    "PATCH",
+    "CONNECT"]
+
+
 @dataclass(frozen=True)
 class Connection:
     """
