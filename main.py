@@ -9,7 +9,7 @@ from source.application import App
 def main():
     app = App(
         address=("0.0.0.0", 8080),
-        ssl=None)
+        ssl_keys=None)
     app.run()
 
 
