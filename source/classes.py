@@ -10,16 +10,16 @@ from dataclasses import dataclass, field
 from source.status_codes import *
 
 
-HTTP_REQUEST_TYPES: list[str] = [
-    "GET",
-    "HEAD",
-    "OPTIONS",
-    "TRACE",
-    "PUT",
-    "DELETE",
-    "POST",
-    "PATCH",
-    "CONNECT"]
+HTTP_REQUEST_TYPES: list[bytes] = [
+    b'GET',
+    b'HEAD',
+    b'OPTIONS',
+    b'TRACE',
+    b'PUT',
+    b'DELETE',
+    b'POST',
+    b'PATCH',
+    b'CONNECT']
 
 
 @dataclass(frozen=True)
