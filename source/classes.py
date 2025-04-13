@@ -40,6 +40,9 @@ class Connection:
     def read(self, *args, **kwargs) -> Coroutine[Any, Any, bytes]:
         return self.reader.read(*args, **kwargs)
 
+    def close(self, *args, **kwargs) -> None:
+        return self.writer.close()
+
 
 @dataclass(frozen=True)
 class Request:
