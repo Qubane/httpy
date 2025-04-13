@@ -3,8 +3,10 @@ Networking stuff
 """
 
 
+import asyncio
 from source.classes import *
 from source.options import *
+from source.exceptions import *
 
 
 async def fetch_request(con: Connection) -> Request:
@@ -13,6 +15,23 @@ async def fetch_request(con: Connection) -> Request:
     :param con: client connection
     :return: client request
     """
+
+    # try reading the header data of request
+    try:
+        initial_data = await con.reader.read(WRITE_BUFFER_SIZE)
+    except (asyncio.IncompleteReadError, asyncio.LimitOverrunError) as e:
+        raise HTTPRequestError(e)
+
+    # get request type
+    for check_type in HTTP_REQUEST_TYPES:
+        if initial_data[:len(check_type)] == check_type:
+            break
+
+    # raise error in case of failure
+    else:
+        raise HTTPRequestTypeError("Failed to identify HTTP request type")
+
+    print(initial_data)
 
 
 async def send_response(con: Connection, response: Response) -> None:
@@ -44,3 +63,5 @@ async def send_response(con: Connection, response: Response) -> None:
         except Exception as e:
             response.data.close()
             raise e
+    if con.writer.transport.get_write_buffer_size() > 0:
+        await con.writer.drain()
