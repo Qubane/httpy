@@ -7,7 +7,9 @@ from source.application import App
 
 
 def main():
-    app = App()
+    app = App(
+        address=("0.0.0.0", 8080),
+        ssl=None)
     app.run()
 
 
