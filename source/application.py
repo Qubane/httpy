@@ -6,7 +6,11 @@ Main application file
 import ssl
 import signal
 import asyncio
+import logging
 from source.server import *
+
+
+LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
 class App:
@@ -49,6 +53,7 @@ class App:
         Quits the application
         """
 
+        logging.info(f"Attempting to close the server")
         self.running = False
 
     async def _run_server(self):
@@ -56,11 +61,15 @@ class App:
         Run server coroutine
         """
 
+        logging.info("Attempting to start the server")
+
         self._server = await asyncio.start_server(
             client_connected_cb=accept_client,
             host=self.address[0],
             port=self.address[1],
             ssl=self.ctx)
+
+        logging.info(f"Server started at '{self.address[0]}:{self.address[1]}'")
 
         # create running loop
         while self.running:
@@ -69,3 +78,4 @@ class App:
 
         # close server
         self._server.close()
+        logging.info(f"Server closed")
