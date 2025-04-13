@@ -24,7 +24,7 @@ class ClientHandle:
         :return: response to client
         """
 
-        request = fetch_request(self.con)
+        request = await fetch_request(self.con)
 
     def close(self) -> None:
         """
