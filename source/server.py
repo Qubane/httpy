@@ -30,6 +30,25 @@ class Server:
             node = node[split]
         node[split_path[-1]] = page
 
+    def get_path(self, path: str) -> Page | None:
+        """
+        Get path from path tree
+        :param path: path to get
+        :return: Page class or None if path doesn't exit
+        """
+
+        node = self._path_tree
+        split_path = path.split("/")
+        for split in split_path:
+            if "*" in node:
+                return node["*"]
+            if split not in node:
+                return None
+            node = node[split]
+        if isinstance(node, dict) and "*" in node:
+            return node["*"]
+        return node
+
     async def process_request(self, request: Request) -> Response:
         """
         Process client request to page server
