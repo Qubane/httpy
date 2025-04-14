@@ -12,7 +12,6 @@ import logging.handlers
 WRITE_BUFFER_SIZE: int = 2 ** 10 * 16
 
 # directories
-TEMP_DIRECTORY: str = "temp"
 LOGS_DIRECTORY: str = "logs"
 ASSETS_DIRECTORY: str = "assets"
 
@@ -23,8 +22,6 @@ def initialize():
     """
 
     # ensure directories exist
-    if not os.path.isdir(TEMP_DIRECTORY):
-        os.makedirs(TEMP_DIRECTORY)
     if not os.path.isdir(LOGS_DIRECTORY):
         os.makedirs(LOGS_DIRECTORY)
     if not os.path.isdir(ASSETS_DIRECTORY):
