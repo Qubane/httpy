@@ -1,5 +1,5 @@
 """
-HTTPy server code
+HTTPy client handling code
 """
 
 
