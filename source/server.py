@@ -21,3 +21,10 @@ class Server:
         :param path: path to add
         :param page: page class reference
         """
+
+    async def process_request(self, request: Request) -> Response:
+        """
+        Process client request to page server
+        :param request: client request
+        :return: server response
+        """
