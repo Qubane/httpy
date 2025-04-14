@@ -7,6 +7,7 @@ import asyncio
 from io import BytesIO
 from typing import Iterable, Coroutine, Any
 from dataclasses import dataclass, field
+from source.server import Server
 from source.status_codes import *
 
 
@@ -68,25 +69,10 @@ class Response:
     headers: dict[str, str] = field(default_factory=lambda: dict())
 
 
-class ServerStub:
-    """
-    Server stub class
-    """
-
-    def add_path(self, path: str, page: "Page") -> None:
-        """
-        Adds path to path tree
-        :param path: path to add
-        :param page: page class reference
-        """
-
-        raise NotImplementedError
-
-
 class Page:
     """
     Page class
     """
 
-    def __init__(self, server: ServerStub):
+    def __init__(self, server: "Server"):
         ...
