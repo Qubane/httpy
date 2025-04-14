@@ -76,3 +76,12 @@ class Page:
 
     def __init__(self, server: "Server"):
         ...
+
+    async def on_request(self, request: Request) -> Response:
+        """
+        Event that gets called when the user requests that page
+        :param request: client request
+        :return: server response
+        """
+
+        raise NotImplementedError
