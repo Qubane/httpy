@@ -12,6 +12,7 @@ import logging.handlers
 WRITE_BUFFER_SIZE: int = 2 ** 10 * 16
 
 # directories
+WWW_DIRECTORY: str = "www"
 LOGS_DIRECTORY: str = "logs"
 ASSETS_DIRECTORY: str = "assets"
 
@@ -24,6 +25,8 @@ def initialize():
     # ensure directories exist
     if not os.path.isdir(LOGS_DIRECTORY):
         os.makedirs(LOGS_DIRECTORY)
+    if not os.path.isdir(WWW_DIRECTORY):
+        os.makedirs(WWW_DIRECTORY)
     if not os.path.isdir(ASSETS_DIRECTORY):
         os.makedirs(ASSETS_DIRECTORY)
 
