@@ -5,6 +5,7 @@ HTTPy server code
 
 from source.options import *
 from source.classes import *
+from source.status_codes import *
 
 
 class Server:
@@ -55,3 +56,12 @@ class Server:
         :param request: client request
         :return: server response
         """
+
+        # get page
+        page = self.get_path(request.path)
+
+        # give response
+        if page is not None:
+            return await page.on_request(request)
+        else:
+            return Response(status=STATUS_CODE_NOT_FOUND, data=b'page not found')
