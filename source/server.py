@@ -22,6 +22,14 @@ class Server:
         :param page: page class reference
         """
 
+        node = self._path_tree
+        split_path = path.split("/")
+        for split in split_path[:-1]:
+            if split not in node:
+                node[split] = dict()
+            node = node[split]
+        node[split_path[-1]] = page
+
     async def process_request(self, request: Request) -> Response:
         """
         Process client request to page server
