@@ -65,3 +65,10 @@ class Server:
             return await page.on_request(request)
         else:
             return Response(status=STATUS_CODE_NOT_FOUND, data=b'page not found')
+
+    async def import_page(self, import_path: str) -> None:
+        """
+        Imports page under a given path
+        :param import_path: python script import path
+        :return: None
+        """
