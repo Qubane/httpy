@@ -8,6 +8,7 @@ adds paths:
 
 
 from source.classes import *
+from source.server import Server
 from source.status_codes import *
 
 
@@ -41,3 +42,7 @@ class IndexPage(Page):
         return Response(
             status=STATUS_CODE_OK,
             data=page)
+
+
+async def setup(server: Server) -> None:
+    await server.add_page(IndexPage(server))
