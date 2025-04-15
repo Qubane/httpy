@@ -7,7 +7,6 @@ import asyncio
 from io import BytesIO
 from typing import Iterable, Coroutine, Any
 from dataclasses import dataclass, field
-from source.server import Server
 from source.status_codes import *
 
 
@@ -73,9 +72,6 @@ class Page:
     """
     Page class
     """
-
-    def __init__(self, server: "Server"):
-        ...
 
     async def on_request(self, request: Request) -> Response:
         """
