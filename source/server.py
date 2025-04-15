@@ -3,6 +3,7 @@ HTTPy server code
 """
 
 
+import importlib
 from source.options import *
 from source.classes import *
 from source.status_codes import *
@@ -16,7 +17,7 @@ class Server:
     def __init__(self):
         self._path_tree: dict[str, dict | Page] = dict()
 
-    def add_path(self, path: str, page: "Page") -> None:
+    def add_path(self, path: str, page: Page) -> None:
         """
         Adds path to path tree
         :param path: path to add
@@ -70,5 +71,17 @@ class Server:
         """
         Imports page under a given path
         :param import_path: python script import path
+        :return: None
+        """
+
+        name = "." + os.path.splitext(os.path.basename(import_path))[0]
+        module_path = os.path.dirname(import_path).replace("/", ".")
+
+        module = importlib.import_module(name, module_path)
+
+    async def add_page(self, page: Page) -> None:
+        """
+        Adds page to self. Generally called by setup
+        :param page: page class
         :return: None
         """
