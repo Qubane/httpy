@@ -34,8 +34,8 @@ class Connection:
     def write(self, *args, **kwargs) -> None:
         return self.writer.write(*args, **kwargs)
 
-    async def drain(self, *args, **kwargs) -> Coroutine[Any, Any, None]:
-        return self.writer.drain()
+    async def drain(self, *args, **kwargs) -> None:
+        return await self.writer.drain()
 
     def read(self, *args, **kwargs) -> Coroutine[Any, Any, bytes]:
         return self.reader.read(*args, **kwargs)
