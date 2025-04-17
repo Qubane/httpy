@@ -71,6 +71,10 @@ class App:
 
         logging.info(f"Server started at '{self.address[0]}:{self.address[1]}'")
 
+        initialize_client_handle()
+
+        logging.info(f"Client handler initialized")
+
         # create running loop
         while self.running:
             await asyncio.sleep(0.01)
