@@ -30,6 +30,7 @@ class ClientHandle:
         """
 
         request = await fetch_request(self.connection)
+        return await self.server.process_request(request)
 
     def close(self) -> None:
         """
@@ -60,7 +61,7 @@ async def accept_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
     # error handling for internal problems
     except (Exception, InternalServerError) as e:
-        # TODO: add logging
+        LOGGER.warning(f"Error occurred while processing client response", exc_info=e)
         response = Response(status=STATUS_CODE_INTERNAL_SERVER_ERROR)
 
     # try sending response
