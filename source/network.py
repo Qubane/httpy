@@ -36,7 +36,8 @@ async def fetch_request(connection: Connection) -> Request:
     request_path = initial_data[len(request_type)+1:initial_data.find(b' ', len(request_type)+1, 255)]
 
     # split path to path and query args
-    request_path, request_args = request_path.split(b'?', maxsplit=1)
+    request_spit = request_path.split(b'?', maxsplit=1)
+    request_path, request_args = request_spit if len(request_spit) == 2 else (request_spit[0], b'')
     request_path = request_path.decode("utf-8", "ignore")
 
     # make query args
