@@ -43,7 +43,7 @@ class App:
         signal.signal(signal.SIGINT, self.quit)
 
         # run the task
-        asyncio.run(self._run_server())
+        asyncio.get_event_loop().run_until_complete(self._run_server())
 
     def quit(self, *args) -> None:
         """
