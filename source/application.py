@@ -22,9 +22,6 @@ class App:
         # define running boolean
         self.running: bool = False
 
-        # define server and running task
-        self._server: asyncio.Server | None = None
-
         # assign address and define ssl context
         self.address: tuple[str, int] | None = address
         self.ctx: ssl.SSLContext | None = None
@@ -63,7 +60,7 @@ class App:
 
         # define server
         logging.info("Attempting to start the server")
-        self._server = await asyncio.start_server(
+        server = await asyncio.start_server(
             client_connected_cb=accept_client,
             host=self.address[0],
             port=self.address[1],
@@ -78,8 +75,8 @@ class App:
         # create running loop
         while self.running:
             await asyncio.sleep(0.01)
-            await self._server.start_serving()
+            await server.start_serving()
 
         # close server
-        self._server.close()
+        server.close()
         logging.info(f"Server closed")
