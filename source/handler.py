@@ -3,6 +3,8 @@ HTTPy client handling code
 """
 
 
+import os
+import glob
 import asyncio
 from source.server import *
 from source.classes import *
@@ -75,3 +77,21 @@ def initialize_client_handle() -> None:
     """
     Initializes ClientHandle server attribute.
     """
+
+    # create instance of server
+    if ClientHandle.server is None:
+        ClientHandle.server = Server()
+
+    # import pages
+    for file in glob.glob(f"{WWW_DIRECTORY}/**/*", recursive=True):
+        # skip all non-files
+        if not os.path.isfile(file):
+            continue
+
+        # skip all non-py files
+        if os.path.splitext(file)[1] != ".py":
+            continue
+
+        filepath = file.replace("\\", "/")
+        module_path = os.path.splitext(filepath)[0].replace("/", ".")
+        ClientHandle.server.import_page(module_path)
