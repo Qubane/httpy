@@ -4,6 +4,7 @@ HTTPy client handling code
 
 
 import asyncio
+from source.server import *
 from source.classes import *
 from source.network import *
 from source.exceptions import *
@@ -14,6 +15,8 @@ class ClientHandle:
     """
     Client handling class
     """
+
+    server: Server | None = None
 
     def __init__(self, connection: Connection):
         self.connection: Connection = connection
@@ -66,3 +69,9 @@ async def accept_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
 
     # close client handle
     client_handle.close()
+
+
+def initialize_client_handle() -> None:
+    """
+    Initializes ClientHandle server attribute.
+    """
