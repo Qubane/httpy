@@ -9,6 +9,9 @@ from source.classes import *
 from source.status_codes import *
 
 
+LOGGER: logging.Logger = logging.getLogger(__name__)
+
+
 class Server:
     """
     Page server class
@@ -67,19 +70,24 @@ class Server:
         else:
             return Response(status=STATUS_CODE_NOT_FOUND, data=b'page not found')
 
-    async def import_page(self, import_path: str) -> None:
+    def import_page(self, import_path: str) -> None:
         """
         Imports page under a given path
         :param import_path: python script import path
         :return: None
         """
 
-        name = "." + os.path.splitext(os.path.basename(import_path))[0]
-        module_path = os.path.dirname(import_path).replace("/", ".")
+        module = importlib.import_module(import_path)
 
-        module = importlib.import_module(name, module_path)
+        try:
+            module.setup(self)
+        except Exception as e:
+            LOGGER.error(f"Error occurred when importing page at '{import_path}';", exc_info=e)
+            return
 
-    async def add_page(self, page: Page) -> None:
+        LOGGER.info(f"Page '{import_path}' imported")
+
+    def add_page(self, page: Page) -> None:
         """
         Adds page to self. Generally called by setup
         :param page: page class
