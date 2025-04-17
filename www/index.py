@@ -44,5 +44,5 @@ class IndexPage(Page):
             data=page)
 
 
-async def setup(server: Server) -> None:
-    await server.add_page(IndexPage(server))
+def setup(server: Server) -> None:
+    server.add_page(IndexPage(server))
