@@ -61,18 +61,18 @@ class App:
         Run server coroutine
         """
 
+        # define server
         logging.info("Attempting to start the server")
-
         self._server = await asyncio.start_server(
             client_connected_cb=accept_client,
             host=self.address[0],
             port=self.address[1],
             ssl=self.ctx)
-
         logging.info(f"Server started at '{self.address[0]}:{self.address[1]}'")
 
+        # client handle initialization
+        logging.info(f"Initializing client handler")
         initialize_client_handle()
-
         logging.info(f"Client handler initialized")
 
         # create running loop
