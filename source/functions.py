@@ -20,13 +20,12 @@ def read_refactor_template(file: TextIO, **kwargs) -> str:
     page = ""
 
     # go through each line
-    with file:
-        for line in file.readlines():
-            # check if line argument is in key_args
-            if (arg := line.strip()) in key_args:
-                page += kwargs[arg[1:-1]]
-            else:
-                page += line
+    for line in file.readlines():
+        # check if line argument is in key_args
+        if (arg := line.strip()) in key_args:
+            page += kwargs[arg[1:-1]]
+        else:
+            page += line
 
     # return page
     return page
