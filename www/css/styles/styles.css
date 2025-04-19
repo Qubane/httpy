@@ -1,0 +1,42 @@
+:root {
+  --body-background: #000000;
+  --shade-1: #1a1a1a;
+  --shade-2: #202020;
+
+  --text-color: #ffffff;
+  --hover-color: #7fffd4;
+}
+
+* {
+  font-family: 'Consolas', 'monospace';
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+
+    background: var(--body-background);
+}
+
+footer {
+    background: var(--shade-2);
+    font-size: 12px;
+    margin-top: auto;
+}
+
+.section-div {
+    width: 70vw;
+    background: var(--shade-1);
+    align-self: center;
+    display: flex;
+    flex-grow: 1;
+}
+
+.section-div p,h1 {
+    padding: 4px;
+    margin: 6px;
+}
