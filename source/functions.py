@@ -3,7 +3,7 @@ Some generic functions
 """
 
 
-def read_refactor_template(path: str, **kwargs) -> bytes | str:
+def read_refactor_template(path: str, **kwargs) -> str:
     """
     Reads and refactors a template file
     :param path: path to file
