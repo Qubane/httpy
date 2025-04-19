@@ -57,10 +57,25 @@ def reads_refactor_template(data: str, **kwargs) -> str:
     return page
 
 
-def generate_lazy_response(text: str, content_type: str) -> Response:
+def generate_lazy_response(text: str, content_type: str, content_encoding: str, status: StatusCode) -> Response:
     """
     Generates a lazy response with automatically assigned headers
     :param text: text
     :param content_type: content type
+    :param content_encoding: content encoding (compression)
+    :param status: response status
     :return: Response
     """
+
+    encoded_text = text.encode("utf-8")
+
+    headers = {
+        "Content-Length": len(encoded_text),
+        "Content-Type": content_type,
+        "Server": "HTTPy"
+    }
+
+    return Response(
+        status=status,
+        headers=headers,
+        data=encoded_text)
