@@ -3,10 +3,10 @@ Some generic functions
 """
 
 
-from io import StringIO
+from typing import TextIO
 
 
-def read_refactor_template(file: StringIO, **kwargs) -> str:
+def read_refactor_template(file: TextIO, **kwargs) -> str:
     """
     Reads and refactors a template file
     :param file: file
