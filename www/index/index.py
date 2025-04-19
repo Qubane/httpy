@@ -27,10 +27,8 @@ class IndexPage(Page):
         with open(f"{WWW_DIRECTORY}/index/index_body.html", "r", encoding="utf-8") as f:
             body = f.read()
 
-        page = read_refactor_template(
-            f"{ASSETS_DIRECTORY}/template.html",
-            head="",
-            body=body)
+        with open(f"{ASSETS_DIRECTORY}/template.html", "r", encoding="utf-8") as f:
+            page = read_refactor_template(f, head="", body=body)
 
         return Response(
             status=STATUS_CODE_OK,
