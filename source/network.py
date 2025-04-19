@@ -25,7 +25,7 @@ async def fetch_request(connection: Connection) -> Request:
 
     # empty request
     if initial_data == b'':
-        raise HTTPRequestError
+        raise ExternalServerError
 
     # get request type
     for request_type in HTTP_REQUEST_TYPES:
