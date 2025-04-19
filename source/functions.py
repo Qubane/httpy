@@ -57,13 +57,17 @@ def reads_refactor_template(data: str, **kwargs) -> str:
     return page
 
 
-def generate_lazy_response(text: str, content_type: str, content_encoding: str, status: StatusCode) -> Response:
+def generate_lazy_response(
+        text: str,
+        content_type: str,
+        status: StatusCode,
+        content_encoding: str | None = None) -> Response:
     """
     Generates a lazy response with automatically assigned headers
     :param text: text
     :param content_type: content type
-    :param content_encoding: content encoding (compression)
     :param status: response status
+    :param content_encoding: content encoding (compression)
     :return: Response
     """
 
