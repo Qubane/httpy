@@ -23,6 +23,10 @@ async def fetch_request(connection: Connection) -> Request:
     except (asyncio.IncompleteReadError, asyncio.LimitOverrunError) as e:
         raise HTTPRequestError(e)
 
+    # empty request
+    if initial_data == b''
+        raise HTTPRequestError
+
     # get request type
     for request_type in HTTP_REQUEST_TYPES:
         if initial_data[:len(request_type)] == request_type:
