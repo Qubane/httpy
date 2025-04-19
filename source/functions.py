@@ -58,7 +58,7 @@ def reads_refactor_template(data: str, **kwargs) -> str:
 
 
 def generate_lazy_response(
-        text: str,
+        text: str | bytes,
         content_type: str,
         status: StatusCode,
         content_encoding: str | None = None) -> Response:
@@ -71,7 +71,10 @@ def generate_lazy_response(
     :return: Response
     """
 
-    encoded_text = text.encode("utf-8")
+    if isinstance(text, str):
+        encoded_text = text.encode("utf-8")
+    else:
+        encoded_text = text
 
     headers = {
         "Content-Length": len(encoded_text),
