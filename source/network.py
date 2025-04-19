@@ -24,7 +24,7 @@ async def fetch_request(connection: Connection) -> Request:
         raise HTTPRequestError(e)
 
     # empty request
-    if initial_data == b''
+    if initial_data == b'':
         raise HTTPRequestError
 
     # get request type
