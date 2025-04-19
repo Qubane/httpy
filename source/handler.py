@@ -67,8 +67,8 @@ async def accept_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     # try sending response
     try:
         await send_response(connection, response)
-    except Exception:
-        ...
+    except Exception as e:
+        LOGGER.warning(f"Error occurred while sending a response to client", exc_info=e)
 
     # close client handle
     client_handle.close()
