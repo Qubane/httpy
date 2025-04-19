@@ -7,24 +7,11 @@ adds paths:
 """
 
 
+from source.server import *
+from source.options import *
 from source.classes import *
-from source.server import Server
+from source.functions import *
 from source.status_codes import *
-
-
-TEST_PAGE = """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <title> Qubane's page </title>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="/css/styles.css">
-</head>
-    <body>
-        <header> Hello World! </header>
-    </body>
-</html>
-"""
 
 
 class IndexPage(Page):
@@ -37,7 +24,10 @@ class IndexPage(Page):
         server.add_path("/index.html", self)
 
     async def on_request(self, request: Request) -> Response:
-        page = TEST_PAGE.encode("utf-8")
+        page = read_refactor_template(
+            f"{ASSETS_DIRECTORY}/template.html",
+            head="",
+            body="<header> hello world! </header>")
 
         return Response(
             status=STATUS_CODE_OK,
