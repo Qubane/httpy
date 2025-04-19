@@ -24,10 +24,13 @@ class IndexPage(Page):
         server.add_path("/index.html", self)
 
     async def on_request(self, request: Request) -> Response:
+        with open(f"{WWW_DIRECTORY}/index/index_body.html", "r", encoding="utf-8") as f:
+            body = f.read()
+
         page = read_refactor_template(
             f"{ASSETS_DIRECTORY}/template.html",
             head="",
-            body="<header> hello world! </header>")
+            body=body)
 
         return Response(
             status=STATUS_CODE_OK,
