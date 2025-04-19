@@ -4,6 +4,7 @@ Some generic functions
 
 
 from typing import TextIO
+from source.classes import *
 
 
 def read_refactor_template(file: TextIO, **kwargs) -> str:
@@ -54,3 +55,12 @@ def reads_refactor_template(data: str, **kwargs) -> str:
 
     # return page
     return page
+
+
+def generate_lazy_response(text: str, content_type: str) -> Response:
+    """
+    Generates a lazy response with automatically assigned headers
+    :param text: text
+    :param content_type: content type
+    :return: Response
+    """
