@@ -25,15 +25,10 @@ class StylesPage(Page):
         with open(f"{WWW_DIRECTORY}/css/styles/styles.css", "rb") as f:
             page = f.read()
 
-        headers = {
-            "Content-Length": len(page),
-            "Content-Type": "text/css"
-        }
-
-        return Response(
-            status=STATUS_CODE_OK,
-            headers=headers,
-            data=page)
+        return generate_lazy_response(
+            text=page,
+            content_type="text/css",
+            status=STATUS_CODE_OK)
 
 
 def setup(server: Server) -> None:
