@@ -64,7 +64,7 @@ class Response:
     """
 
     status: StatusCode = STATUS_CODE_INTERNAL_SERVER_ERROR
-    data: bytes | Iterable | BytesIO | None = None
+    data: str | bytes | Iterable | BytesIO | None = None
     headers: dict[str, str] = field(default_factory=lambda: dict())
 
 
