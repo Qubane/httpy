@@ -80,6 +80,8 @@ async def send_response(connection: Connection, response: Response) -> None:
     # write generic data
     if isinstance(response.data, bytes):
         connection.write(response.data)
+    elif isinstance(response.data, str):
+        connection.write(response.data.encode("utf-8"))
     elif isinstance(response.data, Iterable):
         for data in response.data:
             connection.write(data)
