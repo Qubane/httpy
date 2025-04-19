@@ -1,0 +1,3 @@
+"""
+Some generic functions
+"""
