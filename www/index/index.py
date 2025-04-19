@@ -30,17 +30,10 @@ class IndexPage(Page):
         with open(f"{ASSETS_DIRECTORY}/template.html", "r", encoding="utf-8") as f:
             page = read_refactor_template(f, head="", body=body)
 
-        page = page.encode("utf-8")
-
-        headers = {
-            "Content-Length": len(page),
-            "Content-Type": "text/html"
-        }
-
-        return Response(
-            status=STATUS_CODE_OK,
-            headers=headers,
-            data=page)
+        return generate_lazy_response(
+            text=page,
+            content_type="text/html",
+            status=STATUS_CODE_OK)
 
 
 def setup(server: Server) -> None:
