@@ -6,6 +6,7 @@ adds paths:
 """
 
 
+import os
 from source.server import *
 from source.options import *
 from source.classes import *
@@ -28,10 +29,17 @@ class VideoTestPage(Page):
         if "accept-encoding" in request.headers:
             additional_headers["content-encoding"] = request.headers["accept-encoding"]
 
+        page.seek(0, os.SEEK_END)
+        headers = {
+            "content-length": Header(page.tell()),
+            "content-type": Header("video/mp4"),
+            "server": Header("HTTPy")}
+        page.seek(0)
+
         return Response(
             status=STATUS_CODE_OK,
             data=page,
-            headers={"content-type": Header("video/mp4")})
+            headers=headers)
 
 
 def setup(server: Server) -> None:
