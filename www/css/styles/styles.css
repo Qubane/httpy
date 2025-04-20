@@ -41,14 +41,10 @@ footer {
     margin: 0;
 }
 
-.section-div p {
+.section-div p,ul,video,img {
     margin: 8px 8px 8px 32px;
 }
 
 .section-div h1 {
     padding: 16px;
-}
-
-.section-div ul {
-    margin: 8px 8px 8px 32px;
 }
