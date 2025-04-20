@@ -50,7 +50,7 @@ class Header:
     Generic header container
     """
 
-    data: Any
+    data: str
 
 
 @dataclass(frozen=True)
@@ -59,7 +59,7 @@ class QualityHeader(Header):
     Generic header container, that gets basic parsing
     """
 
-    data: list[tuple[str, float]]
+    data: dict[str, float]
 
 
 @dataclass(frozen=True)
