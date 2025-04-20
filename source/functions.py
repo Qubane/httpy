@@ -97,10 +97,10 @@ def generate_lazy_response(
     # compress if needed
     if "content-encoding" in additional_headers:
         if "br" in additional_headers["content-encoding"].data:
-            encoded_text = gzip.compress(encoded_text)
+            encoded_text = brotli.compress(encoded_text)
             headers["content-encoding"] = Header("br")
         elif "gzip" in additional_headers["content-encoding"].data:
-            encoded_text = brotli.compress(encoded_text)
+            encoded_text = gzip.compress(encoded_text)
             headers["content-encoding"] = Header("gzip")
 
     # add length header
