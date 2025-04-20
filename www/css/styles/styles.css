@@ -1,14 +1,14 @@
 :root {
-  --body-background: #000000;
-  --shade-1: #1a1a1a;
-  --shade-2: #202020;
+    --body-background: #000000;
+    --shade-1: #1a1a1a;
+    --shade-2: #202020;
 
-  --text-color: #ffffff;
-  --hover-color: #7fffd4;
+    --text-color: #ffffff;
+    --hover-color: #7fffd4;
 }
 
 * {
-  font-family: 'Consolas', 'monospace';
+    font-family: 'Consolas', 'monospace';
 }
 
 body {
@@ -33,10 +33,22 @@ footer {
     background: var(--shade-1);
     align-self: center;
     display: flex;
+    flex-direction: column;
     flex-grow: 1;
 }
 
-.section-div p,h1 {
-    padding: 4px;
-    margin: 6px;
+.section-div p,h1,ul {
+    margin: 0;
+}
+
+.section-div p {
+    margin: 8px 8px 8px 32px;
+}
+
+.section-div h1 {
+    padding: 16px;
+}
+
+.section-div ul {
+    margin: 8px 8px 8px 32px;
 }
