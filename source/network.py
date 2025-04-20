@@ -117,7 +117,7 @@ async def send_response(connection: Connection, response: Response) -> None:
     # generate header data
     connection.write(b'HTTP/1.1 ' + response.status.__bytes__() + b'\r\n')
     for key, value in response.headers.items():
-        connection.write(f'{key}: {value}\r\n'.encode("utf-8"))
+        connection.write(f'{key}: {value.data}\r\n'.encode("utf-8"))
     connection.write(b'\r\n')
 
     # write generic data
