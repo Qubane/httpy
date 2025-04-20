@@ -1,5 +1,5 @@
 """
-HTTPy index web page.
+HTTPy video test mp4 file web page.
 
 adds paths:
 - '/test/video-test.mp4'
