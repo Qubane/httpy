@@ -31,9 +31,9 @@ class Server:
         split_path = path.split("/")
         for split in split_path[:-1]:
             if split not in node:
-                node[split] = dict()
+                node[split] = {}
             node = node[split]
-        node[split_path[-1]] = page
+        node[split_path[-1]] = {"__page__": page}
 
     def get_path(self, path: str) -> Page | None:
         """
@@ -44,15 +44,16 @@ class Server:
 
         node = self._path_tree
         split_path = path.split("/")
-        for split in split_path:
-            if "*" in node:
-                return node["*"]
+
+        # go through parts of path
+        for idx, split in enumerate(split_path):
             if split not in node:
                 return None
             node = node[split]
-        if isinstance(node, dict) and "*" in node:
+        if "*" in node:
             return node["*"]
-        return node
+        if "__page__" in node:
+            return node["__page__"]
 
     async def process_request(self, request: Request) -> Response:
         """
