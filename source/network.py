@@ -10,6 +10,39 @@ from source.options import *
 from source.exceptions import *
 
 
+def _parse_http_header(header: Header) -> QualityHeader:
+    """
+    Parses HTTP header data
+    :param header: header
+    :return: QualityHeader
+    """
+
+    header_parts = header.data.split(',')
+
+    # decode
+    decoded_header: list[tuple[str, float]] = []
+    for part in header_parts:
+        part = part.strip()
+
+        # check if part has quality
+        if ';' in part:
+            media_type, quality_str = part.split(';', maxsplit=1)
+            try:
+                quality_value = float(quality_str.split('=', maxsplit=1)[1])
+            except ValueError:
+                raise ExternalServerError
+
+        # if part doesn't, assign 1.0 as quality
+        else:
+            media_type = part
+            quality_value = 1.0
+
+        decoded_header.append((media_type.strip(), quality_value))
+
+    # return
+    return QualityHeader(decoded_header)
+
+
 async def fetch_request(connection: Connection) -> Request:
     """
     Fetches request from a connection
@@ -55,9 +88,14 @@ async def fetch_request(connection: Connection) -> Request:
 
     # headers
     request_headers = dict()
-    for raw_header in re.findall(r"\r\n(.*:.*)\r\n", initial_data.decode("ascii")):
+    for raw_header in re.findall(r"\n(.*:.*)", initial_data.decode("ascii")):
         raw_header = raw_header.split(": ")
-        request_headers[raw_header[0].lower()] = raw_header[1]
+        request_headers[raw_header[0].lower()] = Header(raw_header[1].rstrip('\r'))
+
+    # parse commonly used headers
+    for header_name in ["accept", "accept-encoding", "accept-language"]:
+        if header_name in request_headers:
+            request_headers[header_name] = _parse_http_header(request_headers[header_name])
 
     # return request
     return Request(
