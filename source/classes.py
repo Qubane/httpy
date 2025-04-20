@@ -71,7 +71,7 @@ class Request:
     type: str
     path: str
     query_args: dict[str, str]
-    headers: dict[str, str]
+    headers: dict[str, Header]
     data_stream: Iterable | None = None
 
 
@@ -83,7 +83,7 @@ class Response:
 
     status: StatusCode = STATUS_CODE_INTERNAL_SERVER_ERROR
     data: str | bytes | Iterable | BytesIO | None = None
-    headers: dict[str, str] = field(default_factory=lambda: dict())
+    headers: dict[str, Header] = field(default_factory=lambda: dict())
 
 
 class Page:
