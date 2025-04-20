@@ -7,6 +7,7 @@ import gzip
 import brotli
 from typing import TextIO
 from source.classes import *
+from source.exceptions import *
 
 
 def read_refactor_template(file: TextIO, **kwargs) -> str:
@@ -65,6 +66,32 @@ def parse_http_header(header: str | bytes) -> list[tuple[str, float]]:
     :param header: header data
     :return: sorted list of tuple of str and q
     """
+
+    if isinstance(header, bytes):
+        header = header.decode("utf-8")
+
+    # decode
+    decoded_header: list[tuple[str, float]] = []
+    for part in header.split(','):
+        part = part.strip()
+
+        # check if part has quality
+        if ';' in part:
+            media_type, quality_str = part.split(';', maxsplit=1)
+            try:
+                quality_value = float(quality_str.split('=', maxsplit=1)[1])
+            except ValueError:
+                raise ExternalServerError
+
+        # if part doesn't, assign 1.0 as quality
+        else:
+            media_type = part
+            quality_value = 1.0
+
+        decoded_header.append((media_type.strip(), quality_value))
+
+    # return
+    return decoded_header
 
 
 def generate_lazy_response(
