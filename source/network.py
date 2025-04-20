@@ -20,7 +20,7 @@ def _parse_http_header(header: Header) -> QualityHeader:
     header_parts = header.data.split(',')
 
     # decode
-    decoded_header: list[tuple[str, float]] = []
+    decoded_header: dict[str, float] = {}
     for part in header_parts:
         part = part.strip()
 
@@ -37,7 +37,8 @@ def _parse_http_header(header: Header) -> QualityHeader:
             media_type = part
             quality_value = 1.0
 
-        decoded_header.append((media_type.strip(), quality_value))
+        # add part of header
+        decoded_header[media_type.strip()] = quality_value
 
     # return
     return QualityHeader(decoded_header)
