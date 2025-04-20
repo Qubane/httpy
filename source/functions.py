@@ -59,6 +59,14 @@ def reads_refactor_template(data: str, **kwargs) -> str:
     return page
 
 
+def parse_http_header(header: str | bytes) -> list[tuple[str, float]]:
+    """
+    Parses HTTP header data
+    :param header: header data
+    :return: sorted list of tuple of str and q
+    """
+
+
 def generate_lazy_response(
         data: str | bytes,
         content_type: str,
