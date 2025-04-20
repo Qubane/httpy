@@ -1,5 +1,5 @@
 """
-HTTPy index web page.
+HTTPy about web page.
 
 adds paths:
 - '/about'
