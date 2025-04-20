@@ -50,7 +50,7 @@ class Header:
     Generic header container
     """
 
-    data: str
+    data: Any
 
 
 @dataclass(frozen=True)
