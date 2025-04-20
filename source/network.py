@@ -29,8 +29,8 @@ def _parse_http_header(header: Header) -> QualityHeader:
             media_type, quality_str = part.split(';', maxsplit=1)
             try:
                 quality_value = float(quality_str.split('=', maxsplit=1)[1])
-            except ValueError:
-                raise ExternalServerError
+            except ValueError:  # if not float, just use string
+                quality_value = quality_str
 
         # if part doesn't, assign 1.0 as quality
         else:
