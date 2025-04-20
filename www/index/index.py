@@ -31,7 +31,7 @@ class IndexPage(Page):
             page = read_refactor_template(f, head="", body=body)
 
         return generate_lazy_response(
-            text=page,
+            data=page,
             content_type="text/html",
             status=STATUS_CODE_OK)
 

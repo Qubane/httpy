@@ -26,7 +26,7 @@ class StylesPage(Page):
             page = f.read()
 
         return generate_lazy_response(
-            text=page,
+            data=page,
             content_type="text/css",
             status=STATUS_CODE_OK)
 

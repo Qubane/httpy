@@ -60,14 +60,14 @@ def reads_refactor_template(data: str, **kwargs) -> str:
 
 
 def generate_lazy_response(
-        text: str | bytes,
+        data: str | bytes,
         content_type: str,
         status: StatusCode,
         additional_headers: dict | None = None,
         content_encoding: str | None = None) -> Response:
     """
     Generates a lazy response with automatically assigned headers
-    :param text: text
+    :param data: text
     :param content_type: content type
     :param status: response status
     :param additional_headers: additional headers
@@ -76,10 +76,10 @@ def generate_lazy_response(
     """
 
     # check type
-    if isinstance(text, str):
-        encoded_text = text.encode("utf-8")
-    elif isinstance(text, bytes):
-        encoded_text = text
+    if isinstance(data, str):
+        encoded_text = data.encode("utf-8")
+    elif isinstance(data, bytes):
+        encoded_text = data
     else:
         raise ValueError
 
