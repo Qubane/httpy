@@ -45,6 +45,24 @@ class Connection:
 
 
 @dataclass(frozen=True)
+class Header:
+    """
+    Generic header container
+    """
+
+    data: Any
+
+
+@dataclass(frozen=True)
+class QualityHeader(Header):
+    """
+    Generic header container, that gets basic parsing
+    """
+
+    data: list[tuple[str, float]]
+
+
+@dataclass(frozen=True)
 class Request:
     """
     Client's HTTP request
