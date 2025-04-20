@@ -25,9 +25,14 @@ class StylesPage(Page):
         with open(f"{WWW_DIRECTORY}/css/styles/styles.css", "rb") as f:
             page = f.read()
 
+        additional_headers = {}
+        if "accept-encoding" in request.headers:
+            additional_headers["content-encoding"] = request.headers["accept-encoding"]
+
         return generate_lazy_response(
             data=page,
             content_type="text/css",
+            additional_headers=additional_headers,
             status=STATUS_CODE_OK)
 
 

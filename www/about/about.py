@@ -28,9 +28,14 @@ class AboutPage(Page):
         with open(f"{ASSETS_DIRECTORY}/template.html", "r", encoding="utf-8") as f:
             page = read_refactor_template(f, head="", body=body)
 
+        additional_headers = {}
+        if "accept-encoding" in request.headers:
+            additional_headers["content-encoding"] = request.headers["accept-encoding"]
+
         return generate_lazy_response(
             data=page,
             content_type="text/html",
+            additional_headers=additional_headers,
             status=STATUS_CODE_OK)
 
 
