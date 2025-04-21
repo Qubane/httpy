@@ -7,6 +7,7 @@ import ssl
 import signal
 import asyncio
 import logging
+import argparse
 from source.handler import *
 
 
@@ -80,3 +81,37 @@ class App:
         # close server
         server.close()
         logging.info(f"Server closed")
+
+
+def parse_arguments() -> argparse.Namespace:
+    """
+    Parses CLI arguments
+    :return: arguments
+    """
+
+    # parser
+    parser = argparse.ArgumentParser(
+        prog="HTTPy",
+        description="HTTP python web server")
+
+    # add arguments
+    parser.add_argument("-a", "--address",
+                        help="binding address:port",
+                        required=True)
+    parser.add_argument("-c", "--certificate",
+                        help="SSL certificate (or fullchain.pem)")
+    parser.add_argument("-k", "--private-key",
+                        help="SSL private key")
+
+    # parse arguments
+    args = parser.parse_args()
+
+    # make address
+    address = args.address.split(":")
+    if len(address) == 1:  # only address
+        args.port = 8080  # 80 requires special permissions, so use 8080 instead
+    else:  # address:port
+        args.address = address[0]
+        args.port = int(address[1])
+
+    return args
