@@ -71,8 +71,8 @@ async def accept_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     # try sending response
     try:
         await send_response(connection, response)
-    except Exception as e:
-        LOGGER.warning(f"Error occurred while sending a response to client", exc_info=e)
+    except Exception:
+        pass
 
     # close client handle
     client_handle.close()
@@ -87,6 +87,44 @@ async def accept_http_client(reader: asyncio.StreamReader, writer: asyncio.Strea
 
     # make connection
     connection: Connection = Connection(reader, writer)
+
+    # define request as dummy
+    request = Request("GET", "nothing", dict(), dict())
+
+    # fetch request
+    try:
+        request = await fetch_request(connection)
+
+    # error handling for external (non-server related) problems
+    except ExternalServerError as e:
+        pass
+
+    # error handling for internal problems
+    except (Exception, InternalServerError) as e:
+        LOGGER.warning(f"Error occurred while processing client response", exc_info=e)
+
+    # try fetching a page
+    page = ClientHandle.server.get_path(request.path)
+
+    # TODO: make proper redirects
+    redirect = "https://qubane.ru/"
+
+    # if page is not found
+    if hasattr(page, "__secret__"):
+        # make secret response
+        response = await page.on_request(request)
+    else:
+        # make redirect response
+        response = Response(
+            status=STATUS_CODE_MOVED_PERMANENTLY,
+            data=f"Moved Permanently. Redirecting to {redirect}".encode("ascii"),
+            headers={"location": Header(redirect)})
+
+    # try sending response
+    try:
+        await send_response(connection, response)
+    except Exception:
+        pass
 
 
 def initialize_client_handle() -> None:
