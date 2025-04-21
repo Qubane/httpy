@@ -78,6 +78,17 @@ async def accept_client(reader: asyncio.StreamReader, writer: asyncio.StreamWrit
     client_handle.close()
 
 
+async def accept_http_client(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+    """
+    Accepts the client connection
+    :param reader: client reader
+    :param writer: client writer
+    """
+
+    # make connection
+    connection: Connection = Connection(reader, writer)
+
+
 def initialize_client_handle() -> None:
     """
     Initializes ClientHandle server attribute.
