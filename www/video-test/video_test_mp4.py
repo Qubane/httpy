@@ -32,8 +32,7 @@ class VideoTestPage(Page):
         page.seek(0, os.SEEK_END)
         headers = {
             "content-length": Header(page.tell()),
-            "content-type": Header("video/mp4"),
-            "server": Header("HTTPy")}
+            "content-type": Header("video/mp4")}
         page.seek(0)
 
         return Response(

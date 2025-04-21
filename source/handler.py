@@ -30,7 +30,11 @@ class ClientHandle:
         """
 
         request = await fetch_request(self.connection)
-        return await self.server.process_request(request)
+        response = await self.server.process_request(request)
+
+        response.headers["server"] = Header("HTTPy")
+
+        return response
 
     def close(self) -> None:
         """
