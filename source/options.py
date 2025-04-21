@@ -32,7 +32,7 @@ def initialize():
 
     # logging
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         datefmt="%Y-%m-%d %H:%M:%S",
         style="{",
         format="[{asctime}] [{levelname:<8}] {name}: {message}",
