@@ -75,7 +75,7 @@ class Request:
     data_stream: Iterable | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=False)
 class Response:
     """
     HTTP response to client
