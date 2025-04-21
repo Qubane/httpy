@@ -25,10 +25,6 @@ class VideoTestPage(Page):
     async def on_request(self, request: Request) -> Response:
         page = open(f"{WWW_DIRECTORY}/video-test/test_video.mp4", "rb")
 
-        additional_headers = {}
-        if "accept-encoding" in request.headers:
-            additional_headers["content-encoding"] = request.headers["accept-encoding"]
-
         page.seek(0, os.SEEK_END)
         headers = {
             "content-length": Header(page.tell()),
