@@ -60,13 +60,19 @@ class App:
         """
 
         # define server
-        logging.info("Attempting to start the server")
-        server = await asyncio.start_server(
+        logging.info("Attempting to start generic server")
+        generic_server = await asyncio.start_server(
             client_connected_cb=accept_client,
             host=self.address[0],
             port=self.address[1],
             ssl=self.ctx)
         logging.info(f"Server started at '{self.address[0]}:{self.address[1]}'")
+        logging.info("Attempting to start auth server")
+        auth_server = await asyncio.start_server(
+            client_connected_cb=accept_http_client,
+            host=self.address[0],
+            port=self.address[1]+1)
+        logging.info(f"Server started at '{self.address[0]}:{self.address[1]+1}'")
 
         # client handle initialization
         logging.info(f"Initializing client handler")
@@ -76,10 +82,12 @@ class App:
         # create running loop
         while self.running:
             await asyncio.sleep(0.01)
-            await server.start_serving()
+            await generic_server.start_serving()
+            await auth_server.start_serving()
 
         # close server
-        server.close()
+        generic_server.close()
+        auth_server.close()
         logging.info(f"Server closed")
 
 
