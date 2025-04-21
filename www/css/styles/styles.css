@@ -4,7 +4,7 @@
     --shade-2: #202020;
 
     --text-color: #ffffff;
-    --hover-color: #7fffd4;
+    --hover-color: #00FF00;
 }
 
 * {
@@ -22,9 +22,20 @@ body {
     background: var(--body-background);
 }
 
+a {
+    color: var(--hover-color)
+}
+
 footer {
     background: var(--shade-2);
     font-size: 12px;
+}
+
+header {
+    background: var(--shade-2);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
 }
 
 .section-div {
