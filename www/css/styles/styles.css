@@ -25,7 +25,6 @@ body {
 footer {
     background: var(--shade-2);
     font-size: 12px;
-    margin-top: auto;
 }
 
 .section-div {
@@ -37,18 +36,15 @@ footer {
     flex-grow: 1;
 }
 
-.section-div p,h1,ul {
-    margin: 0;
-}
-
-.section-div p {
-    margin: 8px 8px 8px 32px;
-}
-
 .section-div h1 {
-    padding: 16px;
+    margin: 16px;
 }
 
-.section-div ul {
-    margin: 8px 8px 8px 32px;
+.section-div p, .section-div ul, .section-div ol, .section-div video, .section-div img {
+    margin: 8px;
+    padding-left: 16px;
+}
+
+.section-div ul, .section-div ol {
+    padding-left: 50px;
 }
