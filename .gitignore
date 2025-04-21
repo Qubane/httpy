@@ -170,4 +170,4 @@ cython_debug/
 /cpd/
 
 # certbot secret
-/www/pages/secret/
+/www/secret/
