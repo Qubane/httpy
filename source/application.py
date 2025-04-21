@@ -79,11 +79,19 @@ class App:
         initialize_client_handle()
         logging.info(f"Client handler initialized")
 
-        # create running loop
-        while self.running:
-            await asyncio.sleep(0.01)
-            await generic_server.start_serving()
-            await auth_server.start_serving()
+        async def generic_coro():
+            # create running loop
+            while self.running:
+                await asyncio.sleep(0.01)
+                await generic_server.start_serving()
+
+        async def auth_coro():
+            # create running loop
+            while self.running:
+                await asyncio.sleep(0.01)
+                await auth_server.start_serving()
+
+        await asyncio.gather(generic_coro(), auth_coro())
 
         # close server
         generic_server.close()
