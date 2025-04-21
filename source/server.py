@@ -49,6 +49,8 @@ class Server:
         for idx, split in enumerate(split_path):
             if split not in node:
                 return None
+            if "*" in node:
+                break
             node = node[split]
         if "*" in node:
             return node["*"]
