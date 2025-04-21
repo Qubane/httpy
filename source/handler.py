@@ -112,9 +112,14 @@ async def accept_http_client(reader: asyncio.StreamReader, writer: asyncio.Strea
     # if page is not found
     if hasattr(page, "__secret__"):
         # make secret response
+        data = getattr(page, "__secret__").encode("ascii")
         response = Response(
             status=STATUS_CODE_OK,
-            data=getattr(page, "__secret__"))
+            data=data,
+            headers={
+                "connection": Header("close"),
+                "content-length": Header(len(data)),
+                "content-type": Header("text/plain")})
     else:
         # make redirect response
         response = Response(
