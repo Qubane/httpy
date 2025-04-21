@@ -8,6 +8,7 @@
 }
 
 * {
+    color: var(--text-color);
     font-family: 'Consolas', 'monospace';
 }
 
