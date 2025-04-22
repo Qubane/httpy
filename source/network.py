@@ -68,7 +68,7 @@ async def fetch_request(connection: Connection) -> Request:
 
     # raise error in case of failure
     else:
-        raise HTTPRequestTypeError("Failed to identify HTTP request type")
+        raise HTTPRequestTypeError(f"Failed to identify HTTP request type: {initial_data[:64]}")
 
     # fetch request path
     request_path = initial_data[len(request_type)+1:initial_data.find(b' ', len(request_type)+1, 255)]
