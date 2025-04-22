@@ -79,10 +79,13 @@ async def fetch_request(connection: Connection) -> Request:
     request_path = request_path.decode("utf-8", "ignore")
 
     # make query args
-    request_args = [x for x in request_args.split(b'&') if x]
+    request_args = [x for x in request_args.split(b'&', maxsplit=1) if x]
     for idx, query_arg in enumerate(request_args):
         try:
-            request_args[idx] = query_arg.decode("utf-8", "ignore").split("=")
+            arg_pair = query_arg.decode("utf-8", "ignore").split("=", maxsplit=1)
+            if len(arg_pair) != 2:
+                continue
+            request_args[idx] = arg_pair
         except Exception:
             pass
     request_args = {x[0]: x[1] for x in request_args}
