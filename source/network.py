@@ -93,8 +93,10 @@ async def fetch_request(connection: Connection) -> Request:
     # headers
     request_headers = dict()
     for raw_header in re.findall(r"\n(.*:.*)", initial_data.decode("ascii")):
-        raw_header = raw_header.split(": ")
-        request_headers[raw_header[0].lower()] = Header(raw_header[1].rstrip('\r'))
+        raw_header = raw_header.split(":", maxsplit=1)
+        if len(raw_header) != 2:
+            continue
+        request_headers[raw_header[0].lower()] = Header(raw_header[1].strip())
 
     # parse commonly used headers
     for header_name in ["accept", "accept-encoding", "accept-language"]:
