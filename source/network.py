@@ -56,6 +56,8 @@ async def fetch_request(connection: Connection) -> Request:
         initial_data = await connection.read(WRITE_BUFFER_SIZE)
     except (asyncio.IncompleteReadError, asyncio.LimitOverrunError) as e:
         raise HTTPRequestError(e)
+    except ConnectionError:
+        raise ExternalServerError
 
     # empty request
     if initial_data == b'':
@@ -68,7 +70,7 @@ async def fetch_request(connection: Connection) -> Request:
 
     # raise error in case of failure
     else:
-        raise HTTPRequestTypeError(f"Failed to identify HTTP request type: {initial_data[:64]}")
+        raise ExternalServerError
 
     # fetch request path
     request_path = initial_data[len(request_type)+1:initial_data.find(b' ', len(request_type)+1, 255)]
