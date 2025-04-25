@@ -53,7 +53,7 @@ class Server:
                 return None
             node = node[split]
         if "*" in node:
-            return node["*"]
+            return node["*"]["__page__"]
         if "__page__" in node:
             return node["__page__"]
 
