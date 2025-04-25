@@ -47,10 +47,10 @@ class Server:
 
         # go through parts of path
         for idx, split in enumerate(split_path):
-            if split not in node:
-                return None
             if "*" in node:
                 break
+            if split not in node:
+                return None
             node = node[split]
         if "*" in node:
             return node["*"]
