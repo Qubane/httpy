@@ -22,7 +22,7 @@ class VideoShareUnlistedPage(Page):
     """
 
     dir_path: str = f"{WWW_DIRECTORY}/video-share/unlisted_videos"
-    _update_videos_routine_interval: float = 5 * 60  # 5 minutes (* 60 seconds)
+    _update_videos_routine_interval: float = 2 * 60  # 2 minutes (* 60 seconds)
 
     def __init__(self, server: Server):
         # "uuid": "path/to/file"
