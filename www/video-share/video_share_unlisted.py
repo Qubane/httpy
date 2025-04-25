@@ -46,21 +46,27 @@ class VideoShareUnlistedPage(Page):
 
     async def on_request(self, request: Request) -> Response:
         if (video_id := request.query_args.get("v")) is not None and video_id in self._video_list:
-            video = open(self._video_list[video_id], "rb")
-            video_type = os.path.splitext(self._video_list[video_id])[1]
+            # if query args contain 'raw' argument that is present and is equal to 'true' -> return raw video
+            if request.query_args.get("raw", "false") == "true":
+                video = open(self._video_list[video_id], "rb")
+                video_type = os.path.splitext(self._video_list[video_id])[1]
 
-            # generate basic headers
-            video.seek(0, os.SEEK_END)
-            headers = {
-                "content-length": Header(video.tell()),
-                "content-type": Header(f"video/{video_type}")}
-            video.seek(0)
+                # generate basic headers
+                video.seek(0, os.SEEK_END)
+                headers = {
+                    "content-length": Header(video.tell()),
+                    "content-type": Header(f"video/{video_type}")}
+                video.seek(0)
 
-            # return response
-            return Response(
-                status=STATUS_CODE_OK,
-                data=video,
-                headers=headers)
+                # return response
+                return Response(
+                    status=STATUS_CODE_OK,
+                    data=video,
+                    headers=headers)
+
+            # if query args don't contain 'raw' argument, or it's equal to 'false' -> return body page
+            else:
+                ...
         return Response(
             status=STATUS_CODE_NOT_FOUND,
             data=b'video not found')
