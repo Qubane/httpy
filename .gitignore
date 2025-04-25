@@ -171,3 +171,4 @@ cython_debug/
 
 # certbot secret
 /www/secret/
+/www/video-share/unlisted_videos/
