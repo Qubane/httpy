@@ -52,9 +52,13 @@ header {
     margin: 16px;
 }
 
-.section-div p, .section-div ul, .section-div ol, .section-div video, .section-div img {
+.section-div p, .section-div ul, .section-div ol {
     margin: 8px;
     padding-left: 16px;
+}
+
+.section-div video, .section-div img {
+    margin: 8px;
 }
 
 .section-div ul, .section-div ol {
