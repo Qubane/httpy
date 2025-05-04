@@ -13,7 +13,7 @@ from source.functions import *
 from source.status_codes import *
 
 
-class AboutPage(Page):
+class AboutPagePicture(Page):
     """
     about
     """
@@ -37,4 +37,4 @@ class AboutPage(Page):
 
 
 def setup(server: Server) -> None:
-    server.add_page(AboutPage(server))
+    server.add_page(AboutPagePicture(server))
