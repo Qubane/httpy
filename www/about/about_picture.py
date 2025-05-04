@@ -19,7 +19,7 @@ class AboutPagePicture(Page):
     """
 
     def __init__(self, server: Server):
-        server.add_path("/about", self)
+        server.add_path("/about/profile_picture.png", self)
 
     async def on_request(self, request: Request) -> Response:
         page = open(f"{WWW_DIRECTORY}/about/profile_picture.png", "rb")
