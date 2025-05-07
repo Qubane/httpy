@@ -13,6 +13,9 @@ from source.exceptions import *
 from source.status_codes import *
 
 
+LOGGER: logging.Logger = logging.getLogger(__name__)
+
+
 class ClientHandle:
     """
     Client handling class
@@ -31,6 +34,9 @@ class ClientHandle:
 
         request = await fetch_request(self.connection)
         response = await self.server.process_request(request)
+
+        LOGGER.info(f"Client request: {request}")
+        LOGGER.info(f"Server response status: {response.status}\n")
 
         response.headers["server"] = Header("HTTPy")
 
